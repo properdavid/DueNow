@@ -1,3 +1,4 @@
  - **Be extremely concise when writing messages to the user. Sacrifice grammar for the sake of concision.**
  - When designing modules or the interfaces between them, think "Deep Modules" (John Ousterhout) and "orthogonality" (Andrew Hunt)
  - When implementing code, use /TDD where possible, at pre-agreed seams
+ - When grilling, ask questions in plain text, do not use a tool to present questions.
