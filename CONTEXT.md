@@ -1,0 +1,91 @@
+# DueNow
+
+Household project management for a two-person household — a hierarchy of work items, each with an owner, a status, and a due date, surfaced by what is due soonest.
+
+## Language
+
+### The household
+
+**Household**:
+The two people who share this deployment. One running instance serves exactly one household; there is no household entity in the model because there is never more than one.
+_Avoid_: family, tenant, organisation, workspace, account
+
+### Work items
+
+**Work Item**:
+Anything trackable in DueNow — a single node in the tree. The generic term for all four types below.
+_Avoid_: item, ticket, issue, card, entry, to-do
+
+**Topic**:
+The broadest work item, grouping everything under a common theme. Sits at the root with no parent. Examples: Travel, House, Celebrations, Cleaning.
+_Avoid_: category, area, folder, epic
+
+**Project**:
+A work item under a Topic, representing an undertaking with its own arc. Examples: San Diego Trip, Replace Patio Cover, Kitchen.
+_Avoid_: initiative, goal, milestone
+
+**Task**:
+A work item under a Project — a discrete piece of work. Examples: Book lodging, Get patio cover quotes.
+_Avoid_: action, item, story
+
+**Subtask**:
+The narrowest work item, under a Task. Examples: Research Airbnbs, Call contractor 1.
+_Avoid_: step, child task, sub-item
+
+**Type Ladder**:
+The fixed ordering Topic › Project › Task › Subtask. Every work item except a Topic has exactly one parent, of exactly the type one rung above it. There are no orphans and no additional rungs.
+_Avoid_: hierarchy, tree depth, levels
+
+**Ancestors** / **Descendants**:
+The work items above an item on its path to its Topic, and everything beneath it. A work item's **subtree** is the item plus its descendants.
+_Avoid_: parents (plural), children (when meaning more than one rung), lineage
+
+**Reparent**:
+Moving a work item under a different parent.
+_Avoid_: move, re-assign, transfer
+
+### Status
+
+**Status**:
+Where a work item stands: **Open**, **In Progress**, **Completed**, or **Closed**. Every work item has exactly one.
+_Avoid_: state, stage, progress, workflow step
+
+**Open**:
+Not started.
+_Avoid_: to do, new, backlog, not started
+
+**In Progress**:
+Work has begun.
+_Avoid_: active, started, doing, WIP
+
+**Completed**:
+Terminal, and **achieved** — the outcome was reached.
+_Avoid_: done, finished, resolved, complete
+
+**Closed**:
+Terminal, and **not achieved** — a duplicate, a won't-do, or no longer relevant. Closed is not a worse Completed; it records a different outcome, not a lesser one.
+_Avoid_: cancelled, abandoned, archived, rejected, dropped
+
+**Terminal**:
+Completed or Closed — the two statuses that mean the outcome is settled and no further work is expected.
+_Avoid_: done, closed (as a grouping), final, resolved, inactive
+
+**Unfinished**:
+Open or In Progress — the two statuses that mean an outcome is still expected.
+_Avoid_: active, incomplete, outstanding, live, pending
+
+**Terminal Subtree Invariant**:
+A terminal work item never has unfinished descendants. Holds at all times, so a work item's terminal status is a trustworthy statement about its whole subtree.
+_Avoid_: completion rule, status consistency
+
+**Cascade**:
+A status change on one work item propagating to others. Two exist, and nothing else propagates.
+_Avoid_: rollup, sync, inheritance, trigger
+
+**Settle Cascade**:
+The downward cascade. Making a work item terminal carries that same status onto every unfinished descendant, leaving already-terminal ones as they are.
+_Avoid_: completion cascade, bulk close
+
+**Start Cascade**:
+The upward cascade. Moving a work item to In Progress walks up its ancestors, moving each Open one to In Progress, and stops at the first that is already In Progress.
+_Avoid_: promotion, parent rollup
