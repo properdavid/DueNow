@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+.react-router/
+
+# Environment
+.env
+.env.local
+
+# Data
+data/
+
+# OS
+.DS_Store
+
+# Editor
+.vscode/
+*.swp
+
+# Logs
+*.log
