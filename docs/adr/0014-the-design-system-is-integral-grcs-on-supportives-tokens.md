@@ -1,0 +1,25 @@
+# The design system is integral-grc's, ported onto Supportive's Tailwind v4 tokens
+
+DueNow adopts integral-grc's design system — its token families, typography scale, density rules, and elevation policy — declared in Tailwind v4 form using Supportive's `@theme inline` architecture. integral-grc supplies the policy and the palette; Supportive supplies the declaration site.
+
+The register is deliberately dense and professional rather than consumer-soft. DueNow's premise is JIRA for the household: a four-rung tree, four statuses, a filter bar. A rounded, airy, Reminders-style skin would fight the model it wraps. So `body` stays 14px, spacing stays on the native 4px scale with no semantic aliases, and hierarchy comes from tone and hairline borders rather than shadow. Shadows are reserved exclusively for floating, temporary UI — dropdown, dialog, popover, toast, sheet — and nothing in normal flow casts one.
+
+Density and touch comfort are treated as different axes. Type size and spacing are density; control height is touch comfort. Interactive minimums therefore rise to 44px under `@media (any-pointer: coarse)` while type and spacing stay put, so a phone gets safe targets without the whole interface loosening. `any-pointer` is chosen over `pointer` because it reports *any* attached input rather than the primary one: a hybrid touchscreen laptop gets the larger controls permanently. Neither query re-evaluates when the user switches hand to trackpad — these are static device capabilities, not live state — so the choice is which way to be wrong forever, and a miss-tap on a real touchscreen costs more than a few pixels of density on a laptop neither household member is likely to use as their main surface. Control heights are expressed only inside the primitives, never at call sites, so the rule lives in roughly six files.
+
+The palette keeps near-neutral greys — saturation at or below 8% — rather than tinting them toward the brand hue as Supportive does. DueNow's screens are dominated by user-supplied colour: eight label colours and four status colours on dense rows. Tinted chrome pulls all of them off-true and eats the contrast that makes them scannable. Primary is a deep indigo, `245 55% 52%` light and `245 60% 68%` dark — in the serious-tool family without being the default corporate blue, and clear of the 184 teal that `info` uses to stay distinguishable from it. Primary has small surface area under a tone-based hierarchy (active nav item, primary buttons, focus rings), so it is a cheap token to retune later.
+
+Token families carried: the semantic surface and brand set, the four status colours each with `-foreground` and `-subtle`, the radius scale, elevation overlays, and a trimmed `sm`/`md`/`lg` shadow ramp. integral-grc's `--tag-1..8` become **`--label-1..8`**, matching the Label Palette in the glossary — "tag" is a term DueNow avoids. Dropped: the chart ramp (no charts in v1), the computed-border indirection, and the serif, signature, and monospace fonts. Dropping mono removes the `mono` typography role with it; DueNow displays no code, hashes, or identifiers.
+
+Typography roles stay as documented class-string recipes — `heading-page` is `text-xl font-semibold`, and that is what an engineer types. There is no `<Heading>` component and no `@utility` alias. Each recipe is two utilities long, so a name buys no compression, and a named role invites the variant that erodes the scale from inside (`heading-section-sm`). Enforcement comes from closing the scale, not from naming the rungs.
+
+Adopted verbatim from integral-grc: focus is `focus-visible:ring-1 focus-visible:ring-ring`, thin and token-coloured and keyboard-only, with `ring-inset` on tabs to avoid overflow clipping; disabled is `disabled:pointer-events-none disabled:opacity-50`; ghost buttons carry `border border-transparent` so they do not jump on hover; alerts render as `-subtle` fill with a `/40` border and a tinted icon. Primitives are shadcn-style CVA plus `cn` over Radix, with `lucide-react` icons and Inter self-hosted as the only font.
+
+## Consequences
+
+**Labels and statuses are distinguished by treatment, not only by hue.** Labels are pastel chips; statuses are uppercase micro-badges. Eight user-pickable colours cannot all dodge four status hues on a 360° wheel, so the shape and weight carry the distinction and a reddish label never reads as an error.
+
+**Supportive's `app.css` is a starting file, not a copy.** Its structure ports — the `@theme inline` bridge, the lightness ladder, the `-subtle` inversion across modes — but every value is retyped for the new hue and the neutral desaturation.
+
+**A `design-lint` gate is assumed.** The typography scale, the token discipline, and the ban on raw palette utilities are conventions a linter enforces; without it they decay quietly. Its rules are settled alongside this decision.
+
+**Prototype code is exempt from all of it.** The prototype tickets exist to break rules and live on throwaway branches, outside the lint's source root.
