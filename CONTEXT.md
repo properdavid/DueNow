@@ -123,3 +123,17 @@ _Avoid_: completion cascade, bulk close
 **Start Cascade**:
 The upward cascade. Moving a work item to In Progress walks up its ancestors, moving each Open one to In Progress, and stops at the first that is already In Progress.
 _Avoid_: promotion, parent rollup
+
+### Settings
+
+**Household Timezone**:
+The single timezone the household shares, stored once and editable in Settings. There is no per-user or per-work-item timezone.
+_Avoid_: local time, server time, user timezone, locale
+
+**Today**:
+The calendar day in the Household Timezone. The only thing a Due Date is ever compared against, so overdue and due-today mean the same thing to both household members.
+_Avoid_: now, current date, the current time
+
+**Label Palette**:
+The fixed set of colours a Label may take. A Label is assigned one of them, never an arbitrary colour.
+_Avoid_: colour picker, swatch, custom colour, theme colour
