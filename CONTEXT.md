@@ -41,8 +41,12 @@ The work items above an item on its path to its Topic, and everything beneath it
 _Avoid_: parents (plural), children (when meaning more than one rung), lineage
 
 **Reparent**:
-Moving a work item under a different parent.
+Moving a work item under a different parent of the same type it already sits under — a Task moves to another Project. The work item carries its subtree with it, and no type changes.
 _Avoid_: move, re-assign, transfer
+
+**Promotion** / **Demotion**:
+Changing a work item's type, shifting it and its whole subtree one rung up or down the ladder — a Task that turns out to be a Project. Not in v1; the term is reserved so that retyping, when it arrives, is not confused with Reparent.
+_Avoid_: convert, change type, move up a level
 
 ### Fields
 
