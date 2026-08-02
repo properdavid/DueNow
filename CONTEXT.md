@@ -44,6 +44,40 @@ _Avoid_: parents (plural), children (when meaning more than one rung), lineage
 Moving a work item under a different parent.
 _Avoid_: move, re-assign, transfer
 
+### Fields
+
+**Core Fields**:
+The fields every work item carries, whatever its type — Summary, Description, Assignee, Status, Due Date, Labels, Comments. No type withholds one and no type adds one.
+_Avoid_: attributes, properties, metadata, standard fields
+
+**Summary**:
+The one-line name of a work item, and the only thing a person must supply to create one.
+_Avoid_: title, name, subject, heading
+
+**Description**:
+The long-form detail of a work item, written in Markdown.
+_Avoid_: body, notes, details, content
+
+**Assignee**:
+The single household member responsible for a work item. Optional, and never inherited from an ancestor.
+_Avoid_: owner, responsible party, reporter, watcher
+
+**Unassigned**:
+A work item with no assignee. An expected, first-class state meaning neither person has taken it — not an omission awaiting correction.
+_Avoid_: unowned, orphaned, nobody, empty
+
+**Due Date**:
+The calendar day by which a work item is expected to be finished. A whole day, never a time of day. Optional, and independent of any ancestor's or descendant's.
+_Avoid_: deadline, target date, due by, ETA
+
+**Label**:
+A named, colour-coded tag from one household-wide managed set, applicable to a work item of any type.
+_Avoid_: tag, category, keyword, flag, component
+
+**Comment**:
+A Markdown note written by a household member on a work item, belonging to its author and editable only by them. Only people write comments; the system never does.
+_Avoid_: note, reply, message, activity, update
+
 ### Status
 
 **Status**:
