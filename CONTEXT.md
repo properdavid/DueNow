@@ -124,6 +124,24 @@ _Avoid_: completion cascade, bulk close
 The upward cascade. Moving a work item to In Progress walks up its ancestors, moving each Open one to In Progress, and stops at the first that is already In Progress.
 _Avoid_: promotion, parent rollup
 
+### The Due tab
+
+**Overdue**:
+Unfinished with a Due Date earlier than Today.
+_Avoid_: late, past due, missed, expired
+
+**Covered**:
+Having an unfinished descendant whose Due Date falls on or before your own. A covered work item stays off the Due tab, because something beneath it is already carrying that deadline and is the actionable one. Covered is judged against what the Due tab is currently showing, not against the whole tree.
+_Avoid_: superseded, shadowed, rolled up, hidden, subsumed
+
+**Due Now** / **Due Soon** / **Due Later**:
+The three groups of the Due tab. Now is due today or Overdue, Soon is the next seven days, Later is the twenty-three days after that. All three roll forward from Today rather than aligning to a calendar week or month.
+_Avoid_: urgent, upcoming, this week, buckets, windows
+
+**Horizon**:
+Thirty days from Today. A Due Date beyond it puts a work item on no Due tab group at all; the tab is a view of what is approaching, not an inventory of every date.
+_Avoid_: cutoff, range, limit, lookahead
+
 ### Settings
 
 **Household Timezone**:
