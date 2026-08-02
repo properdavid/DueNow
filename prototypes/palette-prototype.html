@@ -1,0 +1,294 @@
+<!doctype html>
+<!-- PROTOTYPE — throwaway. Answers issue #14 Q4: what does the palette actually look like? -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DueNow palette prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --p-h: 245; --p-s: 55%; --p-l: 52%;
+    --pd-h: 245; --pd-s: 60%; --pd-l: 68%;
+  }
+
+  .pane {
+    --background: 240 6% 98%;
+    --foreground: 240 10% 12%;
+    --card: 0 0% 100%;
+    --muted: 240 5% 95%;
+    --muted-foreground: 240 5% 45%;
+    --accent: var(--p-h) 30% 95%;
+    --accent-foreground: var(--p-h) 45% 40%;
+    --border: 240 6% 88%;
+    --input: 240 6% 82%;
+    --primary: var(--p-h) var(--p-s) var(--p-l);
+    --primary-foreground: 0 0% 100%;
+    --ring: var(--p-h) var(--p-s) var(--p-l);
+    --success: 152 60% 36%; --success-subtle: 152 45% 94%;
+    --warning: 38 92% 42%;  --warning-subtle: 38 80% 94%;
+    --info: 184 70% 34%;    --info-subtle: 184 50% 94%;
+    --destructive: 0 72% 52%; --destructive-subtle: 0 72% 95%;
+    --label-l: 92%; --label-s: 62%; --label-text-l: 30%; --label-text-s: 55%;
+    --elevate-1: rgba(0,0,0,.03);
+    --elevate-2: rgba(0,0,0,.08);
+  }
+
+  .pane.dark {
+    --background: 240 8% 9%;
+    --foreground: 240 8% 93%;
+    --card: 240 8% 12%;
+    --muted: 240 6% 18%;
+    --muted-foreground: 240 5% 62%;
+    --accent: var(--pd-h) 22% 20%;
+    --accent-foreground: var(--pd-h) 60% 80%;
+    --border: 240 6% 22%;
+    --input: 240 6% 28%;
+    --primary: var(--pd-h) var(--pd-s) var(--pd-l);
+    --primary-foreground: 240 30% 10%;
+    --ring: var(--pd-h) var(--pd-s) var(--pd-l);
+    --success: 152 55% 52%; --success-subtle: 152 30% 16%;
+    --warning: 38 85% 58%;  --warning-subtle: 38 40% 16%;
+    --info: 184 60% 50%;    --info-subtle: 184 35% 15%;
+    --destructive: 0 70% 62%; --destructive-subtle: 0 40% 17%;
+    --label-l: 22%; --label-s: 40%; --label-text-l: 78%; --label-text-s: 55%;
+    --elevate-1: rgba(255,255,255,.04);
+    --elevate-2: rgba(255,255,255,.09);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px; display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh;
+  }
+  @media (max-width: 900px) { body { grid-template-columns: 1fr; } }
+
+  .pane {
+    background: hsl(var(--background)); color: hsl(var(--foreground));
+    padding: 0 0 96px; border-right: 1px solid hsl(var(--border));
+  }
+
+  .header { padding: 16px 24px; border-bottom: 1px solid hsl(var(--border)); display: flex; align-items: center; justify-content: space-between; }
+  .h-page { font-size: 20px; font-weight: 600; }
+  .h-section { font-size: 18px; font-weight: 600; }
+  .h-sub { font-size: 16px; font-weight: 500; }
+  .caption { font-size: 12px; color: hsl(var(--muted-foreground)); }
+  .micro-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+  .body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+
+  .card { background: hsl(var(--card)); border: 1px solid hsl(var(--border)); border-radius: 10px; }
+  .card-pad { padding: 24px; }
+
+  /* elevation-by-tone: hover uses an overlay, never a shadow */
+  .row {
+    display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+    border-bottom: 1px solid hsl(var(--border)); cursor: default;
+    background-image: linear-gradient(transparent, transparent);
+  }
+  .row:last-child { border-bottom: 0; }
+  .row:hover { background-image: linear-gradient(var(--elevate-1), var(--elevate-1)); }
+  .row-main { flex: 1; min-width: 0; }
+  .row-sum { font-weight: 500; }
+  .breadcrumb { font-size: 12px; color: hsl(var(--muted-foreground)); }
+
+  .badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 2px 6px; border-radius: 6px; white-space: nowrap; }
+  .b-open { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); border: 1px solid hsl(var(--border)); }
+  .b-prog { background: hsl(var(--info-subtle)); color: hsl(var(--info)); border: 1px solid hsl(var(--info) / .4); }
+  .b-done { background: hsl(var(--success-subtle)); color: hsl(var(--success)); border: 1px solid hsl(var(--success) / .4); }
+  .b-closed { background: hsl(var(--muted)); color: hsl(var(--muted-foreground)); border: 1px solid hsl(var(--border)); text-decoration: line-through; }
+  .b-over { background: hsl(var(--destructive-subtle)); color: hsl(var(--destructive)); border: 1px solid hsl(var(--destructive) / .4); }
+
+  .chip {
+    font-size: 12px; padding: 1px 8px; border-radius: 9999px; white-space: nowrap;
+    background: hsl(var(--lh) var(--label-s) var(--label-l));
+    color: hsl(var(--lh) var(--label-text-s) var(--label-text-l));
+    border: 1px solid hsl(var(--lh) var(--label-s) calc(var(--label-l) - 8%));
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border-radius: 8px; font-size: 14px; font-weight: 500; min-height: 36px; padding: 0 16px;
+    border: 1px solid transparent; cursor: pointer; font-family: inherit;
+    background-image: linear-gradient(transparent, transparent);
+  }
+  .btn:hover { background-image: linear-gradient(var(--elevate-1), var(--elevate-1)); }
+  .btn:active { background-image: linear-gradient(var(--elevate-2), var(--elevate-2)); }
+  .btn:focus-visible { outline: none; box-shadow: 0 0 0 1px hsl(var(--ring)); }
+  .btn-primary { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
+  .btn-outline { border-color: hsl(var(--input)); color: hsl(var(--foreground)); background-color: transparent; }
+  .btn-ghost { color: hsl(var(--foreground)); background-color: transparent; }
+  .btn-destructive { background-color: hsl(var(--destructive)); color: #fff; }
+  .btn[disabled] { pointer-events: none; opacity: .5; }
+  @media (any-pointer: coarse) { .btn { min-height: 44px; } }
+
+  input.field {
+    min-height: 36px; border-radius: 8px; border: 1px solid hsl(var(--input));
+    background: hsl(var(--card)); color: hsl(var(--foreground)); padding: 0 12px;
+    font-family: inherit; font-size: 14px; width: 100%;
+  }
+  input.field:focus-visible { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 1px hsl(var(--ring)); }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; width: 190px; }
+  .nav a { padding: 6px 12px; border-radius: 8px; text-decoration: none; color: hsl(var(--muted-foreground)); }
+  .nav a.active { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); font-weight: 500; }
+
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+  .sw { width: 84px; }
+  .sw div { height: 44px; border-radius: 8px; border: 1px solid hsl(var(--border)); }
+
+  .alert { display: flex; gap: 8px; padding: 12px 16px; border-radius: 8px; align-items: flex-start; }
+  .a-info { background: hsl(var(--info-subtle)); border: 1px solid hsl(var(--info) / .4); }
+  .a-warn { background: hsl(var(--warning-subtle)); border: 1px solid hsl(var(--warning) / .4); }
+
+  .float {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; padding: 6px; border-radius: 9999px; z-index: 10;
+    background: #fff; border: 1px solid #d8d8de; box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  }
+  .float button {
+    border: 0; border-radius: 9999px; padding: 8px 14px; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 500; background: transparent; color: #22222a;
+  }
+  .float button.on { color: #fff; }
+  .mode-tag { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+</style>
+</head>
+<body>
+
+<div class="pane" id="light"></div>
+<div class="pane dark" id="dark"></div>
+
+<div class="float" id="switcher"></div>
+
+<script>
+const VARIANTS = {
+  indigo245: { name: "Indigo 245", p: [245, "55%", "52%"], pd: [245, "60%", "68%"] },
+  blue220:   { name: "Blue 220 (integral-grc)", p: [220, "53%", "49%"], pd: [220, "60%", "66%"] },
+  purple270: { name: "Purple 270 (Supportive)", p: [270, "45%", "55%"], pd: [270, "50%", "68%"] },
+};
+
+const LABELS = [
+  ["Groceries", 340], ["Errand", 15], ["Weekend", 45], ["Outdoors", 100],
+  ["Money", 200], ["Travel", 260], ["Admin", 300], ["Health", 130],
+];
+
+const ROWS = [
+  { sum: "Call contractor 1", crumb: "House › Replace Patio Cover › Get quotes", status: ["b-over","Overdue"], due: "2 days ago", who: "DM", labels: [0,4] },
+  { sum: "Book lodging", crumb: "Travel › San Diego Trip", status: ["b-prog","In Progress"], due: "Today", who: "AR", labels: [5] },
+  { sum: "Deep clean oven", crumb: "Cleaning › Kitchen", status: ["b-open","Open"], due: "Fri", who: null, labels: [3,1] },
+  { sum: "Order birthday cake", crumb: "Celebrations › Mum's Birthday", status: ["b-open","Open"], due: "in 9 days", who: "DM", labels: [2] },
+  { sum: "Renew home insurance", crumb: "Admin › Insurance", status: ["b-done","Completed"], due: "in 21 days", who: "AR", labels: [4,6] },
+];
+
+function chip(i) {
+  const [name, h] = LABELS[i];
+  return `<span class="chip" style="--lh:${h}">${name}</span>`;
+}
+
+function paneHTML(modeLabel) {
+  return `
+  <div class="header">
+    <div>
+      <div class="h-page">Due</div>
+      <div class="caption">Deadline radar · next 30 days</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="mode-tag">${modeLabel}</span>
+      <button class="btn btn-outline">Everyone</button>
+      <button class="btn btn-primary">New work item</button>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <div style="display:flex;gap:24px;align-items:flex-start">
+      <nav class="nav">
+        <a href="#" class="active">Due</a>
+        <a href="#">Work Items</a>
+        <a href="#">Search</a>
+        <a href="#">Settings</a>
+      </nav>
+      <div class="card" style="flex:1;min-width:0">
+        <div style="padding:8px 16px;border-bottom:1px solid hsl(var(--border))">
+          <span class="micro-label" style="color:hsl(var(--muted-foreground))">Due Now</span>
+        </div>
+        ${ROWS.map(r => `
+          <div class="row">
+            <div class="row-main">
+              <div class="row-sum">${r.sum}</div>
+              <div class="breadcrumb">${r.crumb}</div>
+            </div>
+            ${r.labels.map(chip).join("")}
+            <span class="badge ${r.status[0]}">${r.status[1]}</span>
+            <span class="caption" style="width:78px;text-align:right">${r.due}</span>
+            <span class="micro-label" style="width:34px;text-align:right;color:hsl(var(--muted-foreground))">${r.who ?? "—"}</span>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="card card-pad" style="display:flex;flex-direction:column;gap:16px">
+      <div class="h-sub">Controls</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-primary">Primary</button>
+        <button class="btn btn-outline">Outline</button>
+        <button class="btn btn-ghost">Ghost</button>
+        <button class="btn btn-destructive">Close item</button>
+        <button class="btn btn-outline" disabled>Disabled</button>
+      </div>
+      <div style="max-width:340px">
+        <input class="field" placeholder="Summary — tab here to see the focus ring" />
+      </div>
+      <div class="caption">Focus is a 1px token-coloured ring, keyboard-only. Hover/active are tone overlays, never shadows.</div>
+    </div>
+
+    <div class="card card-pad" style="display:flex;flex-direction:column;gap:12px">
+      <div class="h-sub">Status &amp; semantic</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="badge b-open">Open</span>
+        <span class="badge b-prog">In Progress</span>
+        <span class="badge b-done">Completed</span>
+        <span class="badge b-closed">Closed</span>
+        <span class="badge b-over">Overdue</span>
+      </div>
+      <div class="alert a-info"><span>Two items were swept to Completed by the settle cascade.</span></div>
+      <div class="alert a-warn"><span>This label is used by 12 work items. Deleting it detaches them.</span></div>
+    </div>
+
+    <div class="card card-pad" style="display:flex;flex-direction:column;gap:12px">
+      <div class="h-sub">Label palette (8)</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${LABELS.map((_, i) => chip(i)).join("")}</div>
+      <div class="h-sub" style="margin-top:8px">Neutral ladder &amp; primary</div>
+      <div class="swatches">
+        ${[["background","--background"],["muted","--muted"],["border","--border"],["input","--input"],["muted-fg","--muted-foreground"],["foreground","--foreground"],["primary","--primary"],["accent","--accent"]]
+          .map(([n, v]) => `<div class="sw"><div style="background:hsl(var(${v}))"></div><div class="caption" style="height:auto;border:0;background:none;padding-top:4px">${n}</div></div>`).join("")}
+      </div>
+    </div>
+
+  </div>`;
+}
+
+function apply(key) {
+  const v = VARIANTS[key];
+  const r = document.documentElement.style;
+  r.setProperty("--p-h", v.p[0]); r.setProperty("--p-s", v.p[1]); r.setProperty("--p-l", v.p[2]);
+  r.setProperty("--pd-h", v.pd[0]); r.setProperty("--pd-s", v.pd[1]); r.setProperty("--pd-l", v.pd[2]);
+  document.getElementById("light").innerHTML = paneHTML("Light");
+  document.getElementById("dark").innerHTML = paneHTML("Dark");
+  document.querySelectorAll("#switcher button").forEach(b => {
+    const on = b.dataset.k === key;
+    b.classList.toggle("on", on);
+    b.style.background = on ? `hsl(${VARIANTS[b.dataset.k].p.join(" ")})` : "transparent";
+  });
+  const u = new URL(location.href); u.searchParams.set("v", key); history.replaceState({}, "", u);
+}
+
+document.getElementById("switcher").innerHTML =
+  Object.entries(VARIANTS).map(([k, v]) => `<button data-k="${k}">${v.name}</button>`).join("");
+document.querySelectorAll("#switcher button").forEach(b => b.onclick = () => apply(b.dataset.k));
+
+apply(new URL(location.href).searchParams.get("v") || "indigo245");
+</script>
+</body>
+</html>
