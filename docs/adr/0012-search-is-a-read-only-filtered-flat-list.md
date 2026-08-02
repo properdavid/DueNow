@@ -1,0 +1,29 @@
+# Search is a read-only, filtered flat list
+
+The Search tab opens on every work item in the household, flat, sorted by `id`, and narrows from there through a fixed filter bar and a keyword box. It shows results; it never changes them.
+
+Opening on everything is a deliberate choice over opening on a useful slice or on nothing at all. An unfiltered list interleaves all four rungs in creation order and is admittedly not a view anyone reads for long, but it is a *consistent, understandable set* — the whole corpus, stated plainly — and every narrowing is a visible subtraction from it. Defaulting to a slice would mean Search quietly hides work items until you discover which control was pre-set, and defaulting to empty would make the tab's resting state a blank screen. Anyone wanting a different starting set gets one when presets arrive; until then the honest whole is the starting point.
+
+Filtering is a **filter bar**, not a query builder. Each dimension is a multi-select, values within a dimension OR, and dimensions AND with each other: `Type: Task, Subtask` with `Status: Open, In Progress` reads as Tasks or Subtasks that are Open or In Progress. There is no nesting, no OR across dimensions, and no NOT. A general query builder — JQL, or a visual equivalent — is strictly more expressive, and the expressiveness it uniquely buys is the compound OR across dimensions. In a two-person household the one compound query that comes up constantly is "mine or unassigned", and that is a single dimension's multi-select, not a nested clause. Everything else is served by running a second search.
+
+The dimensions are keyword, type, status, assignee, parent, due date, and labels.
+
+**Parent matches the parent field, not the subtree.** `Parent: Kitchen` returns the work items whose parent is Kitchen, one rung down and no further. Because the type ladder is strict, this means the result type is fully determined by the picked item's type, and it means some filter combinations are permanently empty — `Parent: House` with `Type: Subtask` can never return a row, since a Topic's children are Projects. A descendant filter would express "all House work" in one go and avoid the dead combinations, but it makes the filter's reach change with the picked item's depth. Direct parentage is the uniform, predictable reading of the control, and the Work Items tree is where whole-subtree exploration belongs.
+
+Due date is a single choice of **Any**, **Overdue**, **Before**, **After**, **Between**, or **No due date**. Before and After are strict; Between includes both endpoints, which is how whole days are spoken about. **No due date** matters more than its size suggests: the Due tab refuses undated work by design, so this is v1's only route to the backlog.
+
+Sorting offers `id`, due date, and updated, ascending or descending, always tie-broken on `id` so the order is total and stable. Status and summary were rejected — status is a filter dimension, and alphabetical order over household work means nothing. Sorting by due date puts undated items **last** rather than hiding them; hiding would turn a sort into a filter and cut off the one surface that reaches undated work. The sort survives filter changes, because it is a preference about the view rather than part of the question, and resets when the tab is left.
+
+**Grouping is not in v1.** The original idea asked for searchable, sortable, groupable, filterable, and grouping is the verb that does not earn its place: grouping by a dimension and filtering by it answer nearly the same question, and with two household members and four types the groups are too few and too lopsided to be worth a section header. It returns with presets, where a "group by" is a property of a saved view and has somewhere to live.
+
+**Search mutates nothing.** No inline status dropdown on a row, no multi-select with a bulk action bar. Status changes cascade — settling an item carries that status onto its whole unfinished subtree, and starting one walks In Progress up its ancestors — so a bulk status change is a fan-out of cascades, some of which touch other selected rows and some of which touch rows not on screen. The confirmation UX for that is a real design problem, and getting it wrong rewrites the tree silently. Bulk assignee and label edits carry no such risk and would be safe, but a selection model that permits two of three obvious bulk actions invites the third. Finding stays in Search; acting happens in the detail view.
+
+## Consequences
+
+Filter state lives in the **URL** as query parameters, so the loader does the filtering server-side, the back button steps through searches, a search is linkable, and a refresh keeps it. This is not optional in practice: the keyword index is in SQLite, so a round trip happens regardless. It also makes v2 presets a stored query string rather than a schema.
+
+Because the parent filter is one rung, "everything outstanding under House" is not expressible as a single search. That is a known gap, accepted in exchange for a control whose meaning does not shift with what you put in it.
+
+Rows carry the **immediate parent's summary** for context, not the full ancestor path. The Due tab shows the full breadcrumb. The two surfaces diverge knowingly: the Due tab is a short, capped list where three ancestors of context cost little, while Search is unbounded and hundreds of rows each carrying a three-deep breadcrumb reads as noise. The row component takes a lineage variant rather than being two components.
+
+Desktop renders a table with clickable column headers for sort; phone renders stacked rows with the filter bar collapsed behind a **Filters** button carrying a count of active filters, opening as a sheet. This follows the sidebar-as-sheet pattern already established for this stack, and keeps one filter model behind two presentations. The keyword box stays visible at both widths.

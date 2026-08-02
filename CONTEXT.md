@@ -142,6 +142,20 @@ _Avoid_: urgent, upcoming, this week, buckets, windows
 Thirty days from Today. A Due Date beyond it puts a work item on no Due tab group at all; the tab is a view of what is approaching, not an inventory of every date.
 _Avoid_: cutoff, range, limit, lookahead
 
+### The Search tab
+
+**Filter Bar**:
+The fixed set of controls that narrows the Search tab — keyword, type, status, assignee, parent, due date, and labels. Values chosen within one control widen the result; every control narrows it against the others. There is no nesting and no OR across controls.
+_Avoid_: query builder, advanced search, facets, criteria
+
+**Keyword**:
+Text matched against a work item's Summary and Description, never its Comments. Several words match a work item carrying all of them, in any order.
+_Avoid_: search term, full-text search, query, phrase
+
+**Preset**:
+A saved Filter Bar configuration, recalled by name. Not in v1 — the term is reserved so that saved filters, when they arrive, are not called something else.
+_Avoid_: saved search, saved filter, view, smart list
+
 ### Settings
 
 **Household Timezone**:
