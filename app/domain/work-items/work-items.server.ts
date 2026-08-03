@@ -58,6 +58,49 @@ export interface DueRadarReadModel {
   hasEverHadWorkItems: boolean;
 }
 
+export type SearchSort = "id" | "type" | "summary" | "parent" | "assignee" | "status" | "due" | "updated";
+export type SearchDirection = "asc" | "desc";
+export type SearchDueFilter =
+  | { mode: "any" }
+  | { mode: "overdue" }
+  | { mode: "before"; date: string }
+  | { mode: "after"; date: string }
+  | { mode: "between"; start: string; end: string }
+  | { mode: "none" };
+
+export interface SearchWorkItemsInput {
+  keyword?: string;
+  types?: WorkItemType[];
+  statuses?: WorkItemStatus[];
+  assigneeIds?: (number | null)[];
+  parentIds?: number[];
+  due?: SearchDueFilter;
+  labelIds?: number[];
+  sort?: SearchSort;
+  direction?: SearchDirection;
+  now?: Date;
+}
+
+export interface SearchWorkItemRow {
+  id: number;
+  type: WorkItemType;
+  parentId: number | null;
+  parentSummary: string | null;
+  summary: string;
+  description: string;
+  assigneeId: number | null;
+  assignee: WorkItemsTreeMember | null;
+  status: WorkItemStatus;
+  dueDate: string | null;
+  updatedAt: number;
+}
+
+export interface SearchWorkItemsReadModel {
+  rows: SearchWorkItemRow[];
+  resultCount: number;
+  limit: number;
+}
+
 export interface WorkItemDetailReadModel {
   item: WorkItemsTreeRow;
   breadcrumb: { id: number; label: string; type: WorkItemType }[];
@@ -93,6 +136,11 @@ interface WorkItemSelectRow {
   assigneeId: number | null;
   assigneeName: string | null;
   assigneeEmail: string | null;
+}
+
+interface SearchSelectRow extends WorkItemSelectRow {
+  parentSummary: string | null;
+  updatedAt: number;
 }
 
 export interface ParentCandidate extends TreeWorkItem {
@@ -161,6 +209,42 @@ export function loadDueRadar(database: DatabaseClient, currentUserId: number, sc
     today,
     hasEverHadWorkItems: rows.length > 0,
   };
+}
+
+export function searchWorkItems(database: DatabaseClient, input: SearchWorkItemsInput = {}): SearchWorkItemsReadModel {
+  const filters = buildSearchFilters(database, input);
+  const orderBy = searchOrderBy(input.sort ?? "id", input.direction ?? "asc");
+  const baseQuery = `
+    FROM work_items wi
+    LEFT JOIN users assignee ON assignee.id = wi.assigneeId
+    LEFT JOIN work_items parent ON parent.id = wi.parentId
+    ${filters.whereSql}
+  `;
+  const resultCount = (database.sqlite.prepare(`SELECT COUNT(*) AS resultCount ${baseQuery}`).get(...filters.params) as { resultCount: number }).resultCount;
+  const rows = database.sqlite
+    .prepare(
+      `
+      SELECT
+        wi.id,
+        wi.type,
+        wi.parentId,
+        parent.summary AS parentSummary,
+        wi.summary,
+        wi.description,
+        wi.assigneeId,
+        assignee.name AS assigneeName,
+        assignee.email AS assigneeEmail,
+        wi.status,
+        wi.dueDate,
+        wi.updatedAt
+      ${baseQuery}
+      ${orderBy}
+      LIMIT 200
+    `,
+    )
+    .all(...filters.params) as SearchSelectRow[];
+
+  return { rows: rows.map(toSearchRow), resultCount, limit: 200 };
 }
 
 export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkItemDetailReadModel {
@@ -386,6 +470,25 @@ function toTreeRow(row: WorkItemSelectRow): WorkItemsTreeRow {
       row.assigneeId === null || row.assigneeName === null || row.assigneeEmail === null
         ? null
         : { id: row.assigneeId, name: row.assigneeName, email: row.assigneeEmail },
+  };
+}
+
+function toSearchRow(row: SearchSelectRow): SearchWorkItemRow {
+  return {
+    id: row.id,
+    type: row.type,
+    parentId: row.parentId,
+    parentSummary: row.parentSummary,
+    summary: row.summary,
+    description: row.description,
+    assigneeId: row.assigneeId,
+    assignee:
+      row.assigneeId === null || row.assigneeName === null || row.assigneeEmail === null
+        ? null
+        : { id: row.assigneeId, name: row.assigneeName, email: row.assigneeEmail },
+    status: row.status,
+    dueDate: row.dueDate,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -814,6 +917,133 @@ function applyStatusChanges(database: DatabaseClient, changes: { id: number; sta
   database.sqlite
     .prepare(`UPDATE work_items SET status = CASE id ${statusCases} END, updatedAt = ?, updatedBy = ? WHERE id IN (${ids})`)
     .run(...statusParams, now, actorId, ...idParams);
+}
+
+function buildSearchFilters(database: DatabaseClient, input: SearchWorkItemsInput) {
+  const clauses: string[] = [];
+  const params: unknown[] = [];
+  const keyword = keywordMatchExpression(input.keyword ?? "");
+  if (keyword !== null) {
+    clauses.push("wi.id IN (SELECT rowid FROM work_items_fts WHERE work_items_fts MATCH ?)");
+    params.push(keyword);
+  }
+
+  addInFilter(clauses, params, "wi.type", validWorkItemTypes(input.types));
+  addInFilter(clauses, params, "wi.status", validWorkItemStatuses(input.statuses));
+  addInFilter(clauses, params, "wi.parentId", validPositiveIntegers(input.parentIds));
+  addInFilter(clauses, params, "wil.labelId", validPositiveIntegers(input.labelIds), {
+    existsSql: "SELECT 1 FROM work_item_labels wil WHERE wil.workItemId = wi.id",
+  });
+
+  const assigneeIds = input.assigneeIds?.filter((id): id is number | null => id === null || isPositiveInteger(id)) ?? [];
+  if (assigneeIds.length > 0) {
+    const numericAssigneeIds = assigneeIds.filter((id): id is number => id !== null);
+    const assigneeClauses: string[] = [];
+    if (numericAssigneeIds.length > 0) {
+      assigneeClauses.push(`wi.assigneeId IN (${numericAssigneeIds.map(() => "?").join(", ")})`);
+      params.push(...numericAssigneeIds);
+    }
+    if (assigneeIds.includes(null)) {
+      assigneeClauses.push("wi.assigneeId IS NULL");
+    }
+    clauses.push(`(${assigneeClauses.join(" OR ")})`);
+  }
+
+  const dueFilter = input.due ?? { mode: "any" };
+  switch (dueFilter.mode) {
+    case "any":
+      break;
+    case "overdue": {
+      const settings = database.sqlite.prepare("SELECT timezone FROM household_settings WHERE id = 1").get() as { timezone: string };
+      clauses.push("wi.status IN ('open', 'in_progress') AND wi.dueDate IS NOT NULL AND wi.dueDate < ?");
+      params.push(todayInTimezone(settings.timezone, input.now ?? new Date()));
+      break;
+    }
+    case "before":
+      if (isWholeDay(dueFilter.date)) {
+        clauses.push("wi.dueDate IS NOT NULL AND wi.dueDate < ?");
+        params.push(dueFilter.date);
+      }
+      break;
+    case "after":
+      if (isWholeDay(dueFilter.date)) {
+        clauses.push("wi.dueDate IS NOT NULL AND wi.dueDate > ?");
+        params.push(dueFilter.date);
+      }
+      break;
+    case "between":
+      if (isWholeDay(dueFilter.start) && isWholeDay(dueFilter.end)) {
+        clauses.push("wi.dueDate IS NOT NULL AND wi.dueDate BETWEEN ? AND ?");
+        params.push(dueFilter.start <= dueFilter.end ? dueFilter.start : dueFilter.end, dueFilter.start <= dueFilter.end ? dueFilter.end : dueFilter.start);
+      }
+      break;
+    case "none":
+      clauses.push("wi.dueDate IS NULL");
+      break;
+  }
+
+  return { whereSql: clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "", params };
+}
+
+function addInFilter(
+  clauses: string[],
+  params: unknown[],
+  column: string,
+  values: (number | string)[],
+  options: { existsSql?: string } = {},
+) {
+  if (values.length === 0) {
+    return;
+  }
+  const inSql = `${column} IN (${values.map(() => "?").join(", ")})`;
+  clauses.push(options.existsSql ? `EXISTS (${options.existsSql} AND ${inSql})` : inSql);
+  params.push(...values);
+}
+
+function validWorkItemTypes(values: WorkItemType[] | undefined) {
+  return values?.filter((value): value is WorkItemType => workItemTypes.includes(value)) ?? [];
+}
+
+function validWorkItemStatuses(values: WorkItemStatus[] | undefined) {
+  return values?.filter((value): value is WorkItemStatus => workItemStatuses.includes(value)) ?? [];
+}
+
+function validPositiveIntegers(values: number[] | undefined) {
+  return values?.filter(isPositiveInteger) ?? [];
+}
+
+function isPositiveInteger(value: number): value is number {
+  return Number.isSafeInteger(value) && value > 0;
+}
+
+function keywordMatchExpression(keyword: string) {
+  const tokens = [...keyword.matchAll(/[\p{L}\p{N}_]+/gu)].map((match) => match[0]);
+  if (tokens.length === 0) {
+    return null;
+  }
+  return tokens.map((token) => `"${token.replaceAll('"', '""')}"*`).join(" ");
+}
+
+function searchOrderBy(sort: SearchSort, direction: SearchDirection) {
+  const sqlDirection = direction === "desc" ? "DESC" : "ASC";
+  switch (sort) {
+    case "summary":
+      return `ORDER BY lower(wi.summary) ${sqlDirection}, wi.id ASC`;
+    case "type":
+      return `ORDER BY CASE wi.type WHEN 'topic' THEN 0 WHEN 'project' THEN 1 WHEN 'task' THEN 2 ELSE 3 END ${sqlDirection}, wi.id ASC`;
+    case "parent":
+      return `ORDER BY wi.parentId IS NULL ASC, lower(parent.summary) ${sqlDirection}, wi.id ASC`;
+    case "assignee":
+      return `ORDER BY wi.assigneeId IS NULL ASC, lower(assignee.name) ${sqlDirection}, lower(assignee.email) ${sqlDirection}, wi.id ASC`;
+    case "status":
+      return `ORDER BY CASE wi.status WHEN 'open' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'completed' THEN 2 ELSE 3 END ${sqlDirection}, wi.id ASC`;
+    case "due":
+      return `ORDER BY wi.dueDate IS NULL ASC, wi.dueDate ${sqlDirection}, wi.id ASC`;
+    case "updated":
+      return `ORDER BY wi.updatedAt ${sqlDirection}, wi.id ASC`;
+    case "id":
+      return `ORDER BY wi.id ${sqlDirection}`;
+  }
 }
 
 function escapeLike(value: string) {
