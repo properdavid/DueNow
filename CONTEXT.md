@@ -146,6 +146,14 @@ _Avoid_: mobile, phone layout, small screen
 The navigation shell at 1024px and above — a left sidebar of four destinations beside a resizable two-column split, the destination's list on the left and the selected work item's detail on the right. What a desktop gets, and a tablet in landscape.
 _Avoid_: desktop layout, two-pane, master-detail, wide screen
 
+**Unreachable State**:
+What DueNow shows when it cannot reach the server — a message and a Retry, worn by a cold launch with no connection, a navigation whose data never arrives, and a save that never lands. It names the symptom and never the cause: the household runs one instance, so a dead box and a dead connection are the same fact, and nothing on screen claims to tell them apart.
+_Avoid_: offline mode, offline state, disconnected, network error
+
+**Update Banner**:
+The notice that a newer DueNow has been deployed, offering to switch to it. It waits to be accepted rather than reloading on its own, because unsaved text is a normal state of the Detail View.
+_Avoid_: update prompt, upgrade toast, new version banner
+
 ### The Work Items tab
 
 **Work Items Tree**:
