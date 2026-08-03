@@ -210,6 +210,14 @@ _Avoid_: search term, full-text search, query, phrase
 A saved Filter Bar configuration, recalled by name. Not in v1 — the term is reserved so that saved filters, when they arrive, are not called something else.
 _Avoid_: saved search, saved filter, view, smart list
 
+**Results Table**:
+The Search tab's rendering of its results — one row per work item, seven columns, sortable from every header, taking the whole window on a wide screen. Its compact form is a stacked row carrying the same fields minus the columns.
+_Avoid_: grid, list view, data table, issue navigator
+
+**Sort Order**:
+The single column the Results Table is ordered by, plus its direction. Every column can carry it; Status orders down the Type Ladder's statuses rather than alphabetically, and Unassigned, undated and top-level rows sort last in both directions.
+_Avoid_: ordering, ranking, sequence
+
 ### Settings
 
 **Household Timezone**:
