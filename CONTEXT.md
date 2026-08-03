@@ -79,7 +79,7 @@ A named tag from one household-wide managed set, applicable to a work item of an
 _Avoid_: tag, category, keyword, flag, component
 
 **Comment**:
-A Markdown note written by a household member on a work item, belonging to its author and editable only by them. Only people write comments; the system never does.
+A Markdown note written by a household member on a work item, belonging to its author and editable and deletable only by them. An edited comment is marked as edited and nothing more — there is no edit time and no revision list. Only people write comments; the system never does.
 _Avoid_: note, reply, message, activity, update
 
 ### Status
@@ -151,6 +151,20 @@ _Avoid_: type icon, badge, glyph, bullet
 **Status Mark**:
 The small circle that says where a work item stands — empty grey ring Open, half-filled blue In Progress, blue check Completed, filled grey Closed. Shape carries the meaning as much as colour does, so the four read apart without hue.
 _Avoid_: status icon, dot, chip, indicator
+
+### The detail view
+
+**Detail View**:
+The whole of one work item on one surface — breadcrumb, Summary, Property Chips, Description, children, Comments — in that order, the same for all four types. The only place a work item is settled, and the only place Labels are shown.
+_Avoid_: item page, work item page, record, form, inspector
+
+**Property Chip**:
+One of the four pill-shaped controls under the Summary — Status, Assignee, Due Date, Labels. The chip is the value *and* the control: tapping it opens a small picker and the choice commits at once, with no edit mode and no Save.
+_Avoid_: field, property panel, pill, tag
+
+**Settle Confirmation**:
+The popover that opens under the Status Chip when settling a work item that still has unfinished descendants, naming every one it will sweep. It appears only when there is something to sweep, and nothing changes until it is confirmed. The Start Cascade has no equivalent — it is announced in the picker, not gated.
+_Avoid_: confirm dialog, warning, are-you-sure, undo prompt
 
 ### The Due tab
 
