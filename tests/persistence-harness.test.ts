@@ -183,6 +183,19 @@ describe("the persistence test harness", () => {
       });
       expect(harness.sqlite.prepare("SELECT COUNT(*) AS count FROM comments").get()).toEqual({ count: 0 });
 
+      const labelledTopic = insertWorkItem(harness.sqlite, {
+        type: "topic",
+        summary: "Travel",
+        createdBy: user.id,
+      });
+      harness.sqlite
+        .prepare("INSERT INTO work_item_labels (workItemId, labelId) VALUES (?, ?)")
+        .run(labelledTopic.id, label.id);
+      harness.sqlite.prepare("DELETE FROM labels WHERE id = ?").run(label.id);
+      expect(harness.sqlite.prepare("SELECT COUNT(*) AS count FROM work_item_labels").get()).toEqual({
+        count: 0,
+      });
+
       const parent = insertWorkItem(harness.sqlite, {
         type: "topic",
         summary: "House",

@@ -5,6 +5,7 @@ import { Check, X } from "lucide-react";
 
 import { getDatabase, requireUser } from "~/auth/session.server";
 import { useCreationDialog } from "~/components/shell/creation-dialog";
+import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
@@ -18,6 +19,7 @@ import type { WorkItemStatus, WorkItemType } from "~/db/schema";
 type ShellData = {
   user: { id: number };
   members: (WorkItemsTreeMember & { theme?: "system" | "light" | "dark" })[];
+  labels: { id: number; name: string }[];
 };
 
 type ActionResult = { ok: true; changed?: number } | { ok: false; error: { field?: string; message: string } };
@@ -33,16 +35,18 @@ export async function loader({ request, params, context }: LoaderFunctionArgs) {
 
 export default function WorkItem({ loaderData }: { loaderData: WorkItemDetailReadModel }) {
   const shellData = useShellData();
-  return <WorkItemDocument currentUserId={shellData.user.id} detail={loaderData} members={shellData.members} />;
+  return <WorkItemDocument currentUserId={shellData.user.id} detail={loaderData} labelVocabulary={shellData.labels} members={shellData.members} />;
 }
 
 export function WorkItemDocument({
   currentUserId,
   detail,
+  labelVocabulary,
   members,
 }: {
   currentUserId: number;
   detail: WorkItemDetailReadModel;
+  labelVocabulary: { id: number; name: string }[];
   members: WorkItemsTreeMember[];
 }) {
   const location = useLocation();
@@ -100,7 +104,7 @@ export function WorkItemDocument({
           />
           <AssigneeChip currentUserId={currentUserId} id={detail.item.id} assignee={detail.item.assignee} members={members} />
           <DueDateChip dueDate={detail.item.dueDate} id={detail.item.id} />
-          <LabelsChip labels={detail.labels} />
+          <LabelsChip id={detail.item.id} labels={detail.labels} vocabulary={labelVocabulary} />
         </div>
         <DescriptionEditor description={detail.item.description} id={detail.item.id} />
         <ChildrenChecklist
@@ -625,12 +629,94 @@ function DueDateChip({ dueDate, id }: { dueDate: string | null; id: number }) {
   );
 }
 
-function LabelsChip({ labels }: { labels: { id: number; name: string }[] }) {
-  const labelNames = labels.length > 0 ? labels.map((label) => label.name).join(", ") : "No Labels";
+function LabelsChip({
+  id,
+  labels,
+  vocabulary,
+}: {
+  id: number;
+  labels: { id: number; name: string }[];
+  vocabulary: { id: number; name: string }[];
+}) {
+  const mutationFetcher = useFetcher<ActionResult>();
+  const createFetcher = useFetcher<ActionResult>();
+  const [newLabelName, setNewLabelName] = useState("");
+  const selectedIds = new Set(labels.map((label) => label.id));
+  const mutationError = mutationFetcher.data?.ok === false ? mutationFetcher.data.error.message : null;
+  const createError = createFetcher.data?.ok === false ? createFetcher.data.error.message : null;
+  const pending = mutationFetcher.state !== "idle" || createFetcher.state !== "idle";
+
+  useEffect(() => {
+    if (createFetcher.state === "idle" && createFetcher.data?.ok) {
+      setNewLabelName("");
+    }
+  }, [createFetcher.state, createFetcher.data]);
+
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-2 text-sm">
-      <span>Labels: {labelNames}</span>
-    </span>
+    <div>
+      <Menu>
+        <MenuTrigger asChild>
+          <Button className="max-w-full rounded-full whitespace-normal text-left" type="button" variant="outline">
+            <span>Labels:</span>
+            {labels.length > 0 ? (
+              <span className="flex flex-wrap gap-1">
+                {labels.map((label) => (
+                  <Badge key={label.id} variant="chip">{label.name}</Badge>
+                ))}
+              </span>
+            ) : (
+              <span>No Labels</span>
+            )}
+          </Button>
+        </MenuTrigger>
+        <MenuContent align="start" className="w-80 space-y-2 p-2">
+          <div className="space-y-1">
+            {vocabulary.length > 0 ? (
+              vocabulary.map((label) => {
+                const selected = selectedIds.has(label.id);
+                return (
+                  <MenuItem
+                    key={label.id}
+                    disabled={pending}
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      submitLabelToggle(mutationFetcher, id, label.id, selected);
+                    }}
+                  >
+                    <span className="inline-flex size-4 items-center justify-center">
+                      {selected ? <Check aria-hidden="true" /> : null}
+                    </span>
+                    {label.name}
+                  </MenuItem>
+                );
+              })
+            ) : (
+              <p className="px-3 py-2 text-sm text-muted-foreground">No Labels yet.</p>
+            )}
+          </div>
+          <createFetcher.Form method="post" action={`/api/work-items/${id}/create-label`} className="space-y-2 border-t border-border pt-2">
+            <label className="block text-sm text-muted-foreground" htmlFor={`label-name-${id}`}>
+              Create Label
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id={`label-name-${id}`}
+                maxLength={30}
+                name="name"
+                placeholder="Label name"
+                value={newLabelName}
+                onChange={(event) => setNewLabelName(event.currentTarget.value)}
+              />
+              <Button disabled={pending || newLabelName.trim().length === 0} size="sm" type="submit" variant="outline">
+                Add
+              </Button>
+            </div>
+          </createFetcher.Form>
+        </MenuContent>
+      </Menu>
+      {mutationError ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(mutationError)}</p> : null}
+      {createError ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(createError)}</p> : null}
+    </div>
   );
 }
 
@@ -644,6 +730,12 @@ function submitDueDate(fetcher: ReturnType<typeof useFetcher<ActionResult>>, id:
   const formData = new FormData();
   formData.set("dueDate", dueDate);
   fetcher.submit(formData, { method: "post", action: `/api/work-items/${id}/update-due-date` });
+}
+
+function submitLabelToggle(fetcher: ReturnType<typeof useFetcher<ActionResult>>, id: number, labelId: number, selected: boolean) {
+  const formData = new FormData();
+  formData.set("labelId", String(labelId));
+  fetcher.submit(formData, { method: "post", action: `/api/work-items/${id}/${selected ? "detach-label" : "attach-label"}` });
 }
 
 function submitStatus(fetcher: ReturnType<typeof useFetcher<ActionResult>>, id: number, status: WorkItemStatus, confirmed: boolean) {
