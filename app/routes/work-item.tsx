@@ -12,7 +12,7 @@ import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
 import { Textarea } from "~/components/ui/textarea";
 import { Avatar, StatusMark } from "~/components/ui/work-item-marks";
 import { ReparentDialog } from "~/components/work-items/reparent-dialog";
-import type { WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
+import type { WorkItemCommentReadModel, WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
 import type { WorkItemStatus, WorkItemType } from "~/db/schema";
 
@@ -114,8 +114,180 @@ export function WorkItemDocument({
           parentSummary={detail.item.summary}
           parentType={detail.item.type}
         />
+        <CommentsSection comments={detail.comments} currentUserId={currentUserId} workItemId={detail.item.id} />
       </div>
     </article>
+  );
+}
+
+function CommentsSection({
+  comments,
+  currentUserId,
+  workItemId,
+}: {
+  comments: WorkItemCommentReadModel[];
+  currentUserId: number;
+  workItemId: number;
+}) {
+  return (
+    <section className="space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-lg font-semibold">Comments</h2>
+        {comments.length === 0 ? <p className="text-sm text-muted-foreground">No Comments yet.</p> : null}
+      </div>
+      <div className="space-y-4">
+        {comments.map((comment) => (
+          <CommentRow key={comment.id} comment={comment} currentUserId={currentUserId} />
+        ))}
+      </div>
+      <CommentComposer workItemId={workItemId} />
+    </section>
+  );
+}
+
+function CommentRow({ comment, currentUserId }: { comment: WorkItemCommentReadModel; currentUserId: number }) {
+  const editFetcher = useFetcher<ActionResult>();
+  const deleteFetcher = useFetcher<ActionResult>();
+  const [editing, setEditing] = useState(false);
+  const [body, setBody] = useState(comment.body);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const pendingDelete = deleteFetcher.state !== "idle";
+  const editError = editFetcher.data?.ok === false ? editFetcher.data.error.message : null;
+  const deleteError = deleteFetcher.data?.ok === false ? deleteFetcher.data.error.message : null;
+  const isOwnComment = comment.author.id === currentUserId;
+
+  useEffect(() => {
+    setBody(comment.body);
+  }, [comment.body]);
+
+  useEffect(() => {
+    if (editFetcher.state === "idle" && editFetcher.data?.ok) {
+      setEditing(false);
+    }
+  }, [editFetcher.state, editFetcher.data]);
+
+  useEffect(() => {
+    if (deleteFetcher.state === "idle" && deleteFetcher.data?.ok) {
+      setConfirmingDelete(false);
+    }
+  }, [deleteFetcher.state, deleteFetcher.data]);
+
+  return (
+    <article className="rounded-lg border border-border bg-card p-4 text-card-foreground">
+      <div className="flex items-start gap-3">
+        <Avatar assignee={comment.author} currentUserId={currentUserId} />
+        <div className="min-w-0 flex-1 space-y-2">
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{comment.author.name}</span>
+            <span>{relativeTime(comment.createdAt)}</span>
+            {comment.edited ? <span>· edited</span> : null}
+            {isOwnComment ? (
+              confirmingDelete ? (
+                <span className="inline-flex items-center gap-2">
+                  <span>Delete?</span>
+                  <Button disabled={pendingDelete} size="sm" type="button" variant="ghost" onClick={() => submitDeleteComment(deleteFetcher, comment.id)}>
+                    Yes
+                  </Button>
+                  <Button disabled={pendingDelete} size="sm" type="button" variant="ghost" onClick={() => setConfirmingDelete(false)}>
+                    No
+                  </Button>
+                </span>
+              ) : (
+                <>
+                  <Button size="sm" type="button" variant="ghost" onClick={() => setEditing(true)}>
+                    Edit
+                  </Button>
+                  <Button disabled={pendingDelete} size="sm" type="button" variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                    Delete
+                  </Button>
+                </>
+              )
+            ) : null}
+          </div>
+          {editing ? (
+            <editFetcher.Form method="post" action={`/api/comments/${comment.id}/edit`} className="space-y-2">
+              <Textarea
+                aria-label="Comment"
+                name="body"
+                rows={4}
+                value={body}
+                onChange={(event) => setBody(event.currentTarget.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    setBody(comment.body);
+                    setEditing(false);
+                  }
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <Button aria-label="Save Comment" disabled={editFetcher.state !== "idle"} size="sm" type="submit" variant="outline">
+                  <Check aria-hidden="true" />
+                </Button>
+                <Button
+                  aria-label="Discard Comment"
+                  size="sm"
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setBody(comment.body);
+                    setEditing(false);
+                  }}
+                >
+                  <X aria-hidden="true" />
+                </Button>
+              </div>
+              {editError ? <p className="text-sm text-destructive">{controlErrorMessage(editError)}</p> : null}
+            </editFetcher.Form>
+          ) : (
+            <p className="whitespace-pre-wrap text-base">{comment.body}</p>
+          )}
+          {deleteError ? <p className="text-sm text-destructive">{controlErrorMessage(deleteError)}</p> : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function CommentComposer({ workItemId }: { workItemId: number }) {
+  const fetcher = useFetcher<ActionResult>();
+  const [value, setValue] = useState("");
+  const error = fetcher.data?.ok === false ? fetcher.data.error.message : null;
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.ok) {
+      setValue("");
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  return (
+    <fetcher.Form method="post" action={`/api/work-items/${workItemId}/add-comment`} className="space-y-2 rounded-lg border border-border bg-card p-4 text-card-foreground">
+      <label className="block text-sm font-medium text-muted-foreground" htmlFor={`comment-body-${workItemId}`}>
+        Add Comment
+      </label>
+      <Textarea
+        id={`comment-body-${workItemId}`}
+        name="body"
+        rows={4}
+        value={value}
+        onChange={(event) => setValue(event.currentTarget.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setValue("");
+          }
+        }}
+      />
+      <div className="flex items-center gap-2">
+        <Button aria-label="Save Comment" disabled={fetcher.state !== "idle"} size="sm" type="submit" variant="outline">
+          <Check aria-hidden="true" />
+        </Button>
+        <Button aria-label="Discard Comment" size="sm" type="button" variant="ghost" onClick={() => setValue("")}>
+          <X aria-hidden="true" />
+        </Button>
+      </div>
+      {error ? <p className="text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+    </fetcher.Form>
   );
 }
 
@@ -738,6 +910,10 @@ function submitLabelToggle(fetcher: ReturnType<typeof useFetcher<ActionResult>>,
   fetcher.submit(formData, { method: "post", action: `/api/work-items/${id}/${selected ? "detach-label" : "attach-label"}` });
 }
 
+function submitDeleteComment(fetcher: ReturnType<typeof useFetcher<ActionResult>>, commentId: number) {
+  fetcher.submit(new FormData(), { method: "post", action: `/api/comments/${commentId}/delete` });
+}
+
 function submitStatus(fetcher: ReturnType<typeof useFetcher<ActionResult>>, id: number, status: WorkItemStatus, confirmed: boolean) {
   const formData = new FormData();
   formData.set("id", String(id));
@@ -779,4 +955,19 @@ function formatSummaryList(summaries: string[]) {
 
 function controlErrorMessage(message: string) {
   return message === "Try again." ? "Can't reach DueNow — Try again." : message;
+}
+
+function relativeTime(createdAt: number, now = Date.now()) {
+  const elapsed = Math.max(0, now - createdAt);
+  const minute = 60_000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  if (elapsed < minute) return "just now";
+  if (elapsed < hour) return pluralize(Math.floor(elapsed / minute), "minute");
+  if (elapsed < day) return pluralize(Math.floor(elapsed / hour), "hour");
+  return pluralize(Math.floor(elapsed / day), "day");
+}
+
+function pluralize(value: number, unit: string) {
+  return `${value} ${unit}${value === 1 ? "" : "s"} ago`;
 }

@@ -11,6 +11,9 @@ import * as createLabelRoute from "./api.work-items.$id.create-label";
 import * as detachLabelRoute from "./api.work-items.$id.detach-label";
 import * as descriptionRoute from "./api.work-items.$id.update-description";
 import * as dueDateRoute from "./api.work-items.$id.update-due-date";
+import * as deleteCommentRoute from "./api.comments.$id.delete";
+import * as editCommentRoute from "./api.comments.$id.edit";
+import * as addCommentRoute from "./api.work-items.$id.add-comment";
 import * as summaryRoute from "./api.work-items.$id.update-summary";
 import * as settleRoute from "./api.work-items.$id.settle";
 import * as startRoute from "./api.work-items.$id.start";
@@ -55,6 +58,7 @@ describe("Work Item detail route seam", () => {
         { id: errands.id, name: "Errands" },
         { id: house.id, name: "House" },
       ]);
+      expect(detail.comments).toEqual([]);
     } finally {
       harness.close();
     }
@@ -342,6 +346,77 @@ describe("Work Item detail route seam", () => {
       harness.close();
     }
   });
+
+  test("Comment routes add, edit, delete, validate fences and protect authorship", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com,lee@example.com" } });
+
+    try {
+      const danaCookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const dana = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      const lee = harness.database.sqlite
+        .prepare("INSERT INTO users (googleSubject, email, name, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?) RETURNING id")
+        .get("lee", "lee@example.com", "Lee", 1, 1) as { id: number };
+      harness.database.sqlite
+        .prepare("INSERT INTO work_items (id, type, parentId, parentType, summary, description, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .run(1, "topic", null, null, "House", "", "open", 1, 1, dana.id, dana.id);
+      harness.database.sqlite
+        .prepare("INSERT INTO comments (id, workItemId, authorId, body, createdAt, edited) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(1, 1, lee.id, "Oldest", 10, 0);
+
+      const empty = await addCommentRoute.action({
+        request: harness.request("/api/work-items/1/add-comment", { method: "POST", headers: { Cookie: danaCookie }, formData: { body: "   " } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof addCommentRoute.action>[0]);
+      expect(empty).toEqual({ ok: false, error: { field: "body", message: "Comment is required." } });
+
+      const tooLong = await addCommentRoute.action({
+        request: harness.request("/api/work-items/1/add-comment", { method: "POST", headers: { Cookie: danaCookie }, formData: { body: ` ${"x".repeat(20_001)} ` } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof addCommentRoute.action>[0]);
+      expect(tooLong).toEqual({ ok: false, error: { field: "body", message: "Comment is too long (20,001 characters, limit 20,000)." } });
+
+      const added = await addCommentRoute.action({
+        request: harness.request("/api/work-items/1/add-comment", { method: "POST", headers: { Cookie: danaCookie }, formData: { body: "  Plain **comment**  " } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof addCommentRoute.action>[0]);
+      expect(added).toEqual({ ok: true });
+      const danaComment = harness.database.sqlite.prepare("SELECT id FROM comments WHERE authorId = ?").get(dana.id) as { id: number };
+
+      const forbiddenEdit = await editCommentRoute
+        .action({
+          request: harness.request("/api/comments/1/edit", { method: "POST", headers: { Cookie: danaCookie }, formData: { body: "Nope" } }),
+          params: { id: "1" },
+          context: { database: harness.database, env: harness.env },
+        } as unknown as Parameters<typeof editCommentRoute.action>[0])
+        .catch((error) => error);
+      expect(forbiddenEdit).toBeInstanceOf(Response);
+      expect((forbiddenEdit as Response).status).toBe(403);
+
+      const edited = await editCommentRoute.action({
+        request: harness.request(`/api/comments/${danaComment.id}/edit`, { method: "POST", headers: { Cookie: danaCookie }, formData: { body: "Updated" } }),
+        params: { id: String(danaComment.id) },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof editCommentRoute.action>[0]);
+      expect(edited).toEqual({ ok: true });
+      expect(harness.database.sqlite.prepare("SELECT body, edited FROM comments WHERE id = ?").get(danaComment.id)).toEqual({ body: "Updated", edited: 1 });
+
+      const deleted = await deleteCommentRoute.action({
+        request: harness.request(`/api/comments/${danaComment.id}/delete`, { method: "POST", headers: { Cookie: danaCookie } }),
+        params: { id: String(danaComment.id) },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof deleteCommentRoute.action>[0]);
+      expect(deleted).toEqual({ ok: true });
+
+      const detail = loadWorkItemDetail(harness.database, 1);
+      expect(detail.comments.map((comment) => comment.body)).toEqual(["Oldest"]);
+      expect(harness.database.sqlite.prepare("SELECT body FROM comments ORDER BY id").all()).toEqual([{ body: "Oldest" }]);
+    } finally {
+      harness.close();
+    }
+  });
 });
 
 describe("Work Item detail rendering seam", () => {
@@ -361,6 +436,7 @@ describe("Work Item detail rendering seam", () => {
       },
       labels: [{ id: 1, name: "House" }],
       children: [],
+      comments: [],
       unfinishedDescendants: [],
       reopenNotice: [],
       startCascadeAncestors: [],
@@ -436,6 +512,7 @@ describe("Work Item detail rendering seam", () => {
           reopenNotice: [],
         },
       ],
+      comments: [],
       unfinishedDescendants: [{ id: 3, summary: "Paint cabinets", type: "task" as const }],
       reopenNotice: [],
       startCascadeAncestors: [],
@@ -475,5 +552,57 @@ describe("Work Item detail rendering seam", () => {
     ]);
     const subtaskMarkup = renderToStaticMarkup(<SubtaskStub initialEntries={["/items/5"]} />);
     expect(subtaskMarkup).not.toContain("Add Subtask");
+  });
+
+  test("renders Comments last, oldest-first, plain and with own controls only", () => {
+    const now = Date.now();
+    const members = [
+      { id: 1, email: "dana@example.com", name: "Dana" },
+      { id: 2, email: "lee@example.com", name: "Lee" },
+    ];
+    const detail = {
+      breadcrumb: [{ id: 1, label: "Topic", type: "topic" as const }],
+      item: {
+        id: 1,
+        type: "topic" as const,
+        parentId: null,
+        status: "open" as const,
+        dueDate: null,
+        summary: "Topic",
+        description: "Description",
+        assigneeId: null,
+        assignee: null,
+      },
+      labels: [],
+      children: [],
+      comments: [
+        { id: 1, body: "Older **plain**", createdAt: now - 120_000, edited: false, author: members[1] },
+        { id: 2, body: "Newer", createdAt: now - 60_000, edited: true, author: members[0] },
+      ],
+      unfinishedDescendants: [],
+      reopenNotice: [],
+      startCascadeAncestors: [],
+    };
+    const Stub = createRoutesStub([
+      {
+        path: "/items/:id",
+        Component: () => (
+          <CreationDialogProvider members={members} labels={[]}>
+            <WorkItemDocument currentUserId={1} detail={detail} labelVocabulary={[]} members={members} />
+          </CreationDialogProvider>
+        ),
+      },
+    ]);
+
+    const markup = renderToStaticMarkup(<Stub initialEntries={["/items/1"]} />);
+
+    expect(markup.indexOf("Description")).toBeLessThan(markup.indexOf("Comments"));
+    expect(markup.indexOf("Older **plain**")).toBeLessThan(markup.indexOf("Newer"));
+    expect(markup).not.toContain("<strong>");
+    expect(markup).toContain("· edited");
+    expect(markup).toContain("Edit");
+    expect(markup).toContain("Delete");
+    expect(markup.indexOf("Lee")).toBeLessThan(markup.indexOf("Dana"));
+    expect(markup).toContain("Add Comment");
   });
 });
