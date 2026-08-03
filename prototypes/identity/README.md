@@ -72,5 +72,30 @@ variant and an `.ico`. No manifest, no service worker, no favicon actually insta
 
 ## The verdict
 
-_To be filled in when the variant is picked — and the interesting answer is likely to be
-a mix: one variant's icon with another's card marks._
+**A — Tile won, on all three questions, and was amended once while being judged.**
+
+- **The icon** is the checklist with its outer square dropped, because the app tile
+  already draws it: two white ticks left, **D over N** stacked right, on the primary
+  indigo, edge to edge. **Amended: the artwork is scaled to 0.88 about the centre** so
+  every stroke and both letters clear Android's circular maskable crop — the unscaled
+  N's outer corner sat at r=43 on a 100 grid against a crop at r=40.
+- **One artwork at every size**, favicon included. A at 16px is four smudges on an
+  indigo square and that was looked at and accepted: this is a self-hosted app installed
+  to a home screen, so 16px is its *rarest* case, the tab title sits beside it saying
+  DueNow, and a second piece of artwork serving the rarest case is two files to keep in
+  step. C existed only to ask this question and it answered it by losing.
+- **The wordmark is set type and stands alone** — no mark travels beside it, in the
+  sidebar or over the sign-in card.
+- **The empty cards are headed by a picture of the surface, not by the brand** — a list,
+  a check, a clock, a split pane, in the primary-soft disc.
+
+**B lost on its own best property.** Giving the mark an edge so it can travel means it
+travels: at first run in split layout it prints **three times on one screen** — sidebar,
+tree card, unselected column — and the drawn frame is also the thing that dies first
+under the maskable crop and at 32px, because it spends the icon's outermost pixels on a
+border rather than on the mark.
+
+**C lost as an identity and won as a test.** Without the ticks the icon is legible at
+every size and says nothing about what the app is for; its value was proving that the
+ticks *do* cost legibility at 16, which is what made the "same artwork everywhere"
+decision a knowing one rather than an oversight.
