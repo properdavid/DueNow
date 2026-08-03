@@ -154,9 +154,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
               <span id="summary-help" className="text-sm font-normal text-muted-foreground">Trimmed on save, 200 characters maximum.</span>
             </label>
 
-            {isTopic ? (
-              <div className="rounded-lg border border-border bg-muted p-3 text-sm text-muted-foreground">Topics sit at the top of the Type Ladder, so they have no Parent.</div>
-            ) : (
+            {!isTopic && (
               <ParentPicker
                 candidates={candidates}
                 loading={parentFetcher.state !== "idle" || (!isTopic && !parentDataIsFresh)}
