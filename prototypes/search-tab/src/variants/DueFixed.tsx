@@ -1,5 +1,6 @@
-// PROTOTYPE — throwaway. Variant C — RADAR.
-// Stance: a glance-and-go surface, not a register. Rows become cards with room
+// PROTOTYPE — throwaway. The Due tab, HELD FIXED at ADR-0020's winner (the Radar
+// cards from #17), so #18's Search variants are judged inside a populated app.
+// Original stance: a glance-and-go surface, not a register. Rows become cards with room
 // to breathe, dates are spoken relatively ("in 3 days", "5 days late") because
 // that is the question being asked, and urgency is carried by a coloured left
 // edge so the shape of the day is legible before any word is read. This is the
@@ -12,7 +13,7 @@ import { Avatar, StatusIcon, TypeIcon } from "../screens";
 import type { DueProps } from "../shell";
 import { useTree } from "../store";
 
-export default function DueC({ onOpen, selected, compact }: DueProps) {
+export default function DueFixed({ onOpen, selected, compact }: DueProps) {
   const t = useTree();
   const { scenario } = useNav();
   const { mineOnly, setMineOnly } = useMine();

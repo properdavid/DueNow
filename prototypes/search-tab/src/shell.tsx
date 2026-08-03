@@ -1,12 +1,17 @@
-// PROTOTYPE — throwaway. ADR-0017's shell, ADR-0018's tree and ADR-0019's detail view,
-// all held fixed across the three variants: compact below 1024 (capsule + FAB +
-// full-screen push), split at or above (sidebar + resizable list/detail). Only the
-// *Due tab* swaps — it owns its whole pane, its own header and its own filter control,
-// because where the mine+unassigned toggle lives is part of #17's question.
+// PROTOTYPE — throwaway. ADR-0017's shell, ADR-0018's tree, ADR-0019's detail view and
+// ADR-0020's Due tab, all held fixed across the three variants: compact below 1024
+// (capsule + FAB + full-screen push), split at or above (sidebar + resizable
+// list/detail). Only the *Search tab* swaps — it owns its whole pane, its own header,
+// its own filter surface and its own sort control, because all three are #18's
+// question. A Search variant may also declare `fullPane`, in which case it overrides
+// the split on desktop and takes the whole width, with the detail view arriving as a
+// push — the table variant needs seven columns and the 480px list column cannot pay
+// for them, and whether that override is acceptable is part of what is being judged.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNav, useViewport } from "./proto";
-import { Avatar, CreateDialog, MoveDialog, SearchTab, SettingsTab } from "./screens";
+import { Avatar, CreateDialog, MoveDialog, SettingsTab } from "./screens";
 import Detail from "./variants/DetailA";
+import Due from "./variants/DueFixed";
 import Tree from "./variants/TreeA";
 
 const TABS = [
@@ -39,12 +44,16 @@ export type DueProps = {
   compact: boolean;
 };
 
-export function Shell({ due }: { due: (p: DueProps) => React.ReactNode }) {
+export type SearchProps = DueProps;
+
+export type SearchVariant = ((p: SearchProps) => React.ReactNode) & { fullPane?: boolean };
+
+export function Shell({ search }: { search: SearchVariant }) {
   const { compact } = useViewport();
   const { tab, item, goTab, open, close } = useNav();
   const [creating, setCreating] = useState<{ parent: number | null } | null>(null);
   const [moving, setMoving] = useState<number | null>(null);
-  const [split, setSplit] = useState(480);
+  const [split, setSplit] = useState(620);
   const dragging = useRef(false);
 
   const onMove = useCallback((e: MouseEvent) => {
@@ -77,8 +86,8 @@ export function Shell({ due }: { due: (p: DueProps) => React.ReactNode }) {
   const body = (
     <>
       {tab === "items" && <Tree {...treeProps} />}
-      {tab === "due" && due({ onOpen: open, selected: item, compact })}
-      {tab === "search" && <SearchTab onOpen={open} />}
+      {tab === "due" && <Due onOpen={open} selected={item} compact={compact} />}
+      {tab === "search" && search({ onOpen: open, selected: item, compact })}
       {tab === "settings" && <SettingsTab />}
     </>
   );
@@ -96,7 +105,7 @@ export function Shell({ due }: { due: (p: DueProps) => React.ReactNode }) {
         {item ? (
           <main className="h-full overflow-hidden">{Detail(detailProps)}</main>
         ) : (
-          <main className="h-full overflow-y-auto pb-28">{body}</main>
+          <main className={`h-full pb-28 ${tab === "search" ? "overflow-hidden" : "overflow-y-auto"}`}>{body}</main>
         )}
 
         {!item && tab !== "settings" && (
@@ -170,10 +179,28 @@ export function Shell({ due }: { due: (p: DueProps) => React.ReactNode }) {
 
       {tab === "settings" ? (
         <section className="min-w-0 flex-1 overflow-y-auto"><SettingsTab /></section>
+      ) : tab === "search" && search.fullPane ? (
+        // The table variant takes the width: no split, and a work item pushes over the
+        // results with a way back, exactly as it does on a phone.
+        <section className="flex min-w-0 flex-1 flex-col">
+          {item ? (
+            <>
+              <button
+                onClick={close}
+                className="flex shrink-0 items-center gap-1.5 border-b border-line bg-surface px-4 py-1.5 text-left text-[12px] text-primary"
+              >
+                ← Back to results
+              </button>
+              <div className="min-h-0 flex-1">{Detail(detailProps)}</div>
+            </>
+          ) : (
+            <div className="min-h-0 flex-1">{body}</div>
+          )}
+        </section>
       ) : (
         <>
           <section style={{ width: split }} className="flex min-w-0 shrink-0 flex-col border-r border-line">
-            <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
+            <div className={`min-h-0 flex-1 ${tab === "search" ? "overflow-hidden" : "overflow-y-auto"}`}>{body}</div>
           </section>
           <div onMouseDown={() => (dragging.current = true)} className="w-1 shrink-0 cursor-col-resize hover:bg-primary/30" />
           <section className="flex min-w-0 flex-1 flex-col">

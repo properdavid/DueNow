@@ -4,9 +4,9 @@ import { useSearchParams } from "react-router-dom";
 import type { Scenario } from "./due";
 
 export const VARIANTS = [
-  { key: "A", name: "Ledger — dense rows, absolute dates, breadcrumb inline" },
-  { key: "B", name: "Agenda — one chronological rail, dates as headings" },
-  { key: "C", name: "Radar — cards, relative dates, urgency edge" },
+  { key: "A", name: "Table — full-pane takeover, sortable headers, Filters sheet on phone" },
+  { key: "B", name: "Console — permanent facet rail with live counts, inside the split" },
+  { key: "C", name: "Query bar — keyword + filter chips, identical rows at every width" },
 ] as const;
 
 export type Tab = "due" | "items" | "search" | "settings";
@@ -14,7 +14,7 @@ export type Tab = "due" | "items" | "search" | "settings";
 export function useNav() {
   const [params, setParams] = useSearchParams();
   const variant = (params.get("variant") ?? "A").toUpperCase();
-  const tab = (params.get("tab") ?? "due") as Tab;
+  const tab = (params.get("tab") ?? "search") as Tab;
   const scenario = (params.get("data") ?? "full") as Scenario;
   const itemParam = params.get("item");
   const item = itemParam ? Number(itemParam) : null;

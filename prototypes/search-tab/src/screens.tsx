@@ -334,33 +334,7 @@ export function MoveDialog({ id, onClose, phone }: { id: number; onClose: () => 
 
 // The Due tab itself is #17's question and lives in src/variants/Due{A,B,C}.tsx.
 
-export function SearchTab({ onOpen }: { onOpen: (id: number) => void }) {
-  const t = useTree();
-  const [q, setQ] = useState("");
-  const rows = t.items.filter((i) => i.summary.toLowerCase().includes(q.toLowerCase()));
-  return (
-    <div className="pb-6">
-      <div className="p-3">
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Keyword" className="w-full rounded border border-line px-2 py-2 outline-none focus:border-primary" />
-        <p className="mt-2 text-[11px] text-faint">Filter bar stubbed — Search is #18's question.</p>
-      </div>
-      <ul className="border-t border-line">
-        {rows.map((i) => (
-          <li key={i.id}>
-            <button onClick={() => onOpen(i.id)} className="touch-min flex w-full items-center gap-2 border-b border-line px-3 py-2 text-left hover:bg-surface">
-              <span className="min-w-0 flex-1">
-                <span className="block truncate">{i.summary}</span>
-                <span className="block truncate text-[11px] text-faint">{t.byId(i.id).parentId ? t.byId(t.byId(i.id).parentId!).summary : "Topic"}</span>
-              </span>
-              <StatusBadge status={i.status} />
-              <DueCell due={i.due} />
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+// The Search tab is #18 — it lives in src/variants/SearchA|B|C.tsx.
 
 export function SettingsTab() {
   return (
