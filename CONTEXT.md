@@ -160,8 +160,12 @@ _Avoid_: status icon, dot, chip, indicator
 The single dialog every work item is created through, wherever it is opened from — type, then Summary, then a Parent select filtered to the one rung that fits, then the rest of the core fields. Type, Summary and Parent are required; a pre-filled dialog fills only those, never a status.
 _Avoid_: new item form, create modal, add dialog, quick add
 
+**Parent Picker**:
+The typeahead that chooses a work item's parent, filtering by Summary as you type and showing each candidate's own lineage so two "Kitchen"s can be told apart. One control, used in three places — the Creation Dialog, reparenting, and the Filter Bar's parent control — and always confined to the one rung that can legally be a parent.
+_Avoid_: parent select, parent dropdown, item picker, autocomplete
+
 **Reopen Notice**:
-The inline notice a Creation Dialog or reparent picker grows when a terminal parent is chosen, naming the ancestors that confirming will move back to In Progress. It informs rather than gates — the escape is choosing a different parent.
+The inline notice a Creation Dialog or Parent Picker grows when a terminal parent is chosen, naming the ancestors that confirming will move back to In Progress. It informs rather than gates — the escape is choosing a different parent.
 _Avoid_: warning, prompt, alert, confirmation
 
 ### The detail view
@@ -219,15 +223,19 @@ The fixed set of controls that narrows the Search tab — keyword, type, status,
 _Avoid_: query builder, advanced search, facets, criteria
 
 **Keyword**:
-Text matched against a work item's Summary and Description, never its Comments. Several words match a work item carrying all of them, in any order.
+Text matched against a work item's Summary and Description, never its Comments. Every word typed is the *start* of a word in the work item, and several words match a work item carrying all of them, in any order. It takes literal words only — punctuation and operators carry no meaning, so a Keyword can never be malformed.
 _Avoid_: search term, full-text search, query, phrase
+
+**Result Count**:
+The number of work items the current Filter Bar matches, shown above the Results Table whether or not the table is showing all of them. Where the count exceeds what the table draws, it states both — the true total is never hidden.
+_Avoid_: total, hits, matches, rows
 
 **Preset**:
 A saved Filter Bar configuration, recalled by name. Not in v1 — the term is reserved so that saved filters, when they arrive, are not called something else.
 _Avoid_: saved search, saved filter, view, smart list
 
 **Results Table**:
-The Search tab's rendering of its results — one row per work item, seven columns, sortable from every header, taking the whole window on a wide screen. Its compact form is a stacked row carrying the same fields minus the columns.
+The Search tab's rendering of its results — one row per work item, seven columns, sortable from every header, taking the whole window on a wide screen. Its compact form is a stacked row carrying the same fields minus the columns. It draws at most two hundred rows, taken after the Sort Order is applied, and says so when there are more.
 _Avoid_: grid, list view, data table, issue navigator
 
 **Sort Order**:
