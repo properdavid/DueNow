@@ -47,6 +47,10 @@
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
   --color-destructive-subtle: hsl(var(--destructive-subtle));
+  --color-urgency-overdue: hsl(var(--urgency-overdue));
+  --color-urgency-today: hsl(var(--urgency-today));
+  --color-urgency-soon: hsl(var(--urgency-soon));
+  --color-urgency-later: hsl(var(--urgency-later));
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
@@ -106,6 +110,10 @@
   --destructive: 0 72% 52%;
   --destructive-foreground: 0 0% 100%;
   --destructive-subtle: 0 72% 95%;
+  --urgency-overdue: 0 72% 52%;
+  --urgency-today: 38 85% 46%;
+  --urgency-soon: 245 60% 86%;
+  --urgency-later: 240 6% 82%;
   --border: 240 6% 88%;
   --input: 240 6% 82%;
   --ring: 245 55% 52%;
@@ -158,6 +166,10 @@
     --destructive: 0 70% 62%;
     --destructive-foreground: 0 0% 100%;
     --destructive-subtle: 0 40% 17%;
+    --urgency-overdue: 0 70% 62%;
+    --urgency-today: 38 85% 60%;
+    --urgency-soon: 245 40% 40%;
+    --urgency-later: 240 6% 34%;
     --border: 240 6% 22%;
     --input: 240 6% 28%;
     --ring: 245 60% 68%;
