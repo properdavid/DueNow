@@ -8,6 +8,12 @@ export function parseWorkItemId(value: string | undefined) {
   return id;
 }
 
+export function parsePositiveFormInteger(formData: FormData, key: string) {
+  const value = String(formData.get(key) ?? "").trim();
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : "invalid";
+}
+
 export function runFieldUpdate<T extends UpdateWorkItemResult | UpdateWorkItemStatusResult>(operation: () => T): T | UpdateWorkItemResult {
   try {
     return operation();

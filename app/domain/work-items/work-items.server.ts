@@ -431,11 +431,82 @@ export function updateWorkItemDueDate(database: DatabaseClient, id: number, dueD
   return { ok: true };
 }
 
+export function attachLabelToWorkItem(database: DatabaseClient, id: number, labelId: number, actorId: number, now = Date.now()): UpdateWorkItemResult {
+  ensureWorkItemExists(database, id);
+  if (!labelExists(database, labelId)) {
+    return { ok: false, error: { field: "labelId", message: "Choose a valid Label." } };
+  }
+  database.sqlite.transaction(() => {
+    database.sqlite.prepare("INSERT OR IGNORE INTO work_item_labels (workItemId, labelId) VALUES (?, ?)").run(id, labelId);
+    touchWorkItem(database, id, actorId, now);
+  })();
+  return { ok: true };
+}
+
+export function detachLabelFromWorkItem(database: DatabaseClient, id: number, labelId: number, actorId: number, now = Date.now()): UpdateWorkItemResult {
+  ensureWorkItemExists(database, id);
+  if (!labelExists(database, labelId)) {
+    return { ok: false, error: { field: "labelId", message: "Choose a valid Label." } };
+  }
+  database.sqlite.transaction(() => {
+    database.sqlite.prepare("DELETE FROM work_item_labels WHERE workItemId = ? AND labelId = ?").run(id, labelId);
+    touchWorkItem(database, id, actorId, now);
+  })();
+  return { ok: true };
+}
+
+export function createAndAttachLabelToWorkItem(database: DatabaseClient, id: number, name: string, actorId: number, now = Date.now()): UpdateWorkItemResult {
+  ensureWorkItemExists(database, id);
+  const trimmed = name.trim();
+  const validationError = validateLabelName(database, trimmed);
+  if (validationError) {
+    return { ok: false, error: validationError };
+  }
+
+  return database.sqlite.transaction(() => {
+    const existing = labelWithName(database, trimmed);
+    if (existing) {
+      return { ok: false as const, error: { field: "name", message: "A Label with that name already exists." } };
+    }
+    const label = database.sqlite
+      .prepare("INSERT INTO labels (name, createdAt, updatedAt) VALUES (?, ?, ?) RETURNING id")
+      .get(trimmed, now, now) as { id: number };
+    database.sqlite.prepare("INSERT INTO work_item_labels (workItemId, labelId) VALUES (?, ?)").run(id, label.id);
+    touchWorkItem(database, id, actorId, now);
+    return { ok: true as const };
+  })();
+}
+
 function ensureWorkItemExists(database: DatabaseClient, id: number) {
   const row = database.sqlite.prepare("SELECT id FROM work_items WHERE id = ?").get(id);
   if (!row) {
     throw new Response("Work Item not found", { status: 404 });
   }
+}
+
+function labelExists(database: DatabaseClient, id: number) {
+  return Boolean(database.sqlite.prepare("SELECT id FROM labels WHERE id = ?").get(id));
+}
+
+function labelWithName(database: DatabaseClient, name: string) {
+  return database.sqlite.prepare("SELECT id FROM labels WHERE lower(name) = lower(?)").get(name);
+}
+
+function validateLabelName(database: DatabaseClient, name: string): { field?: string; message: string } | null {
+  if (name.length === 0) {
+    return { field: "name", message: "Label name is required." };
+  }
+  if (name.length > 30) {
+    return { field: "name", message: "Label name must be 30 characters or fewer." };
+  }
+  if (labelWithName(database, name)) {
+    return { field: "name", message: "A Label with that name already exists." };
+  }
+  return null;
+}
+
+function touchWorkItem(database: DatabaseClient, id: number, actorId: number, now: number) {
+  database.sqlite.prepare("UPDATE work_items SET updatedAt = ?, updatedBy = ? WHERE id = ?").run(now, actorId, id);
 }
 
 function loadWorkItemRows(database: DatabaseClient): WorkItemsTreeRow[] {

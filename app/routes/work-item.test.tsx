@@ -6,6 +6,9 @@ import { createRouteTestHarness } from "~/test/route-harness";
 import { CreationDialogProvider } from "~/components/shell/creation-dialog";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
 import * as assignRoute from "./api.work-items.$id.assign";
+import * as attachLabelRoute from "./api.work-items.$id.attach-label";
+import * as createLabelRoute from "./api.work-items.$id.create-label";
+import * as detachLabelRoute from "./api.work-items.$id.detach-label";
 import * as descriptionRoute from "./api.work-items.$id.update-description";
 import * as dueDateRoute from "./api.work-items.$id.update-due-date";
 import * as summaryRoute from "./api.work-items.$id.update-summary";
@@ -30,6 +33,10 @@ describe("Work Item detail route seam", () => {
       insert.run(3, "task", 2, "project", "Paint cabinets", "Use primer\nTwo coats", "open", 1, 1, user.id, user.id);
       insert.run(4, "subtask", 3, "task", "Buy primer", "", "open", 1, 1, user.id, user.id);
       insert.run(5, "subtask", 3, "task", "Get swatches", "", "completed", 1, 1, user.id, user.id);
+      const errands = harness.database.sqlite.prepare("INSERT INTO labels (name, createdAt, updatedAt) VALUES (?, ?, ?) RETURNING id").get("Errands", 1, 1) as { id: number };
+      const house = harness.database.sqlite.prepare("INSERT INTO labels (name, createdAt, updatedAt) VALUES (?, ?, ?) RETURNING id").get("House", 1, 1) as { id: number };
+      harness.database.sqlite.prepare("INSERT INTO work_item_labels (workItemId, labelId) VALUES (?, ?)").run(3, house.id);
+      harness.database.sqlite.prepare("INSERT INTO work_item_labels (workItemId, labelId) VALUES (?, ?)").run(3, errands.id);
 
       const detail = loadWorkItemDetail(harness.database, 3);
 
@@ -44,6 +51,10 @@ describe("Work Item detail route seam", () => {
       expect(detail.unfinishedDescendants).toEqual([{ id: 4, summary: "Buy primer", type: "subtask" }]);
       expect(detail.children.map((child) => child.summary)).toEqual(["Buy primer", "Get swatches"]);
       expect(detail.children[0].unfinishedDescendants).toEqual([]);
+      expect(detail.labels).toEqual([
+        { id: errands.id, name: "Errands" },
+        { id: house.id, name: "House" },
+      ]);
     } finally {
       harness.close();
     }
@@ -267,6 +278,70 @@ describe("Work Item detail route seam", () => {
       harness.close();
     }
   });
+
+  test("Label routes attach, detach and create Labels from the Detail View picker", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
+
+    try {
+      const cookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const user = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      harness.database.sqlite
+        .prepare("INSERT INTO work_items (id, type, parentId, parentType, summary, description, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+        .run(1, "topic", null, null, "House", "", "open", 1, 1, user.id, user.id);
+      const errands = harness.database.sqlite.prepare("INSERT INTO labels (name, createdAt, updatedAt) VALUES (?, ?, ?) RETURNING id").get("Errands", 1, 1) as { id: number };
+
+      const attached = await attachLabelRoute.action({
+        request: harness.request("/api/work-items/1/attach-label", { method: "POST", headers: { Cookie: cookie }, formData: { labelId: String(errands.id) } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof attachLabelRoute.action>[0]);
+      expect(attached).toEqual({ ok: true });
+      expect(harness.database.sqlite.prepare("SELECT workItemId, labelId FROM work_item_labels").all()).toEqual([{ workItemId: 1, labelId: errands.id }]);
+
+      const duplicateName = await createLabelRoute.action({
+        request: harness.request("/api/work-items/1/create-label", { method: "POST", headers: { Cookie: cookie }, formData: { name: " errands " } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof createLabelRoute.action>[0]);
+      expect(duplicateName).toEqual({ ok: false, error: { field: "name", message: "A Label with that name already exists." } });
+
+      const created = await createLabelRoute.action({
+        request: harness.request("/api/work-items/1/create-label", { method: "POST", headers: { Cookie: cookie }, formData: { name: " Hardware " } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof createLabelRoute.action>[0]);
+      expect(created).toEqual({ ok: true });
+      expect(harness.database.sqlite.prepare("SELECT name FROM labels ORDER BY lower(name)").all()).toEqual([{ name: "Errands" }, { name: "Hardware" }]);
+      expect(harness.database.sqlite.prepare("SELECT labels.name FROM labels INNER JOIN work_item_labels ON labels.id = work_item_labels.labelId ORDER BY lower(labels.name)").all()).toEqual([
+        { name: "Errands" },
+        { name: "Hardware" },
+      ]);
+
+      const emptyName = await createLabelRoute.action({
+        request: harness.request("/api/work-items/1/create-label", { method: "POST", headers: { Cookie: cookie }, formData: { name: "   " } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof createLabelRoute.action>[0]);
+      expect(emptyName).toEqual({ ok: false, error: { field: "name", message: "Label name is required." } });
+
+      const longName = await createLabelRoute.action({
+        request: harness.request("/api/work-items/1/create-label", { method: "POST", headers: { Cookie: cookie }, formData: { name: "x".repeat(31) } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof createLabelRoute.action>[0]);
+      expect(longName).toEqual({ ok: false, error: { field: "name", message: "Label name must be 30 characters or fewer." } });
+
+      const detached = await detachLabelRoute.action({
+        request: harness.request("/api/work-items/1/detach-label", { method: "POST", headers: { Cookie: cookie }, formData: { labelId: String(errands.id) } }),
+        params: { id: "1" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof detachLabelRoute.action>[0]);
+      expect(detached).toEqual({ ok: true });
+      expect(harness.database.sqlite.prepare("SELECT labels.name FROM labels INNER JOIN work_item_labels ON labels.id = work_item_labels.labelId").all()).toEqual([{ name: "Hardware" }]);
+    } finally {
+      harness.close();
+    }
+  });
 });
 
 describe("Work Item detail rendering seam", () => {
@@ -298,6 +373,7 @@ describe("Work Item detail rendering seam", () => {
             <WorkItemDocument
               currentUserId={1}
               detail={detail}
+              labelVocabulary={[{ id: 1, name: "House" }]}
               members={[{ id: 1, email: "dana@example.com", name: "Dana" }]}
             />
           </CreationDialogProvider>
@@ -369,7 +445,7 @@ describe("Work Item detail rendering seam", () => {
         path: "/items/:id",
         Component: () => (
           <CreationDialogProvider members={members} labels={[]}>
-            <WorkItemDocument currentUserId={1} detail={projectDetail} members={members} />
+            <WorkItemDocument currentUserId={1} detail={projectDetail} labelVocabulary={[]} members={members} />
           </CreationDialogProvider>
         ),
       },
@@ -392,7 +468,7 @@ describe("Work Item detail rendering seam", () => {
         path: "/items/:id",
         Component: () => (
           <CreationDialogProvider members={members} labels={[]}>
-            <WorkItemDocument currentUserId={1} detail={subtaskDetail} members={members} />
+            <WorkItemDocument currentUserId={1} detail={subtaskDetail} labelVocabulary={[]} members={members} />
           </CreationDialogProvider>
         ),
       },
