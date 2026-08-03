@@ -32,7 +32,11 @@ npm run build   # -> build/
 npm start       # serves build/server/index.js on PORT (default 3000)
 ```
 
-Deploy `build/`, `package.json`, and production `node_modules` (`better-sqlite3` is native — install on the target platform). Mount a persistent volume for `DUENOW_DATABASE_PATH`.
+Deploy `build/`, `package.json`, and production `node_modules` (`better-sqlite3` is native — install on the target platform). Copy `app/db/migrations` to `build/server/migrations`; the server reads them beside its bundle. Mount a persistent volume for `DUENOW_DATABASE_PATH`.
+
+### Docker
+
+Pushing to `main` builds `properdavid/duenow:latest` (amd64 + arm64) via `.github/workflows/deploy.yml`. `docker-compose.yml` runs it on port 3000 with `/app/data` mounted for SQLite.
 
 ## Environment variables
 

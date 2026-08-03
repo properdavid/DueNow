@@ -1,0 +1,13 @@
+.git
+node_modules
+build
+.react-router
+data
+docs
+prototypes
+reference
+tests
+*.md
+.env
+.env.local
+.DS_Store

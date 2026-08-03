@@ -1,0 +1,51 @@
+name: duenow
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  main: duenow
+  title:
+    en_us: DueNow
+  description:
+    en_us: Household project management for a two-person household.
+  tagline:
+    en_us: Your household's work, in one place.
+  category: Utilities
+  developer: DueNow
+  author: properdavid
+  icon: https://raw.githubusercontent.com/properdavid/DueNow/main/public/icons/app-icon-512.png
+  index: /
+  port_map: "3000"
+  scheme: http
+
+services:
+  duenow:
+    image: properdavid/duenow:latest
+    container_name: duenow
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      TZ: America/Los_Angeles
+      DUENOW_DATABASE_PATH: /app/data/duenow.sqlite
+
+      # Set these in CasaOS before signing in with Google.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://duenow.mendozaflix.com/auth/google/callback}
+      DUENOW_ALLOWED_EMAILS: ${DUENOW_ALLOWED_EMAILS:-mendoza.david47@gmail.com,nicolettecoey@gmail.com}
+    volumes:
+      - /DATA/AppData/duenow/data:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/login').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
