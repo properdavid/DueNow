@@ -3,6 +3,7 @@ import { createRoutesStub } from "react-router";
 import { describe, expect, test } from "vitest";
 
 import { createRouteTestHarness } from "~/test/route-harness";
+import { CreationDialogProvider } from "~/components/shell/creation-dialog";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
 import * as assignRoute from "./api.work-items.$id.assign";
 import * as descriptionRoute from "./api.work-items.$id.update-description";
@@ -27,6 +28,8 @@ describe("Work Item detail route seam", () => {
       insert.run(1, "topic", null, null, "House", "", "open", 1, 1, user.id, user.id);
       insert.run(2, "project", 1, "topic", "Kitchen", "", "open", 1, 1, user.id, user.id);
       insert.run(3, "task", 2, "project", "Paint cabinets", "Use primer\nTwo coats", "open", 1, 1, user.id, user.id);
+      insert.run(4, "subtask", 3, "task", "Buy primer", "", "open", 1, 1, user.id, user.id);
+      insert.run(5, "subtask", 3, "task", "Get swatches", "", "completed", 1, 1, user.id, user.id);
 
       const detail = loadWorkItemDetail(harness.database, 3);
 
@@ -38,7 +41,9 @@ describe("Work Item detail route seam", () => {
       expect(detail.item.summary).toBe("Paint cabinets");
       expect(detail.item.description).toBe("Use primer\nTwo coats");
       expect(detail.startCascadeAncestors.map((ancestor) => ancestor.summary)).toEqual(["Kitchen", "House"]);
-      expect(detail.unfinishedDescendants).toEqual([]);
+      expect(detail.unfinishedDescendants).toEqual([{ id: 4, summary: "Buy primer", type: "subtask" }]);
+      expect(detail.children.map((child) => child.summary)).toEqual(["Buy primer", "Get swatches"]);
+      expect(detail.children[0].unfinishedDescendants).toEqual([]);
     } finally {
       harness.close();
     }
@@ -85,6 +90,47 @@ describe("Work Item detail route seam", () => {
         { id: 3, status: "closed", updatedBy: actor.id, updatedAt: expect.any(Number) },
         { id: 4, status: "closed", updatedBy: actor.id, updatedAt: expect.any(Number) },
         { id: 5, status: "completed", updatedBy: actor.id, updatedAt: 1 },
+      ]);
+    } finally {
+      harness.close();
+    }
+  });
+
+  test("un-settling a child under a terminal parent waits for the Reopen Notice and reopens ancestors", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
+
+    try {
+      const cookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const actor = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      const insert = harness.database.sqlite.prepare(
+        "INSERT INTO work_items (id, type, parentId, parentType, summary, description, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, '', ?, 1, 1, ?, ?)",
+      );
+      insert.run(1, "topic", null, null, "House", "completed", actor.id, actor.id);
+      insert.run(2, "project", 1, "topic", "Kitchen", "completed", actor.id, actor.id);
+      insert.run(3, "task", 2, "project", "Paint cabinets", "closed", actor.id, actor.id);
+
+      const unconfirmed = await unsettleRoute.action({
+        request: harness.request("/api/work-items/3/unsettle", { method: "POST", headers: { Cookie: cookie }, formData: { confirmed: "false" } }),
+        params: { id: "3" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof unsettleRoute.action>[0]);
+      expect(unconfirmed).toEqual({ ok: false, error: { field: "confirmed", message: "Confirm the Reopen Notice first." } });
+      expect(harness.database.sqlite.prepare("SELECT id, status, updatedAt FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, status: "completed", updatedAt: 1 },
+        { id: 2, status: "completed", updatedAt: 1 },
+        { id: 3, status: "closed", updatedAt: 1 },
+      ]);
+
+      const confirmed = await unsettleRoute.action({
+        request: harness.request("/api/work-items/3/unsettle", { method: "POST", headers: { Cookie: cookie }, formData: { confirmed: "true" } }),
+        params: { id: "3" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof unsettleRoute.action>[0]);
+      expect(confirmed).toEqual({ ok: true, changed: 3 });
+      expect(harness.database.sqlite.prepare("SELECT id, status, updatedBy FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, status: "in_progress", updatedBy: actor.id },
+        { id: 2, status: "in_progress", updatedBy: actor.id },
+        { id: 3, status: "open", updatedBy: actor.id },
       ]);
     } finally {
       harness.close();
@@ -239,18 +285,22 @@ describe("Work Item detail rendering seam", () => {
         assignee: null,
       },
       labels: [{ id: 1, name: "House" }],
+      children: [],
       unfinishedDescendants: [],
+      reopenNotice: [],
       startCascadeAncestors: [],
     };
     const Stub = createRoutesStub([
       {
         path: "/items/:id",
         Component: () => (
-          <WorkItemDocument
-            currentUserId={1}
-            detail={detail}
-            members={[{ id: 1, email: "dana@example.com", name: "Dana" }]}
-          />
+          <CreationDialogProvider members={[{ id: 1, email: "dana@example.com", name: "Dana" }]} labels={[]}>
+            <WorkItemDocument
+              currentUserId={1}
+              detail={detail}
+              members={[{ id: 1, email: "dana@example.com", name: "Dana" }]}
+            />
+          </CreationDialogProvider>
         ),
       },
     ]);
@@ -263,5 +313,89 @@ describe("Work Item detail rendering seam", () => {
     expect(markup).not.toContain("<strong>");
     expect(markup).toContain("Unassigned");
     expect(markup).toContain("No Due Date");
+  });
+
+  test("renders the Children Checklist with a settled reveal and omits it for Subtasks", () => {
+    const members = [{ id: 1, email: "dana@example.com", name: "Dana" }];
+    const projectDetail = {
+      breadcrumb: [{ id: 1, label: "House", type: "topic" as const }, { id: 2, label: "Project", type: "project" as const }],
+      item: {
+        id: 2,
+        type: "project" as const,
+        parentId: 1,
+        status: "open" as const,
+        dueDate: null,
+        summary: "Kitchen",
+        description: "",
+        assigneeId: null,
+        assignee: null,
+      },
+      labels: [],
+      children: [
+        {
+          id: 3,
+          type: "task" as const,
+          parentId: 2,
+          status: "open" as const,
+          dueDate: "2026-08-03",
+          summary: "Paint cabinets",
+          description: "",
+          assigneeId: 1,
+          assignee: members[0],
+          unfinishedDescendants: [],
+          reopenNotice: [],
+        },
+        {
+          id: 4,
+          type: "task" as const,
+          parentId: 2,
+          status: "completed" as const,
+          dueDate: null,
+          summary: "Choose colour",
+          description: "",
+          assigneeId: null,
+          assignee: null,
+          unfinishedDescendants: [],
+          reopenNotice: [],
+        },
+      ],
+      unfinishedDescendants: [{ id: 3, summary: "Paint cabinets", type: "task" as const }],
+      reopenNotice: [],
+      startCascadeAncestors: [],
+    };
+    const Stub = createRoutesStub([
+      {
+        path: "/items/:id",
+        Component: () => (
+          <CreationDialogProvider members={members} labels={[]}>
+            <WorkItemDocument currentUserId={1} detail={projectDetail} members={members} />
+          </CreationDialogProvider>
+        ),
+      },
+    ]);
+
+    const markup = renderToStaticMarkup(<Stub initialEntries={["/items/2"]} />);
+
+    expect(markup).toContain("Tasks");
+    expect(markup).toContain("Paint cabinets");
+    expect(markup).toContain("2026-08-03");
+    expect(markup).toContain("Dana");
+    expect(markup).toContain("1 settled");
+    expect(markup).not.toContain("Choose colour");
+    expect(markup).toContain("Add Task");
+
+    const subtaskDetail = { ...projectDetail, item: { ...projectDetail.item, id: 5, type: "subtask" as const }, children: [] };
+    const SubtaskStub = createRoutesStub([
+      {
+        path: "/items/:id",
+        Component: () => (
+          <CreationDialogProvider members={members} labels={[]}>
+            <WorkItemDocument currentUserId={1} detail={subtaskDetail} members={members} />
+          </CreationDialogProvider>
+        ),
+      },
+    ]);
+    const subtaskMarkup = renderToStaticMarkup(<SubtaskStub initialEntries={["/items/5"]} />);
+    expect(subtaskMarkup).not.toContain("Add Subtask");
   });
 });

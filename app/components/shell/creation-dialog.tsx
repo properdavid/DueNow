@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Plus } from "lucide-react";
 import { useFetcher, useNavigate } from "react-router";
 
@@ -34,6 +34,7 @@ interface CreationDialogPrefill {
   type?: WorkItemType;
   parentId?: number | null;
   parentSummary?: string;
+  stayOnSuccess?: boolean;
 }
 
 interface CreationDialogContextValue {
@@ -63,6 +64,8 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
   const [parentQuery, setParentQuery] = useState("");
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
   const [prefilledParentSummary, setPrefilledParentSummary] = useState<string | null>(null);
+  const [stayOnSuccess, setStayOnSuccess] = useState(false);
+  const handledCreateIdRef = useRef<number | null>(null);
 
   const parentData = parentFetcher.data;
   const parentDataIsFresh = parentData?.ok === true && parentData.type === type && parentData.query === parentQuery;
@@ -82,11 +85,14 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
   }, [open, type, parentQuery]);
 
   useEffect(() => {
-    if (createFetcher.data?.ok) {
+    if (createFetcher.data?.ok && handledCreateIdRef.current !== createFetcher.data.id) {
+      handledCreateIdRef.current = createFetcher.data.id;
       setOpen(false);
-      navigate(`/items/${createFetcher.data.id}`);
+      if (!stayOnSuccess) {
+        navigate(`/items/${createFetcher.data.id}`);
+      }
     }
-  }, [createFetcher.data, navigate]);
+  }, [createFetcher.data, navigate, stayOnSuccess]);
 
   const contextValue = useMemo<CreationDialogContextValue>(
     () => ({
@@ -96,6 +102,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
         setParentQuery("");
         setSelectedParentId(prefill.parentId ?? null);
         setPrefilledParentSummary(prefill.parentSummary ?? null);
+        setStayOnSuccess(prefill.stayOnSuccess ?? false);
         setOpen(true);
       },
     }),
