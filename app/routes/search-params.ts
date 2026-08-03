@@ -6,15 +6,15 @@ const searchDirections = ["asc", "desc"] as const satisfies readonly SearchDirec
 
 export function searchWorkItemsInputFromUrl(url: URL): SearchWorkItemsInput {
   return {
-    keyword: url.searchParams.get("keyword") ?? undefined,
+    keyword: url.searchParams.get("q") ?? url.searchParams.get("keyword") ?? undefined,
     types: enumParams(url, "type", workItemTypes) as WorkItemType[],
     statuses: enumParams(url, "status", workItemStatuses) as WorkItemStatus[],
     assigneeIds: assigneeParams(url),
     parentIds: numberParams(url, "parent"),
     due: dueFilterFromUrl(url),
-    labelIds: numberParams(url, "label"),
+    labelIds: numberParams(url, "labels").length > 0 ? numberParams(url, "labels") : numberParams(url, "label"),
     sort: enumParam(url, "sort", searchSorts) as SearchSort | undefined,
-    direction: enumParam(url, "direction", searchDirections) as SearchDirection | undefined,
+    direction: (enumParam(url, "dir", searchDirections) ?? enumParam(url, "direction", searchDirections)) as SearchDirection | undefined,
   };
 }
 
@@ -34,7 +34,8 @@ function numberParams(url: URL, name: string) {
 }
 
 function assigneeParams(url: URL) {
-  return splitParams(url, "assignee")
+  const values = splitParams(url, "who");
+  return (values.length > 0 ? values : splitParams(url, "assignee"))
     .map((value) => (value === "unassigned" ? null : Number(value)))
     .filter((value): value is number | null => value === null || (Number.isSafeInteger(value) && value > 0));
 }
@@ -54,16 +55,16 @@ function dueFilterFromUrl(url: URL): SearchDueFilter | undefined {
     case "none":
       return { mode };
     case "before": {
-      const date = url.searchParams.get("date");
+      const date = url.searchParams.get("from") ?? url.searchParams.get("date");
       return date ? { mode, date } : undefined;
     }
     case "after": {
-      const date = url.searchParams.get("date");
+      const date = url.searchParams.get("from") ?? url.searchParams.get("date");
       return date ? { mode, date } : undefined;
     }
     case "between": {
-      const start = url.searchParams.get("start");
-      const end = url.searchParams.get("end");
+      const start = url.searchParams.get("from") ?? url.searchParams.get("start");
+      const end = url.searchParams.get("to") ?? url.searchParams.get("end");
       return start && end ? { mode, start, end } : undefined;
     }
     default:

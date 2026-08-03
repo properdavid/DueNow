@@ -1,4 +1,6 @@
 import { describe, expect, test } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { createRoutesStub } from "react-router";
 
 import { createRouteTestHarness } from "~/test/route-harness";
 import * as searchRoute from "./search";
@@ -16,11 +18,7 @@ describe("Search route seam", () => {
       insert.run(2, "project", 1, "topic", "Kitchen", "paint cabinets", null, "open", "2026-08-02", 1, 2, user.id, user.id);
       insert.run(3, "task", 2, "project", "Prime cabinets", "paint primer", null, "in_progress", "2026-08-03", 1, 3, user.id, user.id);
 
-      const data = await harness.runLoader<ReturnType<typeof searchRoute.loader>>(
-        searchRoute.loader,
-        "/search?keyword=paint&type=project,task&status=open,in_progress&assignee=unassigned&parent=1&parent=2&due=between&start=2026-08-01&end=2026-08-03&sort=due&direction=desc",
-        { headers: { Cookie: cookie } },
-      );
+      const data = await harness.runLoader<ReturnType<typeof searchRoute.loader>>(searchRoute.loader, "/search?q=paint&type=project,task&status=open,in_progress&who=unassigned&parent=1&parent=2&due=between&from=2026-08-01&to=2026-08-03&sort=due&dir=desc", { headers: { Cookie: cookie } });
 
       expect(data).not.toBeInstanceOf(Response);
       expect(data).toMatchObject({
@@ -36,3 +34,64 @@ describe("Search route seam", () => {
     }
   });
 });
+
+describe("Search tab rendering seam", () => {
+  test("renders the Filter Bar, Result Count, wide Results Table and compact stacked rows without mutations", () => {
+    const markup = renderSearch({
+      rows: [
+        {
+          id: 3,
+          type: "task",
+          parentId: 2,
+          parentSummary: "Kitchen",
+          summary: "Prime cabinets",
+          description: "",
+          assigneeId: null,
+          assignee: null,
+          status: "in_progress",
+          dueDate: "2026-08-03",
+          updatedAt: Date.UTC(2026, 7, 2),
+        },
+      ],
+      resultCount: 2412,
+      limit: 200,
+      user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" },
+      selectedParents: [{ id: 2, summary: "Kitchen" }],
+    }, "/search?q=paint&type=task&status=in_progress&who=unassigned&parent=2&due=before&from=2026-08-04&labels=7&sort=due&dir=desc");
+
+    expect(markup).toContain("Search");
+    expect(markup).toContain("Showing 200 of 2,412 — narrow your search to see the rest.");
+    expect(markup).toContain("Type: Task");
+    expect(markup).toContain("Status: In Progress");
+    expect(markup).toContain("Assignee: Unassigned");
+    expect(markup).toContain("Parent: Kitchen");
+    expect(markup).toContain("Due Date: Before Aug 4");
+    expect(markup).toContain("Labels:");
+    expect(markup).toContain("<table");
+    expect(markup).toContain("<th");
+    expect(markup).toContain("Prime cabinets");
+    expect(markup).toContain("Aug 3");
+    expect(markup).toContain("#3");
+    expect(markup).toContain("Filters");
+  });
+
+  test("uses distinct empty copy for First Run and missed Keyword states", () => {
+    const firstRun = renderSearch({ rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] });
+    const missedKeyword = renderSearch({ rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] }, "/search?q=patio");
+
+    expect(firstRun).toContain("Nothing searchable yet");
+    expect(firstRun).toContain("Create your first work item and it will appear here.");
+    expect(missedKeyword).toContain("No matching work items");
+    expect(missedKeyword).toContain("Change the Filter Bar or try a different Keyword.");
+  });
+});
+
+function renderSearch(loaderData: React.ComponentProps<typeof searchRoute.default>["loaderData"], path = "/search") {
+  const Stub = createRoutesStub([
+    {
+      path: "/search",
+      Component: () => searchRoute.default({ loaderData, params: {}, matches: [] } as unknown as Parameters<typeof searchRoute.default>[0]),
+    },
+  ]);
+  return renderToStaticMarkup(<Stub initialEntries={[path]} />);
+}
