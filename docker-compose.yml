@@ -35,7 +35,7 @@ services:
       # Set these in CasaOS before signing in with Google.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
-      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://duenow.mendozaflix.com/auth/google/callback}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-https://due.mendozaflix.com/auth/google/callback}
       DUENOW_ALLOWED_EMAILS: ${DUENOW_ALLOWED_EMAILS:-mendoza.david47@gmail.com,nicolettecoey@gmail.com}
     volumes:
       - /DATA/AppData/duenow/data:/app/data
