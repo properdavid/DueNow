@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 
 import type { DatabaseClient } from "~/db/client";
-import { labels, users, workItems, workItemStatuses, workItemTypes, type WorkItemStatus, type WorkItemType } from "~/db/schema";
+import { comments, labels, users, workItems, workItemStatuses, workItemTypes, type WorkItemStatus, type WorkItemType } from "~/db/schema";
 import {
   ancestorsForWorkItem,
   unfinishedDescendantsForSettleConfirmation,
@@ -39,10 +39,19 @@ export interface WorkItemDetailReadModel {
   item: WorkItemsTreeRow;
   breadcrumb: { id: number; label: string; type: WorkItemType }[];
   children: WorkItemDetailChild[];
+  comments: WorkItemCommentReadModel[];
   labels: { id: number; name: string }[];
   unfinishedDescendants: { id: number; summary: string; type: WorkItemType }[];
   reopenNotice: TerminalAncestorNotice[];
   startCascadeAncestors: { id: number; summary: string }[];
+}
+
+export interface WorkItemCommentReadModel {
+  id: number;
+  body: string;
+  createdAt: number;
+  edited: boolean;
+  author: WorkItemsTreeMember;
 }
 
 export interface WorkItemDetailChild extends WorkItemsTreeRow {
@@ -92,6 +101,8 @@ export type UpdateWorkItemStatusResult =
 
 export type ReparentWorkItemResult = { ok: true; changed: number } | { ok: false; error: { field?: string; message: string } };
 
+export type CommentMutationResult = { ok: true } | { ok: false; error: { field?: string; message: string } };
+
 export function loadWorkItemsTree(database: DatabaseClient, selectedId: number | null): WorkItemsTreeReadModel {
   const treeRows = loadWorkItemRows(database);
   const selected = selectedId === null ? null : treeRows.find((row) => row.id === selectedId);
@@ -118,6 +129,7 @@ export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkIt
       "SELECT labels.id, labels.name FROM labels INNER JOIN work_item_labels ON work_item_labels.labelId = labels.id WHERE work_item_labels.workItemId = ? ORDER BY lower(labels.name)",
     )
     .all(id) as { id: number; name: string }[];
+  const selectedComments = loadCommentsForWorkItem(database, id);
 
   return {
     item,
@@ -129,6 +141,7 @@ export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkIt
         unfinishedDescendants: unfinishedDescendantsForSettleConfirmation(rows, child.id).map(({ id, summary, type }) => ({ id, summary, type })),
         reopenNotice: planUnsettle(rows, child.id, "open").reopenNotice,
       })),
+    comments: selectedComments,
     labels: selectedLabels,
     unfinishedDescendants: unfinishedDescendantsForSettleConfirmation(rows, id).map(({ id, summary, type }) => ({ id, summary, type })),
     reopenNotice: planUnsettle(rows, id, "open").reopenNotice,
@@ -141,6 +154,45 @@ export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkIt
             .map(({ id, summary }) => ({ id, summary }))
         : [],
   };
+}
+
+export function addCommentToWorkItem(database: DatabaseClient, workItemId: number, body: string, actorId: number, now = Date.now()): CommentMutationResult {
+  ensureWorkItemExists(database, workItemId);
+  const validation = validateCommentBody(body);
+  if (validation) {
+    return { ok: false, error: validation };
+  }
+
+  database.sqlite.transaction(() => {
+    database.sqlite.prepare("INSERT INTO comments (workItemId, authorId, body, createdAt, edited) VALUES (?, ?, ?, ?, 0)").run(workItemId, actorId, body.trim(), now);
+    touchWorkItem(database, workItemId, actorId, now);
+  })();
+  return { ok: true };
+}
+
+export function editComment(database: DatabaseClient, commentId: number, body: string, actorId: number, now = Date.now()): CommentMutationResult {
+  const comment = loadCommentOwner(database, commentId);
+  ensureCommentAuthor(comment, actorId);
+  const validation = validateCommentBody(body);
+  if (validation) {
+    return { ok: false, error: validation };
+  }
+
+  database.sqlite.transaction(() => {
+    database.sqlite.prepare("UPDATE comments SET body = ?, edited = 1 WHERE id = ?").run(body.trim(), commentId);
+    touchWorkItem(database, comment.workItemId, actorId, now);
+  })();
+  return { ok: true };
+}
+
+export function deleteComment(database: DatabaseClient, commentId: number, actorId: number, now = Date.now()): CommentMutationResult {
+  const comment = loadCommentOwner(database, commentId);
+  ensureCommentAuthor(comment, actorId);
+  database.sqlite.transaction(() => {
+    database.sqlite.prepare("DELETE FROM comments WHERE id = ?").run(commentId);
+    touchWorkItem(database, comment.workItemId, actorId, now);
+  })();
+  return { ok: true };
 }
 
 export function loadParentCandidates(database: DatabaseClient, type: WorkItemType, query: string, excludeParentId: number | null = null): ParentCandidate[] {
@@ -482,6 +534,58 @@ function ensureWorkItemExists(database: DatabaseClient, id: number) {
   if (!row) {
     throw new Response("Work Item not found", { status: 404 });
   }
+}
+
+function loadCommentsForWorkItem(database: DatabaseClient, workItemId: number): WorkItemCommentReadModel[] {
+  return database.db
+    .select({
+      id: comments.id,
+      body: comments.body,
+      createdAt: comments.createdAt,
+      edited: comments.edited,
+      authorId: users.id,
+      authorName: users.name,
+      authorEmail: users.email,
+    })
+    .from(comments)
+    .innerJoin(users, eq(comments.authorId, users.id))
+    .where(eq(comments.workItemId, workItemId))
+    .orderBy(comments.createdAt, comments.id)
+    .all()
+    .map((comment) => ({
+      id: comment.id,
+      body: comment.body,
+      createdAt: comment.createdAt,
+      edited: comment.edited,
+      author: { id: comment.authorId, name: comment.authorName, email: comment.authorEmail },
+    }));
+}
+
+function loadCommentOwner(database: DatabaseClient, commentId: number) {
+  const comment = database.sqlite.prepare("SELECT id, workItemId, authorId FROM comments WHERE id = ?").get(commentId) as
+    | { id: number; workItemId: number; authorId: number }
+    | undefined;
+  if (!comment) {
+    throw new Response("Comment not found", { status: 404 });
+  }
+  return comment;
+}
+
+function ensureCommentAuthor(comment: { authorId: number }, actorId: number) {
+  if (comment.authorId !== actorId) {
+    throw new Response("You can only change your own Comment.", { status: 403 });
+  }
+}
+
+function validateCommentBody(body: string): { field?: string; message: string } | null {
+  const trimmed = body.trim();
+  if (trimmed.length === 0) {
+    return { field: "body", message: "Comment is required." };
+  }
+  if (trimmed.length > 20_000) {
+    return { field: "body", message: `Comment is too long (${trimmed.length.toLocaleString("en-US")} characters, limit 20,000).` };
+  }
+  return null;
 }
 
 function labelExists(database: DatabaseClient, id: number) {
