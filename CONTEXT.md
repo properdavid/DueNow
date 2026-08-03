@@ -75,7 +75,7 @@ The calendar day by which a work item is expected to be finished. A whole day, n
 _Avoid_: deadline, target date, due by, ETA
 
 **Label**:
-A named, colour-coded tag from one household-wide managed set, applicable to a work item of any type.
+A named tag from one household-wide managed set, applicable to a work item of any type. A Label carries no colour, and is displayed only on a work item's detail view; everywhere else it is criteria in the Filter Bar rather than something a row advertises.
 _Avoid_: tag, category, keyword, flag, component
 
 **Comment**:
@@ -138,6 +138,20 @@ _Avoid_: mobile, phone layout, small screen
 The navigation shell at 1024px and above — a left sidebar of four destinations beside a resizable two-column split, the destination's list on the left and the selected work item's detail on the right. What a desktop gets, and a tablet in landscape.
 _Avoid_: desktop layout, two-pane, master-detail, wide screen
 
+### The Work Items tab
+
+**Work Items Tree**:
+The whole ladder drawn as one indented outline, every rung a row of the same list. It opens fully collapsed, showing Topics only, and what you expand is forgotten when you leave.
+_Avoid_: outline, hierarchy view, browser, explorer
+
+**Type Mark**:
+The small shape that says which rung a work item sits on — amber star Topic, violet diamond Project, green square Task, teal triangle Subtask. Never a circle and never blue, both of which belong to the Status Mark.
+_Avoid_: type icon, badge, glyph, bullet
+
+**Status Mark**:
+The small circle that says where a work item stands — empty grey ring Open, half-filled blue In Progress, blue check Completed, filled grey Closed. Shape carries the meaning as much as colour does, so the four read apart without hue.
+_Avoid_: status icon, dot, chip, indicator
+
 ### The Due tab
 
 **Overdue**:
@@ -180,6 +194,3 @@ _Avoid_: local time, server time, user timezone, locale
 The calendar day in the Household Timezone. The only thing a Due Date is ever compared against, so overdue and due-today mean the same thing to both household members.
 _Avoid_: now, current date, the current time
 
-**Label Palette**:
-The fixed set of colours a Label may take. A Label is assigned one of them, never an arbitrary colour.
-_Avoid_: colour picker, swatch, custom colour, theme colour
