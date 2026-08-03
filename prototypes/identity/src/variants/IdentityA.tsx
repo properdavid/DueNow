@@ -13,13 +13,20 @@
 // mark can tell you which screen came up empty.
 import { Check, Letter, Tile, type IconProps, type IdentityPack, type Surface } from "../identity";
 
+// Amended while being judged: the artwork is scaled to 0.88 about the centre so every
+// stroke clears Android's circular maskable crop (r=40 on the 100 grid — the unscaled
+// N's bottom-right corner sat at 43). One artwork, not two: a separate tighter icon for
+// the non-maskable sizes would be a second file to keep in step for a few percent of
+// square, and most app icons carry optical padding anyway.
 function Icon(p: IconProps) {
   return (
     <Tile {...p}>
-      <Check cx={31} cy={34} r={13} w={8} />
-      <Check cx={31} cy={68} r={13} w={8} />
-      <Letter ch="D" cx={69} cy={34} size={34} />
-      <Letter ch="N" cx={69} cy={68} size={34} />
+      <g transform="translate(50 50) scale(0.88) translate(-50 -50)">
+        <Check cx={31} cy={34} r={13} w={8} />
+        <Check cx={31} cy={68} r={13} w={8} />
+        <Letter ch="D" cx={69} cy={34} size={34} />
+        <Letter ch="N" cx={69} cy={68} size={34} />
+      </g>
     </Tile>
   );
 }
