@@ -37,7 +37,17 @@ describe("navigation shell route seam", () => {
     const Stub = createRoutesStub([
       {
         path: "/",
-        Component: shellRoute.default,
+        Component: () =>
+          shellRoute.default({
+            loaderData: {
+              user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" },
+              members: [{ id: 1, email: "dana@example.com", name: "Dana", theme: "system" }],
+              labels: [],
+              householdTimezone: { timezone: "UTC" },
+            },
+            params: {},
+            matches: [],
+          } as unknown as Parameters<typeof shellRoute.default>[0]),
         children: [
           { path: "due", Component: () => <main>Due placeholder</main> },
           { path: "items", Component: () => <main>Work Items placeholder</main> },
@@ -54,8 +64,8 @@ describe("navigation shell route seam", () => {
       expect(markup).toContain(destination.label);
     }
     expect(markup).toContain("DueNow");
-    expect(markup).toContain("New work item");
-    expect(markup).toContain('aria-label="New work item"');
+    expect(markup).toContain("New Work Item");
+    expect(markup).toContain('aria-label="New Work Item"');
     expect(markup).toContain("lg:fixed");
   });
 
