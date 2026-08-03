@@ -11,7 +11,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     throw new Response("Work Item not found", { status: 404 });
   }
 
-  startWorkItem(getDatabase(context), id, user.id);
+  const result = startWorkItem(getDatabase(context), id, user.id);
   const returnTo = new URL(request.url).searchParams.get("returnTo");
-  return redirect(returnTo && returnTo.startsWith("/items") ? returnTo : "/items");
+  if (returnTo) {
+    return redirect(returnTo.startsWith("/items") ? returnTo : "/items");
+  }
+  return result;
 }

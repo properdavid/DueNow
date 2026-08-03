@@ -1,3 +1,5 @@
+import { existsSync, rmSync } from "node:fs";
+
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, test, vi } from "vitest";
 
@@ -27,6 +29,27 @@ describe("auth at the route seam", () => {
       expect(harness.database.sqlite.prepare("SELECT COUNT(*) AS count FROM users").get()).toEqual({ count: 0 });
     } finally {
       harness.close();
+    }
+  });
+
+  test("importing auth modules does not open the default on-disk database", async () => {
+    const databasePath = "data/import-side-effect-test.sqlite";
+    const createdPaths = [databasePath, `${databasePath}-shm`, `${databasePath}-wal`];
+    for (const filePath of createdPaths) {
+      rmSync(filePath, { force: true });
+    }
+
+    vi.stubEnv("DUENOW_DATABASE_PATH", databasePath);
+    vi.resetModules();
+    try {
+      await import("./session.server");
+
+      expect(createdPaths.some((filePath) => existsSync(filePath))).toBe(false);
+    } finally {
+      for (const filePath of createdPaths) {
+        rmSync(filePath, { force: true });
+      }
+      vi.resetModules();
     }
   });
 

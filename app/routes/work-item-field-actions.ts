@@ -1,4 +1,4 @@
-import type { UpdateWorkItemResult } from "~/domain/work-items/work-items.server";
+import type { UpdateWorkItemResult, UpdateWorkItemStatusResult } from "~/domain/work-items/work-items.server";
 
 export function parseWorkItemId(value: string | undefined) {
   const id = Number(value);
@@ -8,7 +8,7 @@ export function parseWorkItemId(value: string | undefined) {
   return id;
 }
 
-export function runFieldUpdate(operation: () => UpdateWorkItemResult): UpdateWorkItemResult {
+export function runFieldUpdate<T extends UpdateWorkItemResult | UpdateWorkItemStatusResult>(operation: () => T): T | UpdateWorkItemResult {
   try {
     return operation();
   } catch (error) {

@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { eq } from "drizzle-orm";
 import { redirect } from "react-router";
 
-import { database as defaultDatabase } from "~/db";
+import { getDefaultDatabase } from "~/db";
 import type { DatabaseClient } from "~/db/client";
 import { sessions, users, type Theme } from "~/db/schema";
 
@@ -36,7 +36,7 @@ export interface AuthContext {
 }
 
 export function getDatabase(context?: unknown): DatabaseClient {
-  return hasDatabaseContext(context) ? context.database : defaultDatabase;
+  return hasDatabaseContext(context) ? context.database : getDefaultDatabase();
 }
 
 export function getEnv(context?: unknown): Record<string, string | undefined> {

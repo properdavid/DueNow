@@ -18,7 +18,7 @@ type ShellData = {
   members: (WorkItemsTreeMember & { theme?: "system" | "light" | "dark" })[];
 };
 
-type ActionResult = { ok: true } | { ok: false; error: { field?: string; message: string } };
+type ActionResult = { ok: true; changed?: number } | { ok: false; error: { field?: string; message: string } };
 
 export async function loader({ request, params, context }: LoaderFunctionArgs) {
   await requireUser(request, context);
@@ -73,7 +73,12 @@ export function WorkItemDocument({
         </nav>
         <SummaryEditor id={detail.item.id} summary={detail.item.summary} />
         <div className="flex flex-wrap gap-2" aria-label="Property Chips">
-          <StatusChip status={detail.item.status} />
+          <StatusChip
+            id={detail.item.id}
+            status={detail.item.status}
+            startCascadeAncestors={detail.startCascadeAncestors}
+            unfinishedDescendants={detail.unfinishedDescendants}
+          />
           <AssigneeChip currentUserId={currentUserId} id={detail.item.id} assignee={detail.item.assignee} members={members} />
           <DueDateChip dueDate={detail.item.dueDate} id={detail.item.id} />
           <LabelsChip labels={detail.labels} />
@@ -212,12 +217,98 @@ function TextEditor({
   );
 }
 
-function StatusChip({ status }: { status: WorkItemStatus }) {
+function StatusChip({
+  id,
+  status,
+  startCascadeAncestors,
+  unfinishedDescendants,
+}: {
+  id: number;
+  status: WorkItemStatus;
+  startCascadeAncestors: { id: number; summary: string }[];
+  unfinishedDescendants: { id: number; summary: string; type: string }[];
+}) {
+  const fetcher = useFetcher<ActionResult>();
+  const [open, setOpen] = useState(false);
+  const [confirmingStatus, setConfirmingStatus] = useState<WorkItemStatus | null>(null);
+  const error = fetcher.data?.ok === false ? fetcher.data.error.message : null;
+  const pending = fetcher.state !== "idle";
+  const settleCount = unfinishedDescendants.length;
+
+  const chooseStatus = (nextStatus: WorkItemStatus) => {
+    if (isTerminalStatus(nextStatus) && settleCount > 0) {
+      setConfirmingStatus(nextStatus);
+      return;
+    }
+    submitStatus(fetcher, id, nextStatus, false);
+    setOpen(false);
+  };
+
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-border bg-muted px-3 py-2 text-sm">
-      <StatusMark status={status} />
-      <span>Status: {statusLabel(status)}</span>
-    </span>
+    <div>
+      <Menu open={open} onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) setConfirmingStatus(null);
+      }}>
+        <MenuTrigger asChild>
+          <Button className="rounded-full" size="sm" type="button" variant="outline">
+            <StatusMark status={status} />
+            Status: {statusLabel(status)}
+          </Button>
+        </MenuTrigger>
+        <MenuContent align="start" className="w-80">
+          {confirmingStatus ? (
+            <div className="space-y-3 p-2">
+              <div className="space-y-1">
+                <p className="text-base font-semibold">
+                  Settle {settleCount} {settleCount === 1 ? "descendant" : "descendants"} as {statusLabel(confirmingStatus)}?
+                </p>
+                <p className="text-sm text-muted-foreground">The Settle Cascade will sweep every Unfinished descendant named here.</p>
+              </div>
+              <ul className="max-h-56 space-y-1 overflow-auto text-sm">
+                {unfinishedDescendants.map((descendant) => (
+                  <li key={descendant.id} className="rounded-md border border-border bg-muted px-2 py-1">
+                    {descendant.summary}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex items-center gap-2">
+                <Button disabled={pending} size="sm" type="button" variant="default" onClick={() => {
+                  submitStatus(fetcher, id, confirmingStatus, true);
+                  setOpen(false);
+                }}>
+                  Confirm
+                </Button>
+                <Button disabled={pending} size="sm" type="button" variant="ghost" onClick={() => setConfirmingStatus(null)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              {(["open", "in_progress", "completed", "closed"] as const).map((option) => (
+                <MenuItem
+                  key={option}
+                  disabled={pending || option === status}
+                  onSelect={(event) => {
+                    if (isTerminalStatus(option) && settleCount > 0) event.preventDefault();
+                    chooseStatus(option);
+                  }}
+                >
+                  <StatusMark status={option} /> {statusLabel(option)}
+                </MenuItem>
+              ))}
+              {startCascadeAncestors.length > 0 ? (
+                <p className="px-3 py-2 text-sm text-muted-foreground">
+                  Starting this Work Item will also start {formatSummaryList(startCascadeAncestors.map((ancestor) => ancestor.summary))}.
+                </p>
+              ) : null}
+            </>
+          )}
+        </MenuContent>
+      </Menu>
+      {error ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+    </div>
   );
 }
 
@@ -313,6 +404,15 @@ function submitDueDate(fetcher: ReturnType<typeof useFetcher<ActionResult>>, id:
   fetcher.submit(formData, { method: "post", action: `/api/work-items/${id}/update-due-date` });
 }
 
+function submitStatus(fetcher: ReturnType<typeof useFetcher<ActionResult>>, id: number, status: WorkItemStatus, confirmed: boolean) {
+  const formData = new FormData();
+  formData.set("id", String(id));
+  formData.set("status", status);
+  formData.set("confirmed", String(confirmed));
+  const action = status === "in_progress" ? "start" : status === "open" ? "unsettle" : "settle";
+  fetcher.submit(formData, { method: "post", action: `/api/work-items/${id}/${action}` });
+}
+
 function useShellData() {
   const shellMatch = useMatches().find((match) => match.id === "routes/shell");
   if (!shellMatch?.data) {
@@ -323,6 +423,16 @@ function useShellData() {
 
 function statusLabel(status: WorkItemStatus) {
   return { open: "Open", in_progress: "In Progress", completed: "Completed", closed: "Closed" }[status];
+}
+
+function isTerminalStatus(status: WorkItemStatus) {
+  return status === "completed" || status === "closed";
+}
+
+function formatSummaryList(summaries: string[]) {
+  if (summaries.length <= 1) return summaries[0] ?? "";
+  if (summaries.length === 2) return `${summaries[0]} and ${summaries[1]}`;
+  return `${summaries.slice(0, -1).join(", ")}, and ${summaries[summaries.length - 1]}`;
 }
 
 function controlErrorMessage(message: string) {
