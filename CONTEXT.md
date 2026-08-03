@@ -14,6 +14,10 @@ _Avoid_: family, tenant, organisation, workspace, account
 A deployment before any work item has ever been created in it. It ships with no work items, no Labels and no users — only the Household Settings row. Because nothing can be deleted, First Run is a one-way door: once the first Topic exists the deployment has left it for good, and a screen showing nothing thereafter means something else entirely.
 _Avoid_: onboarding, setup, empty state, fresh install, day one
 
+**Avatar**:
+The disc that stands for a household member wherever one is named — tree rows, Due Cards, Search rows, Comments, Settings. It carries a single uppercased character taken from the member's name, never a photograph; DueNow stores no picture and fetches none. Yours is a solid indigo disc with the character knocked out and your partner's is the soft fill, so the two are told apart by fill rather than by hue. Unassigned is the dashed disc, carrying no character.
+_Avoid_: profile picture, photo, gravatar, icon, initials badge
+
 ### Work items
 
 **Work Item**:
@@ -63,7 +67,7 @@ The one-line name of a work item, and the only thing a person must supply to cre
 _Avoid_: title, name, subject, heading
 
 **Description**:
-The long-form detail of a work item, written in Markdown.
+The long-form detail of a work item, written in Markdown. Bounded only by a fence the writer never sees — 20,000 characters, which exists against a mispaste rather than against a writer.
 _Avoid_: body, notes, details, content
 
 **Assignee**:
@@ -79,11 +83,11 @@ The calendar day by which a work item is expected to be finished. A whole day, n
 _Avoid_: deadline, target date, due by, ETA
 
 **Label**:
-A named tag from one household-wide managed set, applicable to a work item of any type. A Label carries no colour, and is displayed only on a work item's detail view; everywhere else it is criteria in the Filter Bar rather than something a row advertises.
+A named tag from one household-wide managed set, applicable to a work item of any type. Its name is a word or two — 30 characters, and the cap is one you feel as you type. A Label carries no colour, and is displayed only on a work item's detail view; everywhere else it is criteria in the Filter Bar rather than something a row advertises.
 _Avoid_: tag, category, keyword, flag, component
 
 **Comment**:
-A Markdown note written by a household member on a work item, belonging to its author and editable and deletable only by them. An edited comment is marked as edited and nothing more — there is no edit time and no revision list. Only people write comments; the system never does.
+A Markdown note written by a household member on a work item, belonging to its author and editable and deletable only by them. It is never empty, and carries the same unseen 20,000-character fence as a Description. An edited comment is marked as edited and nothing more — there is no edit time and no revision list. Only people write comments; the system never does.
 _Avoid_: note, reply, message, activity, update
 
 ### Status
