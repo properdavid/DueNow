@@ -34,6 +34,35 @@ function Pop({ onClose, children, wide }: { onClose: () => void; children: React
 const chip =
   "touch-min inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[13px] hover:border-faint";
 
+/** Free text is the one thing here that is *composed* rather than picked, so it commits
+ *  on an explicit ✓ rather than on blur — a half-written sentence should never be able to
+ *  save itself by a stray tap elsewhere. Pickers stay instant. */
+function ConfirmCancel({ onConfirm, onCancel, disabled }: {
+  onConfirm: () => void; onCancel: () => void; disabled?: boolean;
+}) {
+  return (
+    <div className="mt-1.5 flex gap-1.5">
+      <button
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onConfirm}
+        disabled={disabled}
+        aria-label="Confirm"
+        className="flex h-7 w-7 items-center justify-center rounded border border-primary bg-primary text-[13px] text-primary-fg disabled:opacity-35"
+      >
+        ✓
+      </button>
+      <button
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={onCancel}
+        aria-label="Discard"
+        className="flex h-7 w-7 items-center justify-center rounded border border-line text-[13px] text-muted hover:bg-surface"
+      >
+        ✕
+      </button>
+    </div>
+  );
+}
+
 export default function DetailA({ id, compact, onOpen, onClose, onMove, requestCreate }: DetailProps) {
   const t = useTree();
   const item = t.byId(id);
@@ -81,17 +110,28 @@ export default function DetailA({ id, compact, onOpen, onClose, onMove, requestC
       <div className="min-h-0 flex-1 overflow-y-auto pb-32">
         <div className={compact ? "px-4 pt-4" : "mx-auto max-w-[720px] px-8 pt-6"}>
           {editing === "summary" ? (
-            <textarea
-              autoFocus
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={() => {
-                if (draft.trim()) t.update(id, { summary: draft.trim() });
-                setEditing(null);
-              }}
-              rows={2}
-              className="w-full resize-none rounded border border-primary px-2 py-1 text-[22px] leading-tight font-semibold outline-none"
-            />
+            <div>
+              <textarea
+                autoFocus
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") setEditing(null);
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (draft.trim()) t.update(id, { summary: draft.trim() });
+                    setEditing(null);
+                  }
+                }}
+                rows={2}
+                className="w-full resize-none rounded border border-primary px-2 py-1 text-[22px] leading-tight font-semibold outline-none"
+              />
+              <ConfirmCancel
+                disabled={!draft.trim()}
+                onConfirm={() => { t.update(id, { summary: draft.trim() }); setEditing(null); }}
+                onCancel={() => setEditing(null)}
+              />
+            </div>
           ) : (
             <h1
               onClick={() => {
@@ -244,14 +284,20 @@ export default function DetailA({ id, compact, onOpen, onClose, onMove, requestC
           {/* Description reads as prose until you click it. */}
           <div className="mt-5">
             {editing === "description" ? (
-              <textarea
-                autoFocus
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onBlur={() => { t.update(id, { description: draft }); setEditing(null); }}
-                rows={8}
-                className="w-full rounded border border-primary p-2 text-[15px] leading-relaxed outline-none"
-              />
+              <div>
+                <textarea
+                  autoFocus
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && setEditing(null)}
+                  rows={8}
+                  className="w-full rounded border border-primary p-2 text-[15px] leading-relaxed outline-none"
+                />
+                <ConfirmCancel
+                  onConfirm={() => { t.update(id, { description: draft }); setEditing(null); }}
+                  onCancel={() => setEditing(null)}
+                />
+              </div>
             ) : (
               <div
                 onClick={() => { setDraft(item.description ?? ""); setEditing("description"); }}
@@ -324,17 +370,17 @@ export default function DetailA({ id, compact, onOpen, onClose, onMove, requestC
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
+                  onKeyDown={(e) => e.key === "Escape" && setComment("")}
                   rows={comment ? 3 : 1}
                   placeholder="Write a comment…"
                   className="w-full resize-none rounded border border-line px-2 py-1.5 text-[14px] outline-none focus:border-primary"
                 />
-                {comment.trim() && (
-                  <button
-                    onClick={() => { t.addComment(id, comment.trim()); setComment(""); }}
-                    className="touch-min mt-1.5 rounded bg-primary px-3 py-1 text-[13px] font-medium text-primary-fg"
-                  >
-                    Comment
-                  </button>
+                {comment && (
+                  <ConfirmCancel
+                    disabled={!comment.trim()}
+                    onConfirm={() => { t.addComment(id, comment.trim()); setComment(""); }}
+                    onCancel={() => setComment("")}
+                  />
                 )}
               </div>
             </div>
