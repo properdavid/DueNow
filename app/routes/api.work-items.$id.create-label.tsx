@@ -1,3 +1,4 @@
+export { clientAction } from "~/pwa/unreachable-action";
 import type { ActionFunctionArgs } from "react-router";
 
 import { getDatabase, requireUser } from "~/auth/session.server";

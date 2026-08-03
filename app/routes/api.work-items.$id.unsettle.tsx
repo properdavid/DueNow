@@ -1,3 +1,4 @@
+export { clientAction } from "~/pwa/unreachable-action";
 import type { Route } from "./+types/api.work-items.$id.unsettle";
 import { getDatabase, requireUser } from "~/auth/session.server";
 import { reopenAndUnsettleWorkItem, unsettleWorkItem } from "~/domain/work-items/work-items.server";

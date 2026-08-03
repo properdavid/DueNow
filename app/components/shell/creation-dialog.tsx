@@ -18,6 +18,7 @@ import { TypeMark } from "~/components/ui/work-item-marks";
 import { ParentPicker } from "~/components/work-items/parent-picker";
 import { workItemStatuses, workItemTypes, type WorkItemStatus, type WorkItemType } from "~/db/schema";
 import type { ParentCandidate } from "~/domain/work-items/work-items.server";
+import { controlErrorMessage } from "~/pwa/unreachable";
 
 interface ShellMember {
   id: number;
@@ -217,7 +218,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
               </fieldset>
             ) : null}
 
-            {createError ? <p className="text-sm text-destructive">{createError}</p> : null}
+            {createError ? <p className="text-sm text-destructive">{controlErrorMessage(createError)}</p> : null}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
@@ -235,7 +236,14 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
 export function CreationDialogTrigger({ compact = false }: { compact?: boolean }) {
   const { openCreationDialog } = useCreationDialog();
   return compact ? (
-    <Button aria-label="New Work Item" className="fixed bottom-24 right-4 z-50 rounded-full lg:hidden" size="icon" type="button" onClick={() => openCreationDialog()}>
+    <Button
+      aria-label="New Work Item"
+      className="fixed right-4 z-50 rounded-full lg:hidden"
+      size="icon"
+      style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
+      type="button"
+      onClick={() => openCreationDialog()}
+    >
       <Plus aria-hidden="true" />
     </Button>
   ) : (

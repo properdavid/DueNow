@@ -8,6 +8,7 @@ import { Input } from "~/components/ui/input";
 import { Select } from "~/components/ui/select";
 import { Avatar } from "~/components/ui/work-item-marks";
 import { loadSettings } from "~/domain/settings/settings.server";
+import { controlErrorMessage } from "~/pwa/unreachable";
 
 type MutationFetcherData = { ok: true } | { ok: false; error: { field?: string; message: string } };
 type SettingsMember = { id: number; email: string; name: string; theme: "system" | "light" | "dark" };
@@ -106,7 +107,7 @@ function ThemeForm({ theme }: { theme: "system" | "light" | "dark" }) {
       <p id="theme-help" className="text-sm text-muted-foreground">
         System uses your device preference without JavaScript.
       </p>
-      {fetcher.data?.ok === false ? <p className="text-sm text-destructive">{fetcher.data.error.message}</p> : null}
+      {fetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
     </fetcher.Form>
   );
 }
@@ -156,7 +157,7 @@ function TimezoneForm({ timezone, timezones }: { timezone: string; timezones: st
       <p id="timezone-help" className="text-sm text-muted-foreground">
         Today and Due tab groups are computed in this timezone for both members.
       </p>
-      {fetcher.data?.ok === false ? <p className="text-sm text-destructive">{fetcher.data.error.message}</p> : null}
+      {fetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
     </fetcher.Form>
   );
 }
@@ -182,7 +183,7 @@ function LabelManagement({ labels }: { labels: SettingsLabel[] }) {
           {createFetcher.state === "idle" ? "Create Label" : "Creating"}
         </Button>
       </createFetcher.Form>
-      {createFetcher.data?.ok === false ? <p className="text-sm text-destructive">{createFetcher.data.error.message}</p> : null}
+      {createFetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(createFetcher.data.error.message)}</p> : null}
 
       {labels.length === 0 ? (
         <div className="rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground">No Labels yet.</div>
@@ -219,13 +220,14 @@ function LabelRow({ label }: { label: SettingsLabel }) {
           {label.usageCount} {workItemWord}
         </p>
         <p className="text-sm text-destructive">Deleting detaches this Label everywhere.</p>
-        {renameFetcher.data?.ok === false ? <p className="text-sm text-destructive">{renameFetcher.data.error.message}</p> : null}
+        {renameFetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(renameFetcher.data.error.message)}</p> : null}
       </div>
       <deleteFetcher.Form action={`/api/labels/${label.id}/delete`} method="post">
         <Button type="submit" variant="destructive">
           {deleteFetcher.state === "idle" ? "Delete" : "Deleting"}
         </Button>
       </deleteFetcher.Form>
+      {deleteFetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(deleteFetcher.data.error.message)}</p> : null}
     </div>
   );
 }

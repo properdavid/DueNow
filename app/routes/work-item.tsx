@@ -15,6 +15,7 @@ import { ReparentDialog } from "~/components/work-items/reparent-dialog";
 import type { WorkItemCommentReadModel, WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
 import type { WorkItemStatus, WorkItemType } from "~/db/schema";
+import { controlErrorMessage } from "~/pwa/unreachable";
 
 type ShellData = {
   user: { id: number };
@@ -951,10 +952,6 @@ function formatSummaryList(summaries: string[]) {
   if (summaries.length <= 1) return summaries[0] ?? "";
   if (summaries.length === 2) return `${summaries[0]} and ${summaries[1]}`;
   return `${summaries.slice(0, -1).join(", ")}, and ${summaries[summaries.length - 1]}`;
-}
-
-function controlErrorMessage(message: string) {
-  return message === "Try again." ? "Can't reach DueNow — Try again." : message;
 }
 
 function relativeTime(createdAt: number, now = Date.now()) {
