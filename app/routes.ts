@@ -7,7 +7,11 @@ export default [
   route("auth/logout", "routes/auth.logout.tsx"),
   route("api/parents", "routes/api.parents.tsx"),
   route("api/work-items/create", "routes/api.work-items.create.tsx"),
+  route("api/work-items/:id/assign", "routes/api.work-items.$id.assign.tsx"),
   route("api/work-items/:id/start", "routes/api.work-items.$id.start.tsx"),
+  route("api/work-items/:id/update-description", "routes/api.work-items.$id.update-description.tsx"),
+  route("api/work-items/:id/update-due-date", "routes/api.work-items.$id.update-due-date.tsx"),
+  route("api/work-items/:id/update-summary", "routes/api.work-items.$id.update-summary.tsx"),
   layout("routes/shell.tsx", [
     index("routes/home.tsx"),
     route("due", "routes/due.tsx", [route(":id", "routes/work-item.tsx", { id: "due-item" })]),
