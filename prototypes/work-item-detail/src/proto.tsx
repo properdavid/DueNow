@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 export const VARIANTS = [
-  { key: "A", name: "Full outline — indented, global create" },
-  { key: "B", name: "Drill-down — no indentation, you stand in a parent" },
-  { key: "C", name: "Sectioned checklist — inline capture" },
+  { key: "A", name: "Document — one scroll, edit in place" },
+  { key: "B", name: "Record — property rail + tabbed body, form-driven" },
+  { key: "C", name: "Workbench — action bar, children body, comment thread" },
 ] as const;
 
 export type Tab = "due" | "items" | "search" | "settings";
@@ -30,7 +30,8 @@ export function useNav() {
     goTab: (t: Tab) => set({ tab: t, item: null }),
     open: (id: number) => set({ item: String(id) }),
     close: () => set({ item: null }),
-    setVariant: (v: string) => set({ variant: v, item: null }),
+    // The variant swap keeps the open work item — the detail view *is* what changes.
+    setVariant: (v: string) => set({ variant: v }),
   };
 }
 

@@ -1,7 +1,7 @@
 // PROTOTYPE — throwaway. In-memory work item store so creation, reparenting and the
 // two cascades (ADR-0003) are real enough to feel. No persistence, no server.
 import { createContext, useContext, useMemo, useState } from "react";
-import { SEED, type Status, type Type, type WorkItem } from "./data";
+import { ME, SEED, type Status, type Type, type WorkItem } from "./data";
 
 const CHILD_TYPE: Record<Type, Type | null> = {
   Topic: "Project",
@@ -26,6 +26,13 @@ export type Tree = {
   create: (parentId: number | null, summary: string, fields?: Partial<WorkItem>) => number;
   reparent: (id: number, parentId: number) => void;
   setStatus: (id: number, status: Status) => void;
+  /** What a settle would sweep — the unfinished descendants, so a variant can say so. */
+  settlePreview: (id: number) => WorkItem[];
+  /** What a start would wake — the Open ancestors, up to the first already started. */
+  startPreview: (id: number) => WorkItem[];
+  update: (id: number, patch: Partial<WorkItem>) => void;
+  addComment: (id: number, body: string) => void;
+  undo: (() => void) | null;
   lastCreated: number | null;
 };
 
@@ -34,6 +41,7 @@ const Ctx = createContext<Tree | null>(null);
 export function TreeProvider({ children: kids }: { children: React.ReactNode }) {
   const [items, setItems] = useState<WorkItem[]>(() => SEED.map((i) => ({ ...i })));
   const [lastCreated, setLastCreated] = useState<number | null>(null);
+  const [undoStack, setUndoStack] = useState<WorkItem[] | null>(null);
 
   const api = useMemo<Tree>(() => {
     const byId = (id: number) => items.find((i) => i.id === id)!;
@@ -102,7 +110,32 @@ export function TreeProvider({ children: kids }: { children: React.ReactNode }) 
           return next;
         });
       },
+      settlePreview: (id) => descendants(id).filter(unfinished),
+      startPreview: (id) => {
+        const out: WorkItem[] = [];
+        let p = byId(id).parentId;
+        while (p != null) {
+          const a = byId(p);
+          if (a.status !== "Open") break;
+          out.push(a);
+          p = a.parentId;
+        }
+        return out;
+      },
+      update: (id, patch) => {
+        setUndoStack(items.map((i) => ({ ...i })));
+        setItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)));
+      },
+      addComment: (id, body) => {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === id ? { ...i, comments: [...(i.comments ?? []), { author: ME, at: "just now", body }] } : i,
+          ),
+        );
+      },
+      undo: undoStack ? () => { setItems(undoStack); setUndoStack(null); } : null,
       setStatus: (id, status) => {
+        setUndoStack(items.map((i) => ({ ...i })));
         setItems((prev) => {
           const next = prev.map((i) => ({ ...i }));
           const find = (n: number) => next.find((i) => i.id === n)!;
@@ -133,7 +166,7 @@ export function TreeProvider({ children: kids }: { children: React.ReactNode }) 
       },
       lastCreated,
     };
-  }, [items, lastCreated]);
+  }, [items, lastCreated, undoStack]);
 
   return <Ctx.Provider value={api}>{kids}</Ctx.Provider>;
 }

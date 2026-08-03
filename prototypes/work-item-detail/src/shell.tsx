@@ -1,10 +1,12 @@
-// PROTOTYPE — throwaway. ADR-0017's shell, held fixed across all three variants:
-// compact below 1024 (capsule + FAB + full-screen push), split at or above
-// (sidebar + resizable list/detail). Only the Work Items tree swaps.
+// PROTOTYPE — throwaway. ADR-0017's shell and ADR-0018's tree, both held fixed across
+// all three variants: compact below 1024 (capsule + FAB + full-screen push), split at
+// or above (sidebar + resizable list/detail). Only the *detail view* swaps — it owns
+// its whole pane, header and back/close affordance included, because how a detail view
+// announces where you are is part of #12's question.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNav, useViewport } from "./proto";
-import { Avatar, CreateDialog, DueTab, ItemDetail, MoveDialog, SearchTab, SettingsTab } from "./screens";
-import { useTree } from "./store";
+import { Avatar, CreateDialog, DueTab, MoveDialog, SearchTab, SettingsTab } from "./screens";
+import Tree from "./variants/TreeA";
 
 const TABS = [
   { key: "due", label: "Due", icon: "◷" },
@@ -21,10 +23,18 @@ export type TreeProps = {
   requestCreate: (parentId: number | null) => void;
 };
 
-export function Shell({ tree }: { tree: (p: TreeProps) => React.ReactNode }) {
+export type DetailProps = {
+  id: number;
+  compact: boolean;
+  onOpen: (id: number) => void;
+  onClose: () => void;
+  onMove: (id: number) => void;
+  requestCreate: (parentId: number | null) => void;
+};
+
+export function Shell({ detail }: { detail: (p: DetailProps) => React.ReactNode }) {
   const { compact } = useViewport();
   const { tab, item, goTab, open, close } = useNav();
-  const t = useTree();
   const [creating, setCreating] = useState<{ parent: number | null } | null>(null);
   const [moving, setMoving] = useState<number | null>(null);
   const [split, setSplit] = useState(480);
@@ -48,9 +58,18 @@ export function Shell({ tree }: { tree: (p: TreeProps) => React.ReactNode }) {
     requestCreate: (parent) => setCreating({ parent }),
   };
 
+  const detailProps: DetailProps = {
+    id: item ?? 0,
+    compact,
+    onOpen: open,
+    onClose: close,
+    onMove: (id) => setMoving(id),
+    requestCreate: (parent) => setCreating({ parent }),
+  };
+
   const body = (
     <>
-      {tab === "items" && tree(treeProps)}
+      {tab === "items" && <Tree {...treeProps} />}
       {tab === "due" && <DueTab onOpen={open} />}
       {tab === "search" && <SearchTab onOpen={open} />}
       {tab === "settings" && <SettingsTab />}
@@ -67,19 +86,11 @@ export function Shell({ tree }: { tree: (p: TreeProps) => React.ReactNode }) {
   if (compact) {
     return (
       <div className="relative h-full overflow-hidden">
-        <main className="h-full overflow-y-auto pb-28">
-          {item ? (
-            <>
-              <div className="sticky top-0 z-20 flex items-center gap-1 border-b border-line bg-bg/95 px-1 py-1 backdrop-blur">
-                <button onClick={close} className="min-h-11 rounded px-2 text-muted" aria-label="Back">←</button>
-                <p className="min-w-0 flex-1 truncate text-[11px] text-faint">{t.lineage(item) || "Topics"}</p>
-              </div>
-              <ItemDetail id={item} onOpen={open} onMove={(id) => setMoving(id)} />
-            </>
-          ) : (
-            body
-          )}
-        </main>
+        {item ? (
+          <main className="h-full overflow-hidden">{detail(detailProps)}</main>
+        ) : (
+          <main className="h-full overflow-y-auto pb-28">{body}</main>
+        )}
 
         {!item && tab !== "settings" && (
           <button
@@ -160,18 +171,7 @@ export function Shell({ tree }: { tree: (p: TreeProps) => React.ReactNode }) {
           <div onMouseDown={() => (dragging.current = true)} className="w-1 shrink-0 cursor-col-resize hover:bg-primary/30" />
           <section className="flex min-w-0 flex-1 flex-col">
             {item ? (
-              <>
-                <header className="flex h-12 shrink-0 items-center gap-2 border-b border-line px-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] text-faint">{t.lineage(item) || "Topics"}</p>
-                    <h1 className="truncate text-[14px] font-semibold">{t.byId(item).summary}</h1>
-                  </div>
-                  <button onClick={close} className="rounded px-2 text-muted hover:bg-raised" aria-label="Close">✕</button>
-                </header>
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  <ItemDetail id={item} onOpen={open} onMove={(id) => setMoving(id)} showHeader={false} />
-                </div>
-              </>
+              detail(detailProps)
             ) : (
               <div className="flex flex-1 items-center justify-center text-[13px] text-faint">Select a work item</div>
             )}
