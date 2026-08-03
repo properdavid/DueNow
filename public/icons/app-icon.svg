@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="DueNow App Icon">
+  <rect width="100" height="100" fill="#4d41c8"/>
+  <g transform="translate(50 50) scale(0.88) translate(-50 -50)" fill="#ffffff" stroke="#ffffff" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 30 L25 39 L40 21" fill="none" stroke-width="7"/>
+    <path d="M16 62 L25 71 L40 53" fill="none" stroke-width="7"/>
+    <path fill-rule="evenodd" stroke="none" d="M58 18H68C78 18 85 23 85 30.5C85 38 78 43 68 43H58ZM65 25V36H68C73 36 78 34 78 30.5C78 27 73 25 68 25Z"/>
+    <path stroke="none" d="M58 57H65L76 74V57H83V82H76L65 65V82H58Z"/>
+  </g>
+</svg>

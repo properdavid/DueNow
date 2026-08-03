@@ -1,7 +1,9 @@
+export { clientAction } from "~/pwa/unreachable-action";
 import type { Route } from "./+types/api.work-items.create";
 import { getDatabase, requireUser } from "~/auth/session.server";
 import { createWorkItem } from "~/domain/work-items/work-items.server";
 import { workItemStatuses, workItemTypes, type WorkItemStatus, type WorkItemType } from "~/db/schema";
+import { runFieldUpdate } from "./work-item-field-actions";
 
 export async function action({ request, context }: Route.ActionArgs) {
   const user = await requireUser(request, context);
@@ -16,19 +18,21 @@ export async function action({ request, context }: Route.ActionArgs) {
     return { ok: false as const, error: { field: "status", message: "Choose a valid Status." } };
   }
 
-  return createWorkItem(
-    getDatabase(context),
-    {
-      type,
-      summary: stringValue(formData, "summary"),
-      parentId: nullablePositiveInteger(formData, "parentId"),
-      description: stringValue(formData, "description"),
-      dueDate: nullableString(formData, "dueDate"),
-      status,
-      assigneeId: nullablePositiveInteger(formData, "assigneeId"),
-      labelIds: formData.getAll("labelIds").map(String).map(Number).filter((id) => Number.isSafeInteger(id) && id > 0),
-    },
-    user.id,
+  return runFieldUpdate(() =>
+    createWorkItem(
+      getDatabase(context),
+      {
+        type,
+        summary: stringValue(formData, "summary"),
+        parentId: nullablePositiveInteger(formData, "parentId"),
+        description: stringValue(formData, "description"),
+        dueDate: nullableString(formData, "dueDate"),
+        status,
+        assigneeId: nullablePositiveInteger(formData, "assigneeId"),
+        labelIds: formData.getAll("labelIds").map(String).map(Number).filter((id) => Number.isSafeInteger(id) && id > 0),
+      },
+      user.id,
+    ),
   );
 }
 

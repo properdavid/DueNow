@@ -1,5 +1,3 @@
-import type { UpdateWorkItemResult, UpdateWorkItemStatusResult } from "~/domain/work-items/work-items.server";
-
 export function parseWorkItemId(value: string | undefined) {
   const id = Number(value);
   if (!Number.isSafeInteger(id) || id <= 0) {
@@ -22,13 +20,6 @@ export function parsePositiveFormInteger(formData: FormData, key: string) {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : "invalid";
 }
 
-export function runFieldUpdate<T extends UpdateWorkItemResult | UpdateWorkItemStatusResult>(operation: () => T): T | UpdateWorkItemResult {
-  try {
-    return operation();
-  } catch (error) {
-    if (error instanceof Response) {
-      throw error;
-    }
-    return { ok: false, error: { message: "Try again." } };
-  }
+export function runFieldUpdate<T>(operation: () => T): T | { ok: false; error: { message: string } } {
+  return operation();
 }

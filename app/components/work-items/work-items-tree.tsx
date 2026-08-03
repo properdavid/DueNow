@@ -11,6 +11,7 @@ import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
 import { ReparentDialog } from "~/components/work-items/reparent-dialog";
 import type { WorkItemsTreeReadModel, WorkItemsTreeRow } from "~/domain/work-items/work-items.server";
 import { expandableRowIds, isTerminalStatus, rootIsAllSettled, rootRows, terminalParentIdsInPath, workItemsTreeLines } from "~/domain/work-items/tree-view";
+import { controlErrorMessage } from "~/pwa/unreachable";
 
 export type ItemsLoaderData = WorkItemsTreeReadModel & { user: AuthUser };
 
@@ -186,11 +187,12 @@ function TreeRow({
 }
 
 function RowMenu({ row, returnTo }: { row: WorkItemsTreeRow; returnTo: string }) {
-  const fetcher = useFetcher();
+  const fetcher = useFetcher<{ ok: true } | { ok: false; error: { message: string } }>();
   const { openCreationDialog } = useCreationDialog();
   const [reparentOpen, setReparentOpen] = useState(false);
   const canStart = row.status === "open";
   const isStarting = fetcher.state !== "idle";
+  const error = fetcher.data?.ok === false ? fetcher.data.error.message : null;
   const childType = childTypeFor(row.type);
   return (
     <>
@@ -229,6 +231,7 @@ function RowMenu({ row, returnTo }: { row: WorkItemsTreeRow; returnTo: string })
         open={reparentOpen}
         onOpenChange={setReparentOpen}
       />
+      {error ? <p className="ml-16 mt-1 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
     </>
   );
 }

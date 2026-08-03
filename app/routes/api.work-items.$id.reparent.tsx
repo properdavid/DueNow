@@ -1,6 +1,8 @@
+export { clientAction } from "~/pwa/unreachable-action";
 import type { Route } from "./+types/api.work-items.$id.reparent";
 import { getDatabase, requireUser } from "~/auth/session.server";
 import { reparentWorkItem } from "~/domain/work-items/work-items.server";
+import { runFieldUpdate } from "./work-item-field-actions";
 
 export async function action({ request, params, context }: Route.ActionArgs) {
   const user = await requireUser(request, context);
@@ -15,7 +17,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     return { ok: false as const, error: { field: "parentId", message: "Choose a valid Parent." } };
   }
 
-  return reparentWorkItem(getDatabase(context), id, parentId, formData.get("confirmed") === "true", user.id);
+  return runFieldUpdate(() => reparentWorkItem(getDatabase(context), id, parentId, formData.get("confirmed") === "true", user.id));
 }
 
 function positiveInteger(value: FormDataEntryValue | null) {

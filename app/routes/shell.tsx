@@ -55,12 +55,16 @@ export default function Shell({ loaderData }: Route.ComponentProps) {
             ))}
           </nav>
         </aside>
-        <div className={isFullLayout ? "pb-28 lg:pl-64 lg:pb-0" : "lg:h-screen lg:overflow-hidden lg:pl-64"}>
+        <div
+          className={isFullLayout ? "lg:pl-64 lg:pb-0" : "lg:h-screen lg:overflow-hidden lg:pl-64"}
+          style={isFullLayout ? { paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" } : undefined}
+        >
           <Outlet />
         </div>
         <CreationDialogTrigger compact />
         <nav
-          className="fixed inset-x-4 bottom-4 z-50 mx-auto flex max-w-md justify-around rounded-full border border-border bg-card p-1 text-card-foreground lg:hidden"
+          className="fixed inset-x-4 z-50 mx-auto flex max-w-md justify-around rounded-full border border-border bg-card p-1 text-card-foreground lg:hidden"
+          style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
           aria-label="Primary"
         >
           {destinations.map(({ href, label, Icon }) => (

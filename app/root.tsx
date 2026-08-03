@@ -10,6 +10,17 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { Button } from "~/components/ui/button";
+import { isUnreachableError } from "~/pwa/unreachable";
+import { darkPrimaryIndigoHex, primaryIndigoHex } from "../pwa/manifest";
+
+export const links: Route.LinksFunction = () => [
+  { rel: "manifest", href: "/manifest.webmanifest" },
+  { rel: "icon", href: "/icons/favicon.svg", type: "image/svg+xml" },
+  { rel: "apple-touch-icon", href: "/icons/apple-touch-icon-180.png", sizes: "180x180" },
+  { rel: "apple-touch-icon", href: "/icons/apple-touch-icon-167.png", sizes: "167x167" },
+  { rel: "apple-touch-icon", href: "/icons/apple-touch-icon-152.png", sizes: "152x152" },
+];
 
 export function themeClassNameFor(theme?: "system" | "light" | "dark") {
   return theme === "light" || theme === "dark" ? theme : undefined;
@@ -17,8 +28,8 @@ export function themeClassNameFor(theme?: "system" | "light" | "dark") {
 
 type ThemeColorMeta = { name: "theme-color"; content: string; media?: string };
 
-const lightThemeColorMeta: ThemeColorMeta = { name: "theme-color", content: "hsl(245 55% 52%)" };
-const darkThemeColorMeta: ThemeColorMeta = { name: "theme-color", content: "hsl(245 60% 68%)" };
+const lightThemeColorMeta: ThemeColorMeta = { name: "theme-color", content: primaryIndigoHex };
+const darkThemeColorMeta: ThemeColorMeta = { name: "theme-color", content: darkPrimaryIndigoHex };
 
 export function themeColorMetaFor(theme?: "system" | "light" | "dark") {
   if (theme === "light") return [lightThemeColorMeta];
@@ -61,7 +72,28 @@ export default function App() {
   return <Outlet />;
 }
 
+export function isUnreachableRouteError(error: unknown) {
+  if (isRouteErrorResponse(error)) {
+    return false;
+  }
+  return isUnreachableError(error);
+}
+
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  if (isUnreachableRouteError(error)) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-4 p-6">
+        <div className="space-y-2 rounded-lg border border-border bg-card p-6 text-card-foreground">
+          <h1 className="text-xl font-semibold">Can&apos;t reach DueNow</h1>
+          <p className="text-base text-muted-foreground">The server did not answer. Retry when DueNow is reachable again.</p>
+          <Button variant="outline" type="button" onClick={() => window.location.reload()}>
+            Retry
+          </Button>
+        </div>
+      </main>
+    );
+  }
+
   const heading = isRouteErrorResponse(error)
     ? `${error.status} ${error.statusText}`
     : "Something went wrong";

@@ -32,7 +32,7 @@ export default function Login({ loaderData }: Route.ComponentProps) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-background p-6 text-foreground">
       <section className="w-full max-w-sm space-y-4">
-        <h1 className="text-xl font-semibold tracking-[-0.025em] text-primary">DueNow</h1>
+        <h1 className="font-semibold tracking-[-0.025em] text-primary" style={{ fontSize: "26px" }}>DueNow</h1>
         <div className="rounded-lg border border-border bg-card p-6 text-card-foreground">
           <div className="space-y-4">
             <div className="space-y-2">

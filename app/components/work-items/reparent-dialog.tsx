@@ -13,6 +13,7 @@ import {
 import { ParentPicker } from "~/components/work-items/parent-picker";
 import type { ParentCandidate } from "~/domain/work-items/work-items.server";
 import type { WorkItemType } from "~/db/schema";
+import { controlErrorMessage } from "~/pwa/unreachable";
 
 type ParentPickerData =
   | { ok: true; type: WorkItemType; query: string; candidates: ParentCandidate[] }
@@ -116,8 +117,4 @@ function formatList(values: string[]) {
   if (values.length <= 1) return values[0] ?? "";
   if (values.length === 2) return `${values[0]} and ${values[1]}`;
   return `${values.slice(0, -1).join(", ")}, and ${values.at(-1)}`;
-}
-
-function controlErrorMessage(message: string) {
-  return message === "Try again." ? "Can't reach DueNow — Try again." : message;
 }
