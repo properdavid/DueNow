@@ -36,6 +36,11 @@ colors:
   destructive: "hsl(0 72% 52%)"
   destructive-foreground: "hsl(0 0% 100%)"
   destructive-subtle: "hsl(0 72% 95%)"
+  # --- Due tab urgency edge colours: semantic to the radar, not status/type ---
+  urgency-overdue: "hsl(0 72% 52%)"
+  urgency-today: "hsl(38 85% 46%)"
+  urgency-soon: "hsl(245 60% 86%)"
+  urgency-later: "hsl(240 6% 82%)"
   # --- Type colours: one per rung of the Type Ladder, never blue, never a circle ---
   type-topic: "hsl(38 85% 46%)" # amber
   type-project: "hsl(265 50% 55%)" # violet
@@ -221,6 +226,10 @@ The palette is a single indigo brand colour on near-neutral greys.
 - **Border / Input / Ring.** Hairline separators, input outlines and the focus
   ring, which tracks `primary`.
 - **Destructive.** Delete, and the red an **Overdue** date is carried in.
+- **Urgency.** The Due tab's **Urgency Edge** uses dedicated semantic tokens:
+  `urgency-overdue`, `urgency-today`, `urgency-soon`, and `urgency-later`.
+  They intentionally share families with destructive red, amber, faint indigo,
+  and neutral grey without making raw colour utilities valid at call sites.
 
 **Greys are near-neutral, at or below 8% saturation, and are not tinted toward
 the brand hue.** The chrome carries two icon axes; tinted chrome pulls both off

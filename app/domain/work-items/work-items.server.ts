@@ -4,6 +4,8 @@ import type { DatabaseClient } from "~/db/client";
 import { comments, labels, users, workItems, workItemStatuses, workItemTypes, type WorkItemStatus, type WorkItemType } from "~/db/schema";
 import {
   ancestorsForWorkItem,
+  dueTabGroups,
+  formatLateness,
   unfinishedDescendantsForSettleConfirmation,
   parentTypeForWorkItemType,
   planCreateStatusEffects,
@@ -33,6 +35,27 @@ export interface WorkItemsTreeReadModel {
   ancestorIds: number[];
   selectedId: number | null;
   hasAnyWorkItems: boolean;
+}
+
+export type DueRadarScope = "mine" | "everyone";
+export type DueRadarUrgency = "overdue" | "today" | "soon" | "later";
+
+export interface DueRadarCard extends WorkItemsTreeRow {
+  breadcrumb: { id: number; summary: string; type: WorkItemType }[];
+  relativeDate: string;
+  absoluteDate: string;
+  lateness: string | null;
+  urgency: DueRadarUrgency;
+}
+
+export interface DueRadarReadModel {
+  groups: {
+    now: DueRadarCard[];
+    soon: DueRadarCard[];
+    later: DueRadarCard[];
+  };
+  today: string;
+  hasEverHadWorkItems: boolean;
 }
 
 export interface WorkItemDetailReadModel {
@@ -115,6 +138,28 @@ export function loadWorkItemsTree(database: DatabaseClient, selectedId: number |
     ancestorIds: selectedId === null ? [] : ancestorsForWorkItem(treeRows, selectedId).map((row) => row.id),
     selectedId,
     hasAnyWorkItems: treeRows.length > 0,
+  };
+}
+
+export function loadDueRadar(database: DatabaseClient, currentUserId: number, scope: DueRadarScope, now = new Date()): DueRadarReadModel {
+  const rows = loadWorkItemRows(database);
+  const settings = database.sqlite.prepare("SELECT timezone FROM household_settings WHERE id = 1").get() as { timezone: string };
+  const today = todayInTimezone(settings.timezone, now);
+  const visibleIds =
+    scope === "mine"
+      ? new Set(rows.filter((row) => row.assigneeId === null || row.assigneeId === currentUserId).map((row) => row.id))
+      : undefined;
+  const groups = dueTabGroups(rows, today, { visibleIds });
+  const rowById = new Map(rows.map((row) => [row.id, row]));
+
+  return {
+    groups: {
+      now: groups.now.map((row) => toDueRadarCard(rows, requireDueRadarRow(rowById, row.id), today)),
+      soon: groups.soon.map((row) => toDueRadarCard(rows, requireDueRadarRow(rowById, row.id), today)),
+      later: groups.later.map((row) => toDueRadarCard(rows, requireDueRadarRow(rowById, row.id), today)),
+    },
+    today,
+    hasEverHadWorkItems: rows.length > 0,
   };
 }
 
@@ -650,6 +695,70 @@ function loadTreeRows(database: DatabaseClient): TreeWorkItem[] {
 
 function typeLabel(type: WorkItemType) {
   return { topic: "Topic", project: "Project", task: "Task", subtask: "Subtask" }[type];
+}
+
+function toDueRadarCard(rows: WorkItemsTreeRow[], row: WorkItemsTreeRow, today: string): DueRadarCard {
+  const daysOut = daysBetween(today, row.dueDate ?? today);
+  const lateness = row.dueDate !== null && row.dueDate < today ? formatLateness(row.dueDate, today) : null;
+  return {
+    ...row,
+    breadcrumb: ancestorsForWorkItem(rows, row.id).map(({ id, summary, type }) => ({ id, summary, type })),
+    relativeDate: formatRelativeDueDate(daysOut, lateness),
+    absoluteDate: formatAbsoluteDueDate(row.dueDate ?? today),
+    lateness,
+    urgency: urgencyForDaysOut(daysOut),
+  };
+}
+
+function requireDueRadarRow(rows: ReadonlyMap<number, WorkItemsTreeRow>, id: number) {
+  const row = rows.get(id);
+  if (!row) {
+    throw new Error(`Due radar referenced unknown Work Item ${id}`);
+  }
+  return row;
+}
+
+function formatRelativeDueDate(daysOut: number, lateness: string | null) {
+  if (lateness) return lateness;
+  if (daysOut === 0) return "Today";
+  if (daysOut === 1) return "Tomorrow";
+  return `in ${daysOut} days`;
+}
+
+function formatAbsoluteDueDate(dueDate: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "UTC",
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  }).format(parseDate(dueDate));
+}
+
+function urgencyForDaysOut(daysOut: number): DueRadarUrgency {
+  if (daysOut < 0) return "overdue";
+  if (daysOut === 0) return "today";
+  if (daysOut <= 7) return "soon";
+  return "later";
+}
+
+function daysBetween(start: string, end: string): number {
+  return Math.round((parseDate(end).getTime() - parseDate(start).getTime()) / 86_400_000);
+}
+
+function parseDate(date: string): Date {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+function todayInTimezone(timezone: string, now: Date) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = Object.fromEntries(formatter.formatToParts(now).map((part) => [part.type, part.value]));
+  return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
 function isTerminalStatus(status: WorkItemStatus) {
