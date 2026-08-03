@@ -128,6 +128,16 @@ _Avoid_: completion cascade, bulk close
 The upward cascade. Moving a work item to In Progress walks up its ancestors, moving each Open one to In Progress, and stops at the first that is already In Progress.
 _Avoid_: promotion, parent rollup
 
+### The shell
+
+**Compact Layout**:
+The navigation shell below 1024px — content full width, a floating capsule of four tabs at the bottom, and a work item opening as a full-screen push. What a phone gets, and what a tablet in portrait gets.
+_Avoid_: mobile, phone layout, small screen
+
+**Split Layout**:
+The navigation shell at 1024px and above — a left sidebar of four destinations beside a resizable two-column split, the destination's list on the left and the selected work item's detail on the right. What a desktop gets, and a tablet in landscape.
+_Avoid_: desktop layout, two-pane, master-detail, wide screen
+
 ### The Due tab
 
 **Overdue**:

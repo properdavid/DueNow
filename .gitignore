@@ -21,3 +21,5 @@ data/
 
 # Logs
 *.log
+# Agent scratch
+.playwright-mcp/
