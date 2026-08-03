@@ -125,7 +125,7 @@ describe("Work Item tree semantics", () => {
     expect(creationWouldNeedReopen(rows, 2, "open")).toEqual(expected);
     expect(creationWouldNeedReopen(rows, 2, "completed")).toEqual([]);
     expect(reparentWouldNeedReopen(rows, 5, 2)).toEqual(expected);
-    expect(reparentWouldNeedReopen(rows, 3, 2)).toEqual([]);
+    expect(reparentWouldNeedReopen(rows, 3, 2)).toEqual(expected);
     expect(unsettledStatusWouldNeedReopen(rows, 3, "open")).toEqual(expected);
     expect(unsettledStatusWouldNeedReopen(rows, 3, "closed")).toEqual([]);
     expect(planUnsettle(rows, 3, "open")).toEqual({

@@ -7,6 +7,7 @@ import {
   unfinishedDescendantsForSettleConfirmation,
   parentTypeForWorkItemType,
   planCreateStatusEffects,
+  planReparent,
   planReopenTerminalAncestors,
   planStartCascade,
   planSettleCascade,
@@ -89,6 +90,8 @@ export type UpdateWorkItemStatusResult =
   | { ok: true; changed: number }
   | { ok: false; error: { field?: string; message: string } };
 
+export type ReparentWorkItemResult = { ok: true; changed: number } | { ok: false; error: { field?: string; message: string } };
+
 export function loadWorkItemsTree(database: DatabaseClient, selectedId: number | null): WorkItemsTreeReadModel {
   const treeRows = loadWorkItemRows(database);
   const selected = selectedId === null ? null : treeRows.find((row) => row.id === selectedId);
@@ -140,7 +143,7 @@ export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkIt
   };
 }
 
-export function loadParentCandidates(database: DatabaseClient, type: WorkItemType, query: string): ParentCandidate[] {
+export function loadParentCandidates(database: DatabaseClient, type: WorkItemType, query: string, excludeParentId: number | null = null): ParentCandidate[] {
   const parentType = parentTypeForWorkItemType(type);
   if (parentType === null) {
     return [];
@@ -153,6 +156,7 @@ export function loadParentCandidates(database: DatabaseClient, type: WorkItemTyp
   const ids = new Set(candidateRows.map((row) => row.id));
   return rows
     .filter((row) => ids.has(row.id))
+    .filter((row) => row.id !== excludeParentId)
     .map((row) => {
       const ancestors = ancestorsForWorkItem(rows, row.id);
       const startCascade = planCreateStatusEffects(rows, row.id, "in_progress").statusChanges
@@ -170,6 +174,50 @@ export function loadParentCandidates(database: DatabaseClient, type: WorkItemTyp
         startCascade,
       };
     });
+}
+
+export function reparentWorkItem(
+  database: DatabaseClient,
+  id: number,
+  newParentId: number,
+  confirmed: boolean,
+  actorId: number,
+  now = Date.now(),
+): ReparentWorkItemResult {
+  return database.sqlite.transaction(() => {
+    const rows = loadTreeRows(database);
+    const target = rows.find((row) => row.id === id);
+    if (!target) {
+      throw new Response("Work Item not found", { status: 404 });
+    }
+    if (target.type === "topic") {
+      return { ok: false as const, error: { field: "id", message: "A Topic cannot be reparented." } };
+    }
+    if (target.parentId === newParentId) {
+      return { ok: false as const, error: { field: "parentId", message: "Choose a different Parent." } };
+    }
+    const newParent = rows.find((row) => row.id === newParentId);
+    if (!newParent) {
+      return { ok: false as const, error: { field: "parentId", message: "Choose a valid Parent." } };
+    }
+
+    let plan;
+    try {
+      plan = planReparent(rows, id, newParentId);
+    } catch {
+      return { ok: false as const, error: { field: "parentId", message: "Choose a valid Parent." } };
+    }
+    if (plan.reopenStatusChanges.length > 0 && !confirmed) {
+      return { ok: false as const, error: { field: "confirmed", message: "Confirm the Reopen Notice first." } };
+    }
+
+    database.sqlite
+      .prepare("UPDATE work_items SET parentId = ?, parentType = ?, updatedAt = ?, updatedBy = ? WHERE id = ?")
+      .run(plan.parentage.parentId, plan.parentage.parentType, now, actorId, plan.parentage.id);
+    const statusChanges = [...plan.statusChanges, ...plan.reopenStatusChanges];
+    applyStatusChanges(database, statusChanges, actorId, now);
+    return { ok: true as const, changed: 1 + statusChanges.length };
+  })();
 }
 
 export function createWorkItem(

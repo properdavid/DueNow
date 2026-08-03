@@ -8,6 +8,7 @@ export default [
   route("api/parents", "routes/api.parents.tsx"),
   route("api/work-items/create", "routes/api.work-items.create.tsx"),
   route("api/work-items/:id/assign", "routes/api.work-items.$id.assign.tsx"),
+  route("api/work-items/:id/reparent", "routes/api.work-items.$id.reparent.tsx"),
   route("api/work-items/:id/settle", "routes/api.work-items.$id.settle.tsx"),
   route("api/work-items/:id/start", "routes/api.work-items.$id.start.tsx"),
   route("api/work-items/:id/unsettle", "routes/api.work-items.$id.unsettle.tsx"),

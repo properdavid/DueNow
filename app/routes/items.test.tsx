@@ -7,6 +7,7 @@ import { loadWorkItemsTree } from "~/domain/work-items/work-items.server";
 import { CreationDialogProvider } from "~/components/shell/creation-dialog";
 import * as createRoute from "./api.work-items.create";
 import * as parentsRoute from "./api.parents";
+import * as reparentRoute from "./api.work-items.$id.reparent";
 import * as startRoute from "./api.work-items.$id.start";
 import { WorkItemsTree } from "./items";
 import type { WorkItemsTreeReadModel, WorkItemsTreeRow } from "~/domain/work-items/work-items.server";
@@ -135,6 +136,105 @@ describe("Work Items tree route seam", () => {
           { id: 4, summary: "Outdoor Kitchen", status: "open", lineage: "Travel › Outdoor Kitchen" },
         ],
       });
+    } finally {
+      harness.close();
+    }
+  });
+
+  test("/api/parents can exclude the current parent for reparenting", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
+
+    try {
+      const cookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const user = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      const insert = harness.database.sqlite.prepare(
+        "INSERT INTO work_items (id, type, parentId, parentType, summary, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      );
+      insert.run(1, "topic", null, null, "House", "open", 1, 1, user.id, user.id);
+      insert.run(2, "project", 1, "topic", "Kitchen", "open", 1, 1, user.id, user.id);
+      insert.run(3, "project", 1, "topic", "Patio", "open", 1, 1, user.id, user.id);
+
+      const data = await harness.runLoader<ReturnType<typeof parentsRoute.loader>>(parentsRoute.loader, "/api/parents?type=task&q=&excludeParentId=2", {
+        headers: { Cookie: cookie },
+      });
+
+      expect(data).not.toBeInstanceOf(Response);
+      expect(data).toMatchObject({ ok: true, candidates: [{ id: 3, summary: "Patio" }] });
+    } finally {
+      harness.close();
+    }
+  });
+
+  test("reparenting rewrites one parent row, preserves the subtree, starts the destination, and leaves the source alone", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
+
+    try {
+      const cookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const user = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      const insert = harness.database.sqlite.prepare(
+        "INSERT INTO work_items (id, type, parentId, parentType, summary, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      );
+      insert.run(1, "topic", null, null, "House", "in_progress", 1, 1, user.id, user.id);
+      insert.run(2, "project", 1, "topic", "Kitchen", "in_progress", 1, 1, user.id, user.id);
+      insert.run(3, "project", 1, "topic", "Patio", "open", 1, 1, user.id, user.id);
+      insert.run(4, "task", 2, "project", "Paint cabinets", "in_progress", 1, 1, user.id, user.id);
+      insert.run(5, "subtask", 4, "task", "Buy primer", "open", 1, 1, user.id, user.id);
+
+      const data = await reparentRoute.action({
+        request: harness.request("/api/work-items/4/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "3", confirmed: "false" } }),
+        params: { id: "4" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof reparentRoute.action>[0]);
+
+      expect(data).toEqual({ ok: true, changed: 2 });
+      expect(harness.database.sqlite.prepare("SELECT id, parentId, parentType, status, updatedAt FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, parentId: null, parentType: null, status: "in_progress", updatedAt: 1 },
+        { id: 2, parentId: 1, parentType: "topic", status: "in_progress", updatedAt: 1 },
+        { id: 3, parentId: 1, parentType: "topic", status: "in_progress", updatedAt: expect.any(Number) },
+        { id: 4, parentId: 3, parentType: "project", status: "in_progress", updatedAt: expect.any(Number) },
+        { id: 5, parentId: 4, parentType: "task", status: "open", updatedAt: 1 },
+      ]);
+    } finally {
+      harness.close();
+    }
+  });
+
+  test("reparenting under a terminal parent waits for the Reopen Notice", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
+
+    try {
+      const cookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const user = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      const insert = harness.database.sqlite.prepare(
+        "INSERT INTO work_items (id, type, parentId, parentType, summary, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      );
+      insert.run(1, "topic", null, null, "House", "completed", 1, 1, user.id, user.id);
+      insert.run(2, "topic", null, null, "Travel", "open", 1, 1, user.id, user.id);
+      insert.run(3, "project", 2, "topic", "San Diego", "open", 1, 1, user.id, user.id);
+
+      const blocked = await reparentRoute.action({
+        request: harness.request("/api/work-items/3/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "1", confirmed: "false" } }),
+        params: { id: "3" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof reparentRoute.action>[0]);
+      expect(blocked).toEqual({ ok: false, error: { field: "confirmed", message: "Confirm the Reopen Notice first." } });
+      expect(harness.database.sqlite.prepare("SELECT id, parentId, status, updatedAt FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, parentId: null, status: "completed", updatedAt: 1 },
+        { id: 2, parentId: null, status: "open", updatedAt: 1 },
+        { id: 3, parentId: 2, status: "open", updatedAt: 1 },
+      ]);
+
+      const confirmed = await reparentRoute.action({
+        request: harness.request("/api/work-items/3/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "1", confirmed: "true" } }),
+        params: { id: "3" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof reparentRoute.action>[0]);
+      expect(confirmed).toEqual({ ok: true, changed: 2 });
+      expect(harness.database.sqlite.prepare("SELECT id, parentId, parentType, status FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, parentId: null, parentType: null, status: "in_progress" },
+        { id: 2, parentId: null, parentType: null, status: "open" },
+        { id: 3, parentId: 1, parentType: "topic", status: "open" },
+      ]);
     } finally {
       harness.close();
     }

@@ -15,10 +15,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     ok: true as const,
     type,
     query: url.searchParams.get("q") ?? "",
-    candidates: loadParentCandidates(getDatabase(context), type, url.searchParams.get("q") ?? ""),
+    candidates: loadParentCandidates(getDatabase(context), type, url.searchParams.get("q") ?? "", positiveInteger(url.searchParams.get("excludeParentId"))),
   };
 }
 
 function isWorkItemType(value: string | null): value is WorkItemType {
   return workItemTypes.some((type) => type === value);
+}
+
+function positiveInteger(value: string | null) {
+  if (value === null || value.trim().length === 0) {
+    return null;
+  }
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
 }
