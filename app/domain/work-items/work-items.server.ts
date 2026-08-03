@@ -4,9 +4,11 @@ import type { DatabaseClient } from "~/db/client";
 import { labels, users, workItems, workItemStatuses, workItemTypes, type WorkItemStatus, type WorkItemType } from "~/db/schema";
 import {
   ancestorsForWorkItem,
+  unfinishedDescendantsForSettleConfirmation,
   parentTypeForWorkItemType,
   planCreateStatusEffects,
   planStartCascade,
+  planSettleCascade,
   type TerminalAncestorNotice,
   type TreeWorkItem,
 } from "./tree";
@@ -34,6 +36,8 @@ export interface WorkItemDetailReadModel {
   item: WorkItemsTreeRow;
   breadcrumb: { id: number; label: string; type: WorkItemType }[];
   labels: { id: number; name: string }[];
+  unfinishedDescendants: { id: number; summary: string; type: WorkItemType }[];
+  startCascadeAncestors: { id: number; summary: string }[];
 }
 
 interface WorkItemSelectRow {
@@ -72,6 +76,10 @@ export type CreateWorkItemResult =
 
 export type UpdateWorkItemResult = { ok: true } | { ok: false; error: { field?: string; message: string } };
 
+export type UpdateWorkItemStatusResult =
+  | { ok: true; changed: number }
+  | { ok: false; error: { field?: string; message: string } };
+
 export function loadWorkItemsTree(database: DatabaseClient, selectedId: number | null): WorkItemsTreeReadModel {
   const treeRows = loadWorkItemRows(database);
   const selected = selectedId === null ? null : treeRows.find((row) => row.id === selectedId);
@@ -103,6 +111,15 @@ export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkIt
     item,
     breadcrumb: [...ancestorsForWorkItem(rows, id).map(({ id, summary: label, type }) => ({ id, label, type })), { id: item.id, label: typeLabel(item.type), type: item.type }],
     labels: selectedLabels,
+    unfinishedDescendants: unfinishedDescendantsForSettleConfirmation(rows, id).map(({ id, summary, type }) => ({ id, summary, type })),
+    startCascadeAncestors:
+      item.status === "open"
+        ? planStartCascade(rows, id)
+            .filter((change) => change.id !== id)
+            .map((change) => rows.find((row) => row.id === change.id))
+            .filter((row): row is WorkItemsTreeRow => Boolean(row))
+            .map(({ id, summary }) => ({ id, summary }))
+        : [],
   };
 }
 
@@ -218,7 +235,7 @@ export function startWorkItem(database: DatabaseClient, id: number, actorId: num
       throw new Response("Work Item not found", { status: 404 });
     }
 
-    if (target.status !== "open") {
+    if (target.status === "in_progress") {
       return { ok: true as const, changed: 0 };
     }
 
@@ -231,6 +248,51 @@ export function startWorkItem(database: DatabaseClient, id: number, actorId: num
       .prepare(`UPDATE work_items SET status = 'in_progress', updatedAt = ?, updatedBy = ? WHERE id IN (${changes.map(() => "?").join(", ")})`)
       .run(now, actorId, ...changes.map((change) => change.id));
 
+    return { ok: true as const, changed: changes.length };
+  })();
+}
+
+export function settleWorkItem(
+  database: DatabaseClient,
+  id: number,
+  status: WorkItemStatus,
+  confirmed: boolean,
+  actorId: number,
+  now = Date.now(),
+): UpdateWorkItemStatusResult {
+  return database.sqlite.transaction(() => {
+    const rows = loadTreeRows(database);
+    const target = rows.find((row) => row.id === id);
+    if (!target) {
+      throw new Response("Work Item not found", { status: 404 });
+    }
+
+    if (!isTerminalStatus(status)) {
+      return { ok: false as const, error: { field: "status", message: "Choose Completed or Closed to settle." } };
+    }
+
+    const unfinishedDescendants = unfinishedDescendantsForSettleConfirmation(rows, id);
+    if (unfinishedDescendants.length > 0 && !confirmed) {
+      return { ok: false as const, error: { field: "confirmed", message: "Confirm the Settle Cascade first." } };
+    }
+    const changes = planSettleCascade(rows, id, status);
+    applyStatusChanges(database, changes, actorId, now);
+    return { ok: true as const, changed: changes.length };
+  })();
+}
+
+export function unsettleWorkItem(database: DatabaseClient, id: number, actorId: number, now = Date.now()): UpdateWorkItemStatusResult {
+  return database.sqlite.transaction(() => {
+    const rows = loadTreeRows(database);
+    const target = rows.find((row) => row.id === id);
+    if (!target) {
+      throw new Response("Work Item not found", { status: 404 });
+    }
+    if (target.status === "open") {
+      return { ok: true as const, changed: 0 };
+    }
+    const changes = [{ id, status: "open" as const }];
+    applyStatusChanges(database, changes, actorId, now);
     return { ok: true as const, changed: changes.length };
   })();
 }
@@ -329,6 +391,10 @@ function typeLabel(type: WorkItemType) {
   return { topic: "Topic", project: "Project", task: "Task", subtask: "Subtask" }[type];
 }
 
+function isTerminalStatus(status: WorkItemStatus) {
+  return status === "completed" || status === "closed";
+}
+
 function validateCreateWorkItemInput(database: DatabaseClient, input: CreateWorkItemInput): { field?: string; message: string } | null {
   if (!workItemTypes.includes(input.type)) {
     return { field: "type", message: "Choose a valid Type." };
@@ -371,10 +437,13 @@ function applyStatusChanges(database: DatabaseClient, changes: { id: number; sta
   if (changes.length === 0) {
     return;
   }
-  const update = database.sqlite.prepare("UPDATE work_items SET status = ?, updatedAt = ?, updatedBy = ? WHERE id = ?");
-  for (const change of changes) {
-    update.run(change.status, now, actorId, change.id);
-  }
+  const statusCases = changes.map(() => "WHEN ? THEN ?").join(" ");
+  const ids = changes.map(() => "?").join(", ");
+  const statusParams = changes.flatMap((change) => [change.id, change.status]);
+  const idParams = changes.map((change) => change.id);
+  database.sqlite
+    .prepare(`UPDATE work_items SET status = CASE id ${statusCases} END, updatedAt = ?, updatedBy = ? WHERE id IN (${ids})`)
+    .run(...statusParams, now, actorId, ...idParams);
 }
 
 function escapeLike(value: string) {

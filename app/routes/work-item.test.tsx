@@ -8,6 +8,9 @@ import * as assignRoute from "./api.work-items.$id.assign";
 import * as descriptionRoute from "./api.work-items.$id.update-description";
 import * as dueDateRoute from "./api.work-items.$id.update-due-date";
 import * as summaryRoute from "./api.work-items.$id.update-summary";
+import * as settleRoute from "./api.work-items.$id.settle";
+import * as startRoute from "./api.work-items.$id.start";
+import * as unsettleRoute from "./api.work-items.$id.unsettle";
 import { WorkItemDocument } from "./work-item";
 
 describe("Work Item detail route seam", () => {
@@ -34,6 +37,99 @@ describe("Work Item detail route seam", () => {
       ]);
       expect(detail.item.summary).toBe("Paint cabinets");
       expect(detail.item.description).toBe("Use primer\nTwo coats");
+      expect(detail.startCascadeAncestors.map((ancestor) => ancestor.summary)).toEqual(["Kitchen", "House"]);
+      expect(detail.unfinishedDescendants).toEqual([]);
+    } finally {
+      harness.close();
+    }
+  });
+
+  test("status update route gates Settle Cascade until confirmation and sweeps server-computed descendants", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
+
+    try {
+      const cookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const actor = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      const insert = harness.database.sqlite.prepare(
+        "INSERT INTO work_items (id, type, parentId, parentType, summary, description, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, '', ?, 1, 1, ?, ?)",
+      );
+      insert.run(1, "topic", null, null, "House", "open", actor.id, actor.id);
+      insert.run(2, "project", 1, "topic", "Kitchen", "open", actor.id, actor.id);
+      insert.run(3, "task", 2, "project", "Paint cabinets", "open", actor.id, actor.id);
+      insert.run(4, "subtask", 3, "task", "Buy primer", "in_progress", actor.id, actor.id);
+      insert.run(5, "task", 2, "project", "Choose colour", "completed", actor.id, actor.id);
+
+      const unconfirmed = await settleRoute.action({
+        request: harness.request("/api/work-items/2/settle", { method: "POST", headers: { Cookie: cookie }, formData: { id: "2", status: "closed", confirmed: "false" } }),
+        params: { id: "2" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof settleRoute.action>[0]);
+      expect(unconfirmed).toEqual({ ok: false, error: { field: "confirmed", message: "Confirm the Settle Cascade first." } });
+      expect(harness.database.sqlite.prepare("SELECT id, status, updatedAt FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, status: "open", updatedAt: 1 },
+        { id: 2, status: "open", updatedAt: 1 },
+        { id: 3, status: "open", updatedAt: 1 },
+        { id: 4, status: "in_progress", updatedAt: 1 },
+        { id: 5, status: "completed", updatedAt: 1 },
+      ]);
+
+      const confirmed = await settleRoute.action({
+        request: harness.request("/api/work-items/2/settle", { method: "POST", headers: { Cookie: cookie }, formData: { id: "2", status: "closed", confirmed: "true" } }),
+        params: { id: "2" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof settleRoute.action>[0]);
+      expect(confirmed).toEqual({ ok: true, changed: 3 });
+      expect(harness.database.sqlite.prepare("SELECT id, status, updatedBy, updatedAt FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, status: "open", updatedBy: actor.id, updatedAt: 1 },
+        { id: 2, status: "closed", updatedBy: actor.id, updatedAt: expect.any(Number) },
+        { id: 3, status: "closed", updatedBy: actor.id, updatedAt: expect.any(Number) },
+        { id: 4, status: "closed", updatedBy: actor.id, updatedAt: expect.any(Number) },
+        { id: 5, status: "completed", updatedBy: actor.id, updatedAt: 1 },
+      ]);
+    } finally {
+      harness.close();
+    }
+  });
+
+  test("status update route announces behavior server-side: start cascades, un-settle does not", async () => {
+    const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
+
+    try {
+      const cookie = await harness.authenticatedCookie({ email: "dana@example.com", name: "Dana" });
+      const actor = harness.database.sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
+      const insert = harness.database.sqlite.prepare(
+        "INSERT INTO work_items (id, type, parentId, parentType, summary, description, status, createdAt, updatedAt, createdBy, updatedBy) VALUES (?, ?, ?, ?, ?, '', ?, 1, 1, ?, ?)",
+      );
+      insert.run(1, "topic", null, null, "House", "open", actor.id, actor.id);
+      insert.run(2, "project", 1, "topic", "Kitchen", "open", actor.id, actor.id);
+      insert.run(3, "task", 2, "project", "Paint cabinets", "open", actor.id, actor.id);
+      insert.run(4, "subtask", 3, "task", "Buy primer", "completed", actor.id, actor.id);
+
+      const started = await startRoute.action({
+        request: harness.request("/api/work-items/3/start", { method: "POST", headers: { Cookie: cookie }, formData: { id: "3", status: "in_progress", confirmed: "false" } }),
+        params: { id: "3" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof startRoute.action>[0]);
+      expect(started).toEqual({ ok: true, changed: 3 });
+      expect(harness.database.sqlite.prepare("SELECT id, status FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, status: "in_progress" },
+        { id: 2, status: "in_progress" },
+        { id: 3, status: "in_progress" },
+        { id: 4, status: "completed" },
+      ]);
+
+      const unsettled = await unsettleRoute.action({
+        request: harness.request("/api/work-items/4/unsettle", { method: "POST", headers: { Cookie: cookie }, formData: { id: "4", status: "open", confirmed: "false" } }),
+        params: { id: "4" },
+        context: { database: harness.database, env: harness.env },
+      } as unknown as Parameters<typeof unsettleRoute.action>[0]);
+      expect(unsettled).toEqual({ ok: true, changed: 1 });
+      expect(harness.database.sqlite.prepare("SELECT id, status FROM work_items ORDER BY id").all()).toEqual([
+        { id: 1, status: "in_progress" },
+        { id: 2, status: "in_progress" },
+        { id: 3, status: "in_progress" },
+        { id: 4, status: "open" },
+      ]);
     } finally {
       harness.close();
     }
@@ -143,6 +239,8 @@ describe("Work Item detail rendering seam", () => {
         assignee: null,
       },
       labels: [{ id: 1, name: "House" }],
+      unfinishedDescendants: [],
+      startCascadeAncestors: [],
     };
     const Stub = createRoutesStub([
       {
@@ -160,7 +258,7 @@ describe("Work Item detail rendering seam", () => {
     const markup = renderToStaticMarkup(<Stub initialEntries={["/items/1"]} />);
 
     expect(markup.indexOf("Topic › Topic")).toBeLessThan(markup.indexOf("Topic</h1>"));
-    expect(markup.indexOf("Topic</h1>")).toBeLessThan(markup.indexOf("Status"));
+    expect(markup.indexOf("Topic</h1>")).toBeLessThan(markup.indexOf("Status: Open"));
     expect(markup.indexOf("Labels")).toBeLessThan(markup.indexOf("Use **plain** text"));
     expect(markup).not.toContain("<strong>");
     expect(markup).toContain("Unassigned");
