@@ -68,11 +68,16 @@ export function Avatar({ name, size = 20 }: { name: string | null; size?: number
         ?
       </span>
     );
+  // Mine is inverted — solid fill, knocked-out initial — so my own work and my own
+  // comments carry more weight on the page than my partner's.
+  const mine = name === ME;
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-full bg-primary-soft text-[10px] font-semibold text-primary"
+      className={`inline-flex shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${
+        mine ? "bg-primary text-primary-fg" : "bg-primary-soft text-primary"
+      }`}
       style={{ width: size, height: size }}
-      title={name}
+      title={mine ? `${name} (you)` : name}
     >
       {name[0]}
     </span>
