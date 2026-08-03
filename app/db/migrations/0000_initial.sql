@@ -49,7 +49,7 @@ CREATE TABLE work_items (
   parentId INTEGER,
   parentType TEXT,
   summary TEXT NOT NULL CHECK (summary = trim(summary) AND length(summary) BETWEEN 1 AND 200),
-  description TEXT NOT NULL DEFAULT '' CHECK (length(description) <= 20000),
+  description TEXT NOT NULL DEFAULT '' CHECK (length(trim(description)) <= 20000),
   assigneeId INTEGER REFERENCES users(id) ON DELETE RESTRICT,
   status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'completed', 'closed')),
   dueDate TEXT CHECK (dueDate IS NULL OR dueDate GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),

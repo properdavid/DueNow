@@ -30,6 +30,12 @@ export interface WorkItemsTreeReadModel {
   hasAnyWorkItems: boolean;
 }
 
+export interface WorkItemDetailReadModel {
+  item: WorkItemsTreeRow;
+  breadcrumb: { id: number; label: string; type: WorkItemType }[];
+  labels: { id: number; name: string }[];
+}
+
 interface WorkItemSelectRow {
   id: number;
   type: WorkItemType;
@@ -64,26 +70,10 @@ export type CreateWorkItemResult =
   | { ok: true; id: number }
   | { ok: false; error: { field?: string; message: string } };
 
-export function loadWorkItemsTree(database: DatabaseClient, selectedId: number | null): WorkItemsTreeReadModel {
-  const rows = database.db
-    .select({
-      id: workItems.id,
-      type: workItems.type,
-      parentId: workItems.parentId,
-      status: workItems.status,
-      dueDate: workItems.dueDate,
-      summary: workItems.summary,
-      description: workItems.description,
-      assigneeId: workItems.assigneeId,
-      assigneeName: users.name,
-      assigneeEmail: users.email,
-    })
-    .from(workItems)
-    .leftJoin(users, eq(workItems.assigneeId, users.id))
-    .orderBy(workItems.id)
-    .all() as WorkItemSelectRow[];
+export type UpdateWorkItemResult = { ok: true } | { ok: false; error: { field?: string; message: string } };
 
-  const treeRows = rows.map(toTreeRow);
+export function loadWorkItemsTree(database: DatabaseClient, selectedId: number | null): WorkItemsTreeReadModel {
+  const treeRows = loadWorkItemRows(database);
   const selected = selectedId === null ? null : treeRows.find((row) => row.id === selectedId);
   if (selectedId !== null && !selected) {
     throw new Response("Work Item not found", { status: 404 });
@@ -94,6 +84,25 @@ export function loadWorkItemsTree(database: DatabaseClient, selectedId: number |
     ancestorIds: selectedId === null ? [] : ancestorsForWorkItem(treeRows, selectedId).map((row) => row.id),
     selectedId,
     hasAnyWorkItems: treeRows.length > 0,
+  };
+}
+
+export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkItemDetailReadModel {
+  const rows = loadWorkItemRows(database);
+  const item = rows.find((row) => row.id === id);
+  if (!item) {
+    throw new Response("Work Item not found", { status: 404 });
+  }
+  const selectedLabels = database.sqlite
+    .prepare(
+      "SELECT labels.id, labels.name FROM labels INNER JOIN work_item_labels ON work_item_labels.labelId = labels.id WHERE work_item_labels.workItemId = ? ORDER BY lower(labels.name)",
+    )
+    .all(id) as { id: number; name: string }[];
+
+  return {
+    item,
+    breadcrumb: [...ancestorsForWorkItem(rows, id).map(({ id, summary: label, type }) => ({ id, label, type })), { id: item.id, label: typeLabel(item.type), type: item.type }],
+    labels: selectedLabels,
   };
 }
 
@@ -208,6 +217,7 @@ export function startWorkItem(database: DatabaseClient, id: number, actorId: num
     if (!target) {
       throw new Response("Work Item not found", { status: 404 });
     }
+
     if (target.status !== "open") {
       return { ok: true as const, changed: 0 };
     }
@@ -225,6 +235,81 @@ export function startWorkItem(database: DatabaseClient, id: number, actorId: num
   })();
 }
 
+export function updateWorkItemSummary(database: DatabaseClient, id: number, summary: string, actorId: number, now = Date.now()): UpdateWorkItemResult {
+  ensureWorkItemExists(database, id);
+  const trimmed = summary.trim();
+  if (trimmed.length === 0) {
+    return { ok: false, error: { field: "summary", message: "Summary is required." } };
+  }
+  if (trimmed.length > 200) {
+    return { ok: false, error: { field: "summary", message: "Summary must be 200 characters or fewer." } };
+  }
+  database.sqlite.prepare("UPDATE work_items SET summary = ?, updatedAt = ?, updatedBy = ? WHERE id = ?").run(trimmed, now, actorId, id);
+  return { ok: true };
+}
+
+export function updateWorkItemDescription(database: DatabaseClient, id: number, description: string, actorId: number, now = Date.now()): UpdateWorkItemResult {
+  ensureWorkItemExists(database, id);
+  const trimmed = description.trim();
+  if (trimmed.length > 20_000) {
+    return {
+      ok: false,
+      error: { field: "description", message: `Description is too long (${trimmed.length.toLocaleString("en-US")} characters, limit 20,000).` },
+    };
+  }
+  const storedDescription = trimmed.length === 0 ? "" : description;
+  database.sqlite.prepare("UPDATE work_items SET description = ?, updatedAt = ?, updatedBy = ? WHERE id = ?").run(storedDescription, now, actorId, id);
+  return { ok: true };
+}
+
+export function updateWorkItemAssignee(database: DatabaseClient, id: number, assigneeId: number | null, actorId: number, now = Date.now()): UpdateWorkItemResult {
+  ensureWorkItemExists(database, id);
+  if (assigneeId !== null) {
+    const assignee = database.sqlite.prepare("SELECT id FROM users WHERE id = ?").get(assigneeId);
+    if (!assignee) {
+      return { ok: false, error: { field: "assigneeId", message: "Choose a valid Assignee." } };
+    }
+  }
+  database.sqlite.prepare("UPDATE work_items SET assigneeId = ?, updatedAt = ?, updatedBy = ? WHERE id = ?").run(assigneeId, now, actorId, id);
+  return { ok: true };
+}
+
+export function updateWorkItemDueDate(database: DatabaseClient, id: number, dueDate: string | null, actorId: number, now = Date.now()): UpdateWorkItemResult {
+  ensureWorkItemExists(database, id);
+  if (dueDate !== null && !isWholeDay(dueDate)) {
+    return { ok: false, error: { field: "dueDate", message: "Due Date must be a calendar day." } };
+  }
+  database.sqlite.prepare("UPDATE work_items SET dueDate = ?, updatedAt = ?, updatedBy = ? WHERE id = ?").run(dueDate, now, actorId, id);
+  return { ok: true };
+}
+
+function ensureWorkItemExists(database: DatabaseClient, id: number) {
+  const row = database.sqlite.prepare("SELECT id FROM work_items WHERE id = ?").get(id);
+  if (!row) {
+    throw new Response("Work Item not found", { status: 404 });
+  }
+}
+
+function loadWorkItemRows(database: DatabaseClient): WorkItemsTreeRow[] {
+  return (database.db
+    .select({
+      id: workItems.id,
+      type: workItems.type,
+      parentId: workItems.parentId,
+      status: workItems.status,
+      dueDate: workItems.dueDate,
+      summary: workItems.summary,
+      description: workItems.description,
+      assigneeId: workItems.assigneeId,
+      assigneeName: users.name,
+      assigneeEmail: users.email,
+    })
+    .from(workItems)
+    .leftJoin(users, eq(workItems.assigneeId, users.id))
+    .orderBy(workItems.id)
+    .all() as WorkItemSelectRow[]).map(toTreeRow);
+}
+
 function loadTreeRows(database: DatabaseClient): TreeWorkItem[] {
   return database.db
     .select({
@@ -238,6 +323,10 @@ function loadTreeRows(database: DatabaseClient): TreeWorkItem[] {
     .from(workItems)
     .orderBy(workItems.id)
     .all();
+}
+
+function typeLabel(type: WorkItemType) {
+  return { topic: "Topic", project: "Project", task: "Task", subtask: "Subtask" }[type];
 }
 
 function validateCreateWorkItemInput(database: DatabaseClient, input: CreateWorkItemInput): { field?: string; message: string } | null {

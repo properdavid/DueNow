@@ -102,7 +102,7 @@ export const workItems = sqliteTable(
     check("work_items_type_check", sql`${table.type} IN ('topic', 'project', 'task', 'subtask')`),
     check("work_items_status_check", sql`${table.status} IN ('open', 'in_progress', 'completed', 'closed')`),
     check("work_items_summary_check", sql`${table.summary} = trim(${table.summary}) AND length(${table.summary}) BETWEEN 1 AND 200`),
-    check("work_items_description_check", sql`length(${table.description}) <= 20000`),
+    check("work_items_description_check", sql`length(trim(${table.description})) <= 20000`),
     check("work_items_due_date_check", sql`${table.dueDate} IS NULL OR ${table.dueDate} GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'`),
     check("work_items_parent_type_check", sql`(${table.type} = 'topic' AND ${table.parentType} IS NULL) OR (${table.type} = 'project' AND ${table.parentType} = 'topic') OR (${table.type} = 'task' AND ${table.parentType} = 'project') OR (${table.type} = 'subtask' AND ${table.parentType} = 'task')`),
     check("work_items_parent_presence_check", sql`(${table.type} = 'topic' AND ${table.parentId} IS NULL) OR (${table.type} <> 'topic' AND ${table.parentId} IS NOT NULL)`),
