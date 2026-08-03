@@ -32,6 +32,9 @@ export type Tree = {
   startPreview: (id: number) => WorkItem[];
   update: (id: number, patch: Partial<WorkItem>) => void;
   addComment: (id: number, body: string) => void;
+  /** #5: a comment belongs to its author — only they may edit it, and delete is hard. */
+  editComment: (id: number, n: number, body: string) => void;
+  deleteComment: (id: number, n: number) => void;
   undo: (() => void) | null;
   lastCreated: number | null;
 };
@@ -131,6 +134,20 @@ export function TreeProvider({ children: kids }: { children: React.ReactNode }) 
           prev.map((i) =>
             i.id === id ? { ...i, comments: [...(i.comments ?? []), { author: ME, at: "just now", body }] } : i,
           ),
+        );
+      },
+      editComment: (id, n, body) => {
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === id
+              ? { ...i, comments: (i.comments ?? []).map((c, k) => (k === n ? { ...c, body, edited: true } : c)) }
+              : i,
+          ),
+        );
+      },
+      deleteComment: (id, n) => {
+        setItems((prev) =>
+          prev.map((i) => (i.id === id ? { ...i, comments: (i.comments ?? []).filter((_, k) => k !== n) } : i)),
         );
       },
       undo: undoStack ? () => { setItems(undoStack); setUndoStack(null); } : null,

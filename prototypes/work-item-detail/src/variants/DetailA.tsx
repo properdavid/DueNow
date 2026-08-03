@@ -5,7 +5,7 @@
 // announced by a popover under the chip you are already touching, listing what it will
 // sweep, before it happens.
 import { useEffect, useRef, useState } from "react";
-import { LABELS, PEOPLE, formatDue, type Status } from "../data";
+import { LABELS, ME, PEOPLE, formatDue, type Status } from "../data";
 import { Avatar, DueCell, StatusIcon, TypeIcon } from "../screens";
 import type { DetailProps } from "../shell";
 import { terminal, unfinished, useTree } from "../store";
@@ -73,6 +73,9 @@ export default function DetailA({ id, compact, onOpen, onClose, onMove, requestC
   const [confirm, setConfirm] = useState<Status | null>(null);
   const [comment, setComment] = useState("");
   const [showSettled, setShowSettled] = useState(false);
+  const [editComment, setEditComment] = useState<number | null>(null);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState<number | null>(null);
 
   const settled = kids.filter(terminal);
   const shown = showSettled ? kids : kids.filter(unfinished);
@@ -353,19 +356,72 @@ export default function DetailA({ id, compact, onOpen, onClose, onMove, requestC
             <h2 className="mb-2 text-[12px] font-semibold tracking-wide text-faint uppercase">
               Comments {item.comments?.length ? item.comments.length : ""}
             </h2>
-            {(item.comments ?? []).map((c, n) => (
-              <div key={n} className="mb-4 flex gap-2.5">
-                <Avatar name={c.author} size={24} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[12px] text-faint">
-                    <span className="font-medium text-fg">{c.author}</span> · {c.at}
-                  </p>
-                  <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{c.body}</p>
+            {(item.comments ?? []).map((c, n) => {
+              const mine = c.author === ME;
+              const isEditing = editComment === n;
+              return (
+                <div key={n} className="mb-4 flex gap-2.5">
+                  <Avatar name={c.author} size={24} />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-baseline gap-2 text-[12px] text-faint">
+                      <span className="font-medium text-fg">{c.author}</span>
+                      <span>· {c.at}</span>
+                      {c.edited && <span className="text-[11px]">· edited</span>}
+                      {/* Only the author gets these — a comment belongs to whoever wrote it. */}
+                      {mine && !isEditing && (
+                        <span className="ml-auto flex gap-2">
+                          <button
+                            onClick={() => { setEditComment(n); setCommentDraft(c.body); setConfirmDelete(null); }}
+                            className="hover:text-primary hover:underline"
+                          >
+                            Edit
+                          </button>
+                          {confirmDelete === n ? (
+                            <>
+                              <span className="text-overdue">Delete?</span>
+                              <button
+                                onClick={() => { t.deleteComment(id, n); setConfirmDelete(null); }}
+                                className="font-medium text-overdue hover:underline"
+                              >
+                                Yes
+                              </button>
+                              <button onClick={() => setConfirmDelete(null)} className="hover:underline">
+                                No
+                              </button>
+                            </>
+                          ) : (
+                            <button onClick={() => setConfirmDelete(n)} className="hover:text-overdue hover:underline">
+                              Delete
+                            </button>
+                          )}
+                        </span>
+                      )}
+                    </p>
+                    {isEditing ? (
+                      <div>
+                        <textarea
+                          autoFocus
+                          value={commentDraft}
+                          onChange={(e) => setCommentDraft(e.target.value)}
+                          onKeyDown={(e) => e.key === "Escape" && setEditComment(null)}
+                          rows={3}
+                          className="mt-1 w-full resize-none rounded border border-primary px-2 py-1.5 text-[14px] outline-none"
+                        />
+                        <ConfirmCancel
+                          disabled={!commentDraft.trim()}
+                          onConfirm={() => { t.editComment(id, n, commentDraft.trim()); setEditComment(null); }}
+                          onCancel={() => setEditComment(null)}
+                        />
+                      </div>
+                    ) : (
+                      <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{c.body}</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <div className="flex gap-2.5">
-              <Avatar name="Dave" size={24} />
+              <Avatar name={ME} size={24} />
               <div className="min-w-0 flex-1">
                 <textarea
                   value={comment}

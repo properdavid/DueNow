@@ -14,7 +14,7 @@ export type WorkItem = {
   due: string | null; // YYYY-MM-DD
   labels: string[];
   description?: string;
-  comments?: { author: string; at: string; body: string }[];
+  comments?: { author: string; at: string; body: string; edited?: boolean }[];
 };
 
 export const PEOPLE = ["Dave", "Mira"];
