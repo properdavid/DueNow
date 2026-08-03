@@ -34,6 +34,8 @@ export function openDatabaseClient(databasePath: string, options: DatabaseClient
   };
 }
 
+export type DatabaseClient = ReturnType<typeof openDatabaseClient>;
+
 export function createDatabaseClient(databasePath = process.env.DUENOW_DATABASE_PATH ?? "data/duenow.sqlite") {
   return openDatabaseClient(databasePath, { journalMode: "wal" });
 }

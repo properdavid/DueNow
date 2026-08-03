@@ -9,9 +9,9 @@ type TestSqlite = ReturnType<typeof createPersistenceTestHarness>["sqlite"];
 function insertUser(sqlite: TestSqlite) {
   sqlite
     .prepare(
-      "INSERT INTO users (email, name, theme, createdAt, updatedAt) VALUES (?, ?, 'system', ?, ?)",
+      "INSERT INTO users (googleSubject, email, name, theme, createdAt, updatedAt) VALUES (?, ?, ?, 'system', ?, ?)",
     )
-    .run("dana@example.com", "Dana", fixedInstant, fixedInstant);
+    .run("google-subject-dana", "dana@example.com", "Dana", fixedInstant, fixedInstant);
   return sqlite.prepare("SELECT id FROM users WHERE email = ?").get("dana@example.com") as { id: number };
 }
 
