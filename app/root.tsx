@@ -5,14 +5,22 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useMatches,
 } from "react-router";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const matches = useMatches();
+  const shellData = matches.find((match) => match.id === "routes/shell")?.data as
+    | { user?: { theme?: "system" | "light" | "dark" } }
+    | undefined;
+  const theme = shellData?.user?.theme;
+  const themeClassName = theme === "light" || theme === "dark" ? theme : undefined;
+
   return (
-    <html lang="en">
+    <html className={themeClassName} lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

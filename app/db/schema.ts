@@ -24,6 +24,7 @@ export const users = sqliteTable(
   "users",
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
+    googleSubject: text("googleSubject").notNull().unique(),
     email: text("email").notNull().unique(),
     name: text("name").notNull(),
     theme: text("theme", { enum: themes }).notNull().default("system"),
