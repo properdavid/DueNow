@@ -152,10 +152,18 @@ _Avoid_: type icon, badge, glyph, bullet
 The small circle that says where a work item stands — empty grey ring Open, half-filled blue In Progress, blue check Completed, filled grey Closed. Shape carries the meaning as much as colour does, so the four read apart without hue.
 _Avoid_: status icon, dot, chip, indicator
 
+**Creation Dialog**:
+The single dialog every work item is created through, wherever it is opened from — type, then Summary, then a Parent select filtered to the one rung that fits, then the rest of the core fields. Type, Summary and Parent are required; a pre-filled dialog fills only those, never a status.
+_Avoid_: new item form, create modal, add dialog, quick add
+
+**Reopen Notice**:
+The inline notice a Creation Dialog or reparent picker grows when a terminal parent is chosen, naming the ancestors that confirming will move back to In Progress. It informs rather than gates — the escape is choosing a different parent.
+_Avoid_: warning, prompt, alert, confirmation
+
 ### The detail view
 
 **Detail View**:
-The whole of one work item on one surface — breadcrumb, Summary, Property Chips, Description, children, Comments — in that order, the same for all four types. The only place a work item is settled, and the only place Labels are shown.
+The whole of one work item on one surface — breadcrumb, Summary, Property Chips, Description, children, Comments — in that order, the same for all four types. The only place a work item is settled — from its own Status Chip, or from its parent's Children Checklist — and the only place Labels are shown.
 _Avoid_: item page, work item page, record, form, inspector
 
 **Property Chip**:
@@ -163,8 +171,12 @@ One of the four pill-shaped controls under the Summary — Status, Assignee, Due
 _Avoid_: field, property panel, pill, tag
 
 **Settle Confirmation**:
-The popover that opens under the Status Chip when settling a work item that still has unfinished descendants, naming every one it will sweep. It appears only when there is something to sweep, and nothing changes until it is confirmed. The Start Cascade has no equivalent — it is announced in the picker, not gated.
+The popover that opens under the Status Chip, or under a Children Checklist row, when settling a work item that still has unfinished descendants, naming every one it will sweep. It appears only when there is something to sweep, and nothing changes until it is confirmed. The Start Cascade has no equivalent — it is announced in the picker, not gated.
 _Avoid_: confirm dialog, warning, are-you-sure, undo prompt
+
+**Children Checklist**:
+The children of a work item as they appear on its Detail View — Status Mark, Summary, Due Date, Assignee per row, ending in the settled reveal and an inline add. Its Status Mark is a toggle that settles a child to Completed and un-settles one to Open; no other status is reachable from it.
+_Avoid_: subtask list, child list, checkbox list, todo list
 
 ### The Due tab
 
