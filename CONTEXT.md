@@ -10,6 +10,10 @@ Household project management for a two-person household — a hierarchy of work 
 The two people who share this deployment. One running instance serves exactly one household; there is no household entity in the model because there is never more than one.
 _Avoid_: family, tenant, organisation, workspace, account
 
+**First Run**:
+A deployment before any work item has ever been created in it. It ships with no work items, no Labels and no users — only the Household Settings row. Because nothing can be deleted, First Run is a one-way door: once the first Topic exists the deployment has left it for good, and a screen showing nothing thereafter means something else entirely.
+_Avoid_: onboarding, setup, empty state, fresh install, day one
+
 ### Work items
 
 **Work Item**:
@@ -233,7 +237,7 @@ _Avoid_: ordering, ranking, sequence
 ### Settings
 
 **Household Timezone**:
-The single timezone the household shares, stored once and editable in Settings. There is no per-user or per-work-item timezone.
+The single timezone the household shares, stored once and editable in Settings. It starts as the timezone of the server the household deployed onto, and there is no per-user or per-work-item timezone.
 _Avoid_: local time, server time, user timezone, locale
 
 **Today**:
