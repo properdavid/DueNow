@@ -181,8 +181,20 @@ The three groups of the Due tab. Now is due today or Overdue, Soon is the next s
 _Avoid_: urgent, upcoming, this week, buckets, windows
 
 **Horizon**:
-Thirty days from Today. A Due Date beyond it puts a work item on no Due tab group at all; the tab is a view of what is approaching, not an inventory of every date.
+Thirty days from Today. A Due Date beyond it puts a work item on no Due tab group at all; the tab is a view of what is approaching, not an inventory of every date. The Horizon looks forward only — however overdue a work item is, it stays in Due Now.
 _Avoid_: cutoff, range, limit, lookahead
+
+**Due Card**:
+One work item as it appears on the Due tab — breadcrumb, Summary, and a meta line of due date, Status Mark and Assignee, inside a bordered box with an Urgency Edge. Cards are the same size in all three groups; a Due Card carries no Labels and nothing on it can be changed.
+_Avoid_: row, tile, entry, list item
+
+**Urgency Edge**:
+The coloured stripe down the left of a Due Card — red Overdue, amber due today, faint indigo within seven days, grey beyond. Amber belongs to today alone, which is the last day a deadline can still be met.
+_Avoid_: priority colour, accent bar, severity, highlight
+
+**Lateness**:
+How far past its Due Date an Overdue work item is, written in words on its Due Card — "2 days late", "7 weeks late". It rounds as it grows: days, then weeks, then months.
+_Avoid_: age, delay, days overdue, slippage
 
 ### The Search tab
 
