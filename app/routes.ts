@@ -5,6 +5,7 @@ export default [
   route("auth/google", "routes/auth.google.tsx"),
   route("auth/google/callback", "routes/auth.google-callback.tsx"),
   route("auth/logout", "routes/auth.logout.tsx"),
+  route("api/work-items/:id/start", "routes/api.work-items.$id.start.tsx"),
   layout("routes/shell.tsx", [
     index("routes/home.tsx"),
     route("due", "routes/due.tsx", [route(":id", "routes/work-item.tsx", { id: "due-item" })]),
