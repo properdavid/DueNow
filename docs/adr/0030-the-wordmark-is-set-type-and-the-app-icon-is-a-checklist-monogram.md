@@ -32,7 +32,7 @@ The second wins because the two cards a household actually confuses are *Nothing
 
 ## Consequences
 
-**The primary indigo now has a second home that no token can reach.** ADR-0014 called primary "a cheap token to retune later" because its surface area is small. That is still true on screen, but the icon artwork and the manifest's `theme_color: "#4d41c8"` are exported files carrying the same value literally, so retuning the primary means re-exporting the icon set. `design-lint` cannot see either.
+**The primary indigo now has homes that no token can reach.** ADR-0014 called primary "a cheap token to retune later" because its surface area is small. That is still true on screen, but the icon artwork, the manifest's `theme_color: "#4d41c8"`, and the server-rendered document `theme-color` meta carry the same value literally, because neither launchers nor the meta tag can consume DueNow's CSS custom properties. Retuning the primary means re-exporting the icon set and updating the metadata literals in lockstep with `app.css`. `design-lint` cannot see the exported artwork or manifest.
 
 **The letterforms are outlined in the shipped artwork.** Inter is self-hosted (ADR-0014), and an icon rendered by a launcher has no access to it; the D and N are paths in the exported PNGs and in any SVG favicon, not live type.
 

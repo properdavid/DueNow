@@ -11,19 +11,40 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 
+export function themeClassNameFor(theme?: "system" | "light" | "dark") {
+  return theme === "light" || theme === "dark" ? theme : undefined;
+}
+
+type ThemeColorMeta = { name: "theme-color"; content: string; media?: string };
+
+const lightThemeColorMeta: ThemeColorMeta = { name: "theme-color", content: "hsl(245 55% 52%)" };
+const darkThemeColorMeta: ThemeColorMeta = { name: "theme-color", content: "hsl(245 60% 68%)" };
+
+export function themeColorMetaFor(theme?: "system" | "light" | "dark") {
+  if (theme === "light") return [lightThemeColorMeta];
+  if (theme === "dark") return [darkThemeColorMeta];
+  return [
+    { ...lightThemeColorMeta, media: "(prefers-color-scheme: light)" },
+    { ...darkThemeColorMeta, media: "(prefers-color-scheme: dark)" },
+  ];
+}
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const matches = useMatches();
   const shellData = matches.find((match) => match.id === "routes/shell")?.data as
     | { user?: { theme?: "system" | "light" | "dark" } }
     | undefined;
   const theme = shellData?.user?.theme;
-  const themeClassName = theme === "light" || theme === "dark" ? theme : undefined;
+  const themeClassName = themeClassNameFor(theme);
 
   return (
     <html className={themeClassName} lang="en">
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {themeColorMetaFor(theme).map((meta) => (
+          <meta key={meta.media ?? meta.content} {...meta} />
+        ))}
         <Meta />
         <Links />
       </head>

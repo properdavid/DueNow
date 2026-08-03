@@ -1,20 +1,25 @@
-import { Outlet } from "react-router";
+import { Outlet, useMatches } from "react-router";
 
 import type { Route } from "./+types/search";
-import { requireUser } from "~/auth/session.server";
 
 export const handle = { layout: "full" };
 
-export async function loader({ request, context }: Route.LoaderArgs) {
-  await requireUser(request, context);
+export async function loader(_: Route.LoaderArgs) {
   return null;
 }
 
 export default function Search() {
+  const hasSelection = useMatches().some((match) => match.id === "search-item");
+
   return (
-    <main className="p-6">
-      <h1 className="text-xl font-semibold">Search</h1>
-      <Outlet />
+    <main className="min-h-screen bg-background p-6 pb-28 text-foreground lg:pb-6">
+      <div className={hasSelection ? "hidden" : undefined}>
+        <h1 className="text-xl font-semibold">Search</h1>
+        <div className="mt-6 rounded-lg border border-border bg-card p-6 text-card-foreground">
+          <p className="text-sm text-muted-foreground">The Results Table and Filter Bar will appear here.</p>
+        </div>
+      </div>
+      {hasSelection ? <Outlet /> : null}
     </main>
   );
 }

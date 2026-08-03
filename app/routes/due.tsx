@@ -1,12 +1,12 @@
 import { Clock } from "lucide-react";
-import { Outlet, useMatches } from "react-router";
+import { useMatches } from "react-router";
 
 import type { Route } from "./+types/due";
-import { EmptySelectionCard } from "~/components/empty-selection-card";
-import { getDatabase, requireUser } from "~/auth/session.server";
+import { getDatabase } from "~/auth/session.server";
+import { EmptyCard } from "~/components/shell/empty-card";
+import { SplitRoute } from "~/components/shell/split-route";
 
-export async function loader({ request, context }: Route.LoaderArgs) {
-  await requireUser(request, context);
+export async function loader({ context }: Route.LoaderArgs) {
   const row = getDatabase(context).sqlite.prepare("SELECT COUNT(*) AS count FROM work_items").get() as { count: number };
   return { hasEverHadWorkItems: row.count > 0 };
 }
@@ -21,19 +21,10 @@ export default function Due({ loaderData }: Route.ComponentProps) {
       };
 
   return (
-    <main className="grid min-h-screen gap-4 bg-background p-6 text-foreground lg:grid-cols-2">
-      <section className="flex items-center justify-center">
-        <div className="w-full max-w-sm rounded-lg border border-border bg-card p-6 text-center text-card-foreground">
-          <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <Clock aria-hidden="true" />
-          </div>
-          <h1 className="text-lg font-semibold">{emptyState.headline}</h1>
-          <p className="mt-2 text-sm text-muted-foreground">{emptyState.line}</p>
-        </div>
-      </section>
-      <aside className="hidden items-center justify-center lg:flex">
-        {hasSelection ? <Outlet /> : <EmptySelectionCard />}
-      </aside>
-    </main>
+    <SplitRoute hasSelection={hasSelection}>
+      <div className="flex min-h-screen items-center justify-center p-6 lg:min-h-full">
+        <EmptyCard headline={emptyState.headline} line={emptyState.line} Mark={Clock} />
+      </div>
+    </SplitRoute>
   );
 }
