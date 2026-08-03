@@ -1,11 +1,16 @@
 import { Outlet, useMatches } from "react-router";
 
 import type { Route } from "./+types/search";
+import { getDatabase, requireUser } from "~/auth/session.server";
+import { searchWorkItems } from "~/domain/work-items/work-items.server";
+import { searchWorkItemsInputFromUrl } from "./search-params";
 
 export const handle = { layout: "full" };
 
-export async function loader(_: Route.LoaderArgs) {
-  return null;
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const user = await requireUser(request, context);
+  const url = new URL(request.url);
+  return { ...searchWorkItems(getDatabase(context), searchWorkItemsInputFromUrl(url)), user };
 }
 
 export default function Search() {
