@@ -4,6 +4,7 @@ import { Check, ChevronDown, ChevronRight, ListTree, MoreHorizontal, Play } from
 
 import type { AuthUser } from "~/auth/session.server";
 import { EmptyCard } from "~/components/shell/empty-card";
+import { useCreationDialog } from "~/components/shell/creation-dialog";
 import { Button } from "~/components/ui/button";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
 import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
@@ -185,8 +186,10 @@ function TreeRow({
 
 function RowMenu({ row, returnTo }: { row: WorkItemsTreeRow; returnTo: string }) {
   const fetcher = useFetcher();
+  const { openCreationDialog } = useCreationDialog();
   const canStart = row.status === "open";
   const isStarting = fetcher.state !== "idle";
+  const childType = childTypeFor(row.type);
   return (
     <Menu>
       <MenuTrigger asChild>
@@ -195,7 +198,16 @@ function RowMenu({ row, returnTo }: { row: WorkItemsTreeRow; returnTo: string })
         </Button>
       </MenuTrigger>
       <MenuContent>
-        <MenuItem disabled>Add child</MenuItem>
+        <MenuItem
+          disabled={childType === null}
+          onSelect={() => {
+            if (childType) {
+              openCreationDialog({ type: childType, parentId: row.id, parentSummary: row.summary });
+            }
+          }}
+        >
+          Add child
+        </MenuItem>
         <MenuItem disabled>Move…</MenuItem>
         <fetcher.Form method="post" action={`/api/work-items/${row.id}/start?returnTo=${encodeURIComponent(returnTo)}`}>
           <MenuItem asChild disabled={!canStart || isStarting}>
@@ -207,6 +219,10 @@ function RowMenu({ row, returnTo }: { row: WorkItemsTreeRow; returnTo: string })
       </MenuContent>
     </Menu>
   );
+}
+
+function childTypeFor(type: WorkItemsTreeRow["type"]) {
+  return { topic: "project", project: "task", task: "subtask", subtask: null }[type] as WorkItemsTreeRow["type"] | null;
 }
 
 function DueDate({ dueDate }: { dueDate: string }) {

@@ -72,6 +72,10 @@ const parentTypeByType = {
   subtask: "task",
 } as const satisfies Record<WorkItemType, WorkItemType | null>;
 
+export function parentTypeForWorkItemType(type: WorkItemType): WorkItemType | null {
+  return parentTypeByType[type];
+}
+
 function byId(rows: readonly TreeWorkItem[]) {
   return new Map(rows.map((row) => [row.id, row]));
 }
