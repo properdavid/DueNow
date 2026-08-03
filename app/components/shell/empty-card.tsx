@@ -5,9 +5,10 @@ interface EmptyCardProps {
   line: string;
   Mark: LucideIcon;
   headingLevel?: "h1" | "h2";
+  children?: React.ReactNode;
 }
 
-export function EmptyCard({ headline, line, Mark, headingLevel = "h1" }: EmptyCardProps) {
+export function EmptyCard({ headline, line, Mark, headingLevel = "h1", children }: EmptyCardProps) {
   const Heading = headingLevel;
 
   return (
@@ -17,6 +18,7 @@ export function EmptyCard({ headline, line, Mark, headingLevel = "h1" }: EmptyCa
         </div>
         <Heading className="text-lg font-semibold">{headline}</Heading>
         <p className="mt-2 text-sm text-muted-foreground">{line}</p>
+        {children}
     </div>
   );
 }
