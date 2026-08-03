@@ -210,6 +210,12 @@
   }
 }
 
+@utility wordmark {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
 @layer base {
   html {
     /* ADR-0014 as amended by ADR-0017: body is 16px. */

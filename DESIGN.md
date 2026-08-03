@@ -167,6 +167,12 @@ class-variance-authority, and `lucide-react` icons. There is no
 in CSS -- `light` / `dark` on `<html>` for an explicit choice, and
 `prefers-color-scheme` for System (ADR-0015).
 
+The document `theme-color` meta is the one app-code exception to the "no literal
+colour values" rule: browsers do not resolve CSS custom properties there, so the
+server-rendered descriptors repeat the primary token values exactly, including
+the `prefers-color-scheme` pair for System. Treat them like the manifest
+`theme_color` and keep them in lockstep with `app.css`.
+
 ## Overview
 
 DueNow is a work tracker for one two-person household -- a four-rung tree, four
@@ -183,6 +189,10 @@ that tinted chrome would pull off-true.
 
 When no specific token or rule below covers a case, choose the option that is
 calmer, denser and more legible.
+
+The **Wordmark** is a named surface rather than a typography role: in the Split
+Layout sidebar it renders at 15px, Inter semibold, tightened tracking, in
+primary indigo.
 
 ## Colors
 
@@ -479,9 +489,11 @@ violation fails. Five rules:
 break these rules and live on throwaway branches -- as does `public/offline.html`
 (ADR-0029), which is hand-written, self-contained and monochrome.
 
-**Two homes for the primary indigo are outside the token set and beyond the
-lint's reach** (ADR-0030): the exported App Icon artwork and the manifest's
-`theme_color: "#4d41c8"`. Retuning the primary means re-exporting the icons.
+**A few homes for the primary indigo are outside the token set and beyond the
+lint's reach** (ADR-0030): the exported App Icon artwork, the manifest's
+`theme_color: "#4d41c8"`, and the server-rendered document `theme-color` meta
+values. Retuning the primary means re-exporting the icons and updating those
+metadata literals in lockstep with `app.css`.
 
 ## Do's and Don'ts
 
