@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* PROTOTYPE — throwaway. Tokens are a rough take on ADR-0014:
+   14px body, near-neutral greys, indigo primary. Not the real token set. */
+
+@theme inline {
+  --color-bg: hsl(0 0% 100%);
+  --color-surface: hsl(240 4% 99%);
+  --color-raised: hsl(240 5% 96.5%);
+  --color-fg: hsl(240 6% 10%);
+  --color-muted: hsl(240 4% 46%);
+  --color-faint: hsl(240 4% 64%);
+  --color-line: hsl(240 6% 90%);
+  --color-primary: hsl(245 55% 52%);
+  --color-primary-fg: hsl(0 0% 100%);
+  --color-primary-soft: hsl(245 60% 96%);
+
+  /* Status owns blue and the circle. Open and Closed are grey; In Progress and
+     Completed are the same blue, told apart by fill. */
+  --color-open: hsl(240 4% 60%);
+  --color-progress: hsl(215 75% 50%);
+  --color-completed: hsl(215 75% 50%);
+  --color-closed: hsl(240 4% 60%);
+  --color-overdue: hsl(0 60% 48%);
+
+  /* Type owns shape + hue, and never blue, never a circle. */
+  --color-type-topic: hsl(38 85% 52%);
+  --color-type-project: hsl(265 50% 55%);
+  --color-type-task: hsl(140 45% 50%);
+  --color-type-subtask: hsl(178 50% 40%);
+
+  --color-label-1: hsl(210 60% 92%);
+  --color-label-2: hsl(150 45% 90%);
+  --color-label-3: hsl(40 70% 90%);
+  --color-label-4: hsl(280 45% 93%);
+  --color-label-5: hsl(0 55% 93%);
+}
+
+html {
+  font-size: 16px; /* ADR-0014 as amended by ADR-0017 */
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Coarse pointers get 44px minimums; density otherwise holds (ADR-0014). */
+@media (any-pointer: coarse) {
+  .touch-min {
+    min-height: 44px;
+  }
+}
