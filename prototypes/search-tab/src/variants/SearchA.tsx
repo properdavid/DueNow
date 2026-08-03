@@ -73,10 +73,11 @@ export default function SearchA({ onOpen, selected, compact }: SearchProps) {
                     </span>
                   </span>
                   <span className="w-full text-[14px] leading-snug">{i.summary}</span>
-                  <span className="flex items-center gap-2 text-[11px] text-muted">
+                  <span className="flex w-full items-center gap-2 text-[11px] text-muted">
                     <StatusIcon status={i.status} size={11} />
                     {i.status}
                     <Avatar name={i.assignee} size={17} />
+                    <span className="ml-auto tabular-nums text-faint">#{i.id}</span>
                   </span>
                 </button>
               </li>
@@ -87,10 +88,10 @@ export default function SearchA({ onOpen, selected, compact }: SearchProps) {
             <thead className="sticky top-0 z-10 bg-surface">
               <tr className="border-b border-line text-left text-[11px] tracking-wide text-muted uppercase">
                 <Th sortKey="id" query={query} write={write} className="w-14 pl-4">#</Th>
-                <th className="px-2 py-1.5 font-semibold">Summary</th>
-                <th className="w-52 px-2 py-1.5 font-semibold">Parent</th>
-                <th className="w-24 px-2 py-1.5 font-semibold">Assignee</th>
-                <th className="w-28 px-2 py-1.5 font-semibold">Status</th>
+                <Th sortKey="summary" query={query} write={write}>Summary</Th>
+                <Th sortKey="parent" query={query} write={write} className="w-52">Parent</Th>
+                <Th sortKey="assignee" query={query} write={write} className="w-28">Assignee</Th>
+                <Th sortKey="status" query={query} write={write} className="w-28">Status</Th>
                 <Th sortKey="due" query={query} write={write} className="w-28">Due</Th>
                 <Th sortKey="updated" query={query} write={write} className="w-28 pr-4">Updated</Th>
               </tr>
@@ -241,9 +242,7 @@ function DesktopBar({
           </button>
         )}
 
-        <span className="ml-auto flex items-center gap-1.5 text-[12px] text-faint">
-          <span>Sort in the header ↑</span>
-        </span>
+        <span className="ml-auto text-[12px] text-faint">Sort from any column header</span>
       </div>
     </header>
   );
@@ -462,14 +461,11 @@ function CompactBar({
           <button
             type="button"
             onClick={() => setSheet(true)}
-            className={`touch-min flex shrink-0 items-center gap-1.5 rounded border px-3 text-[13px] ${
-              dims ? "border-primary bg-primary-soft text-primary" : "border-line text-muted"
+            className={`touch-min flex shrink-0 items-center rounded border px-3 text-[13px] ${
+              dims ? "border-primary bg-primary-soft font-semibold text-primary" : "border-line text-muted"
             }`}
           >
             Filters
-            {dims > 0 && (
-              <span className="rounded-full bg-primary px-1.5 text-[11px] tabular-nums text-primary-fg">{dims}</span>
-            )}
           </button>
         </form>
       </header>
@@ -515,6 +511,19 @@ function FilterSheet({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+        <Section title="Sort">
+          <Pills
+            options={SORTS.map((s) => s.label)}
+            chosen={[SORTS.find((s) => s.key === draft.sort)!.label]}
+            onToggle={(v) => patch({ sort: SORTS.find((s) => s.label === v)!.key })}
+          />
+          <button
+            onClick={() => patch({ dir: draft.dir === "asc" ? "desc" : "asc" })}
+            className="touch-min mt-2 rounded border border-line px-3 text-[13px] text-muted"
+          >
+            {draft.dir === "asc" ? "Ascending ↑" : "Descending ↓"}
+          </button>
+        </Section>
         <Section title="Type">
           <Pills options={TYPES} chosen={draft.types} onToggle={(v) => patch({ types: toggle(draft.types, v as Type) })} />
         </Section>
@@ -532,19 +541,6 @@ function FilterSheet({
         </Section>
         <Section title="Parent">
           <ParentPicker value={draft.parent} onPick={(id) => patch({ parent: id })} options={typeAhead(t, "", scenario)} />
-        </Section>
-        <Section title="Sort">
-          <Pills
-            options={SORTS.map((s) => s.label)}
-            chosen={[SORTS.find((s) => s.key === draft.sort)!.label]}
-            onToggle={(v) => patch({ sort: SORTS.find((s) => s.label === v)!.key })}
-          />
-          <button
-            onClick={() => patch({ dir: draft.dir === "asc" ? "desc" : "asc" })}
-            className="touch-min mt-2 rounded border border-line px-3 text-[13px] text-muted"
-          >
-            {draft.dir === "asc" ? "Ascending ↑" : "Descending ↓"}
-          </button>
         </Section>
       </div>
 

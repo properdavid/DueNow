@@ -22,12 +22,22 @@ export const DUE_MODES: { key: DueMode; label: string }[] = [
   { key: "none", label: "No due date" },
 ];
 
-export type Sort = "id" | "due" | "updated";
+/** #18 widened #9's three sorts: every column the table prints is sortable, because a
+ *  header that does nothing when clicked is indistinguishable from one that does. */
+export type Sort = "id" | "summary" | "parent" | "assignee" | "status" | "due" | "updated";
 export const SORTS: { key: Sort; label: string }[] = [
   { key: "id", label: "Created" },
+  { key: "summary", label: "Summary" },
+  { key: "parent", label: "Parent" },
+  { key: "assignee", label: "Assignee" },
+  { key: "status", label: "Status" },
   { key: "due", label: "Due date" },
   { key: "updated", label: "Updated" },
 ];
+
+/** Status sorts down the ladder, never alphabetically — Closed before Completed before
+ *  In Progress is nobody's idea of order. */
+const STATUS_ORDER: Record<Status, number> = { Open: 0, "In Progress": 1, Completed: 2, Closed: 3 };
 
 export type Query = {
   q: string;
@@ -206,7 +216,36 @@ export function runQuery(t: Tree, query: Query, scenario: Scenario): WorkItem[] 
   });
 
   const sign = query.dir === "asc" ? 1 : -1;
+  const parentOf = (i: WorkItem) => (i.parentId == null ? "" : t.byId(i.parentId).summary);
   return rows.sort((a, b) => {
+    if (query.sort === "summary") {
+      const d = a.summary.localeCompare(b.summary);
+      return d !== 0 ? d * sign : a.id - b.id;
+    }
+    if (query.sort === "parent") {
+      // Top-level items have no parent to compare — they sort last, like undated rows.
+      const pa = parentOf(a);
+      const pb = parentOf(b);
+      if (!pa && !pb) return a.id - b.id;
+      if (!pa) return 1;
+      if (!pb) return -1;
+      const d = pa.localeCompare(pb);
+      return d !== 0 ? d * sign : a.id - b.id;
+    }
+    if (query.sort === "assignee") {
+      // Unassigned is a real state, and it sorts last rather than under "U".
+      const aa = a.assignee;
+      const bb = b.assignee;
+      if (!aa && !bb) return a.id - b.id;
+      if (!aa) return 1;
+      if (!bb) return -1;
+      const d = aa.localeCompare(bb);
+      return d !== 0 ? d * sign : a.id - b.id;
+    }
+    if (query.sort === "status") {
+      const d = STATUS_ORDER[a.status] - STATUS_ORDER[b.status];
+      return d !== 0 ? d * sign : a.id - b.id;
+    }
     if (query.sort === "due") {
       // Undated sort last in both directions — never hidden, never in the way.
       if (!a.due && !b.due) return a.id - b.id;
