@@ -4,7 +4,7 @@
 // construction — the parent is where you are standing, so there is no picker.
 import { useState } from "react";
 import type { WorkItem } from "../data";
-import { Avatar, DueCell, StatusBadge, StatusDot } from "../screens";
+import { Avatar, DueCell, StatusBadge, StatusIcon } from "../screens";
 import type { TreeProps } from "../shell";
 import { terminal, unfinished, useTree } from "../store";
 
@@ -37,7 +37,7 @@ export default function TreeB({ onOpen, selected, compact, onMove }: TreeProps) 
       <li>
         <div className={`touch-min flex items-center gap-2 border-b border-line pr-2 hover:bg-surface ${selected === item.id ? "bg-primary-soft" : ""}`}>
           <button onClick={() => enter(item)} className="flex min-w-0 flex-1 items-center gap-2 py-2 pl-3 text-left">
-            <StatusDot status={item.status} />
+            <StatusIcon status={item.status} />
             <span className="min-w-0 flex-1">
               <span className={`block truncate ${terminal(item) ? "text-faint line-through" : ""}`}>{item.summary}</span>
               {(item.due || item.assignee || prog.total > 0) && (
@@ -76,7 +76,7 @@ export default function TreeB({ onOpen, selected, compact, onMove }: TreeProps) 
                 path.some((p) => p.id === c.id) ? "bg-primary-soft" : selected === c.id ? "bg-raised" : ""
               }`}
             >
-              <StatusDot status={c.status} />
+              <StatusIcon status={c.status} size={12} />
               <span className={`min-w-0 flex-1 truncate text-[13px] ${terminal(c) ? "text-faint line-through" : ""}`}>{c.summary}</span>
               {c.due && <span className="shrink-0 text-[11px]"><DueCell due={c.due} /></span>}
               {c.type !== "Subtask" && <span className="shrink-0 text-faint">›</span>}

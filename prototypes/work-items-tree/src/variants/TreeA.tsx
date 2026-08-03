@@ -5,14 +5,14 @@
 import { useState } from "react";
 import { type WorkItem } from "../data";
 import type { TreeProps } from "../shell";
-import { Avatar, DueCell, StatusBadge, StatusDot, TYPE_GLYPH } from "../screens";
+import { Avatar, Chevron, DueCell, StatusIcon, TypeIcon } from "../screens";
 import { terminal, unfinished, useTree } from "../store";
 
 export default function TreeA({ onOpen, selected, compact, onMove, requestCreate }: TreeProps) {
   const t = useTree();
-  const [open, setOpen] = useState<Set<number>>(
-    () => new Set(t.items.filter((i) => i.type === "Topic" || i.type === "Project").map((i) => i.id)),
-  );
+  // v1: the tree always opens fully collapsed. Expansion is session-only and is not
+  // remembered — a saved default view is a v2 idea.
+  const [open, setOpen] = useState<Set<number>>(() => new Set());
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
   const [menu, setMenu] = useState<number | null>(null);
 
@@ -46,15 +46,15 @@ export default function TreeA({ onOpen, selected, compact, onMove, requestCreate
           >
             <button
               onClick={() => toggle(item.id)}
-              className={`h-6 w-5 shrink-0 rounded text-[10px] text-faint hover:bg-raised ${all.length ? "" : "invisible"}`}
+              className={`flex h-6 w-5 shrink-0 items-center justify-center rounded text-faint hover:bg-raised ${all.length ? "" : "invisible"}`}
               aria-label={isOpen ? "Collapse" : "Expand"}
             >
-              {isOpen ? "▾" : "▸"}
+              <Chevron open={isOpen} />
             </button>
 
             <button onClick={() => onOpen(item.id)} className="flex min-w-0 flex-1 flex-col text-left">
               <span className="flex min-w-0 items-center gap-1.5">
-                <span className="shrink-0 text-[11px] text-faint">{TYPE_GLYPH[item.type]}</span>
+                <TypeIcon type={item.type} size={compact ? 12 : 11} />
                 <span className={`truncate ${item.type === "Topic" ? "font-semibold" : ""} ${terminal(item) ? "text-faint line-through" : ""}`}>
                   {item.summary}
                 </span>
@@ -63,9 +63,12 @@ export default function TreeA({ onOpen, selected, compact, onMove, requestCreate
                   prints what the item actually has. */}
               {compact && (
                 <span className="mt-0.5 flex items-center gap-2 text-[12px] text-muted">
-                  <StatusDot status={item.status} />
-                  {item.assignee ? <span>{item.assignee}</span> : <span className="text-faint">Unassigned</span>}
-                  {item.due && <DueCell due={item.due} />}
+                  <StatusIcon status={item.status} size={13} />
+                  <span className="flex items-center gap-1">
+                    <Avatar name={item.assignee} size={15} />
+                    {item.assignee && <span>{item.assignee}</span>}
+                  </span>
+                  {item.due && <DueCell due={item.due} settled={terminal(item)} />}
                   {!isOpen && prog.total > 0 && <span className="text-faint">{prog.done}/{prog.total}</span>}
                 </span>
               )}
@@ -76,9 +79,9 @@ export default function TreeA({ onOpen, selected, compact, onMove, requestCreate
                 {!isOpen && prog.total > 0 && (
                   <span className="shrink-0 rounded bg-raised px-1.5 text-[11px] text-muted tabular-nums">{prog.done}/{prog.total}</span>
                 )}
-                <StatusBadge status={item.status} short />
+                <StatusIcon status={item.status} />
                 <Avatar name={item.assignee} />
-                <span className="w-16 shrink-0 text-right text-[12px]"><DueCell due={item.due} /></span>
+                <span className="w-16 shrink-0 text-right text-[12px]"><DueCell due={item.due} settled={terminal(item)} /></span>
               </>
             )}
 
@@ -106,13 +109,10 @@ export default function TreeA({ onOpen, selected, compact, onMove, requestCreate
                   Move…
                 </button>
               )}
-              {unfinished(item) ? (
-                <>
-                  <button onClick={() => { setMenu(null); t.setStatus(item.id, "In Progress"); }} className="block w-full px-3 py-2 text-left text-[13px] hover:bg-surface">Start</button>
-                  <button onClick={() => { setMenu(null); t.setStatus(item.id, "Completed"); }} className="block w-full px-3 py-2 text-left text-[13px] hover:bg-surface">Complete</button>
-                </>
-              ) : (
-                <button onClick={() => { setMenu(null); t.setStatus(item.id, "Open"); }} className="block w-full px-3 py-2 text-left text-[13px] hover:bg-surface">Reopen</button>
+              {/* Start only. Completing runs the settle cascade (ADR-0003) over rows the
+                  tree may have collapsed out of sight — that stays a detail-view act. */}
+              {item.status === "Open" && (
+                <button onClick={() => { setMenu(null); t.setStatus(item.id, "In Progress"); }} className="block w-full px-3 py-2 text-left text-[13px] hover:bg-surface">Start</button>
               )}
             </div>
           )}

@@ -23,7 +23,7 @@ export type Tree = {
   progress: (id: number) => { done: number; total: number };
   childTypeOf: (parentId: number | null) => Type | null;
   validParentsFor: (type: Type, moving?: number) => WorkItem[];
-  create: (parentId: number | null, summary: string) => number;
+  create: (parentId: number | null, summary: string, fields?: Partial<WorkItem>) => number;
   reparent: (id: number, parentId: number) => void;
   setStatus: (id: number, status: Status) => void;
   lastCreated: number | null;
@@ -74,12 +74,12 @@ export function TreeProvider({ children: kids }: { children: React.ReactNode }) 
         const blocked = moving == null ? [] : [moving, ...descendants(moving).map((d) => d.id)];
         return items.filter((i) => i.type === wanted && !blocked.includes(i.id));
       },
-      create: (parentId, summary) => {
+      create: (parentId, summary, fields) => {
         const id = Math.max(...items.map((i) => i.id)) + 1;
-        const type = childTypeOf(parentId)!;
+        const type = (fields?.type ?? childTypeOf(parentId))!;
         setItems((prev) => [
           ...prev,
-          { id, type, parentId, summary, status: "Open", assignee: null, due: null, labels: [] },
+          { id, type, parentId, summary, status: "Open", assignee: null, due: null, labels: [], ...fields },
         ]);
         setLastCreated(id);
         return id;
