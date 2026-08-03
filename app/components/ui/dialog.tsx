@@ -32,13 +32,17 @@ function DialogContent({
       <DialogOverlay />
       <DialogPrimitive.Content
         className={cn(
-          "fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2",
-          "rounded-lg border border-border bg-popover p-6 text-popover-foreground shadow-lg",
+          "fixed left-1/2 top-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 -translate-y-1/2 flex-col",
+          /* A tall form on a phone must stay inside the viewport and scroll inside
+             itself — the page behind it is locked while the dialog is open, and the
+             close affordance stays put because only the inner region scrolls. */
+          "max-h-[calc(100dvh-2rem)] overflow-hidden",
+          "rounded-lg border border-border bg-popover text-popover-foreground shadow-lg",
           className,
         )}
         {...props}
       >
-        {children}
+        <div className="overflow-y-auto overscroll-contain p-6">{children}</div>
         <DialogPrimitive.Close
           className={cn(
             "absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-md",
