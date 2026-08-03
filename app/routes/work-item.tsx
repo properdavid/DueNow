@@ -10,6 +10,7 @@ import { Input } from "~/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
 import { Textarea } from "~/components/ui/textarea";
 import { Avatar, StatusMark } from "~/components/ui/work-item-marks";
+import { ReparentDialog } from "~/components/work-items/reparent-dialog";
 import type { WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
 import type { WorkItemStatus, WorkItemType } from "~/db/schema";
@@ -45,6 +46,7 @@ export function WorkItemDocument({
   members: WorkItemsTreeMember[];
 }) {
   const location = useLocation();
+  const [reparentOpen, setReparentOpen] = useState(false);
   const backLink = location.pathname.startsWith("/search/")
     ? { href: `/search${location.search}`, label: "← Back to results" }
     : location.pathname.startsWith("/due/")
@@ -72,6 +74,21 @@ export function WorkItemDocument({
             </span>
           ))}
         </nav>
+        {detail.item.parentId !== null ? (
+          <div>
+            <Button size="sm" type="button" variant="outline" onClick={() => setReparentOpen(true)}>
+              Reparent…
+            </Button>
+            <ReparentDialog
+              currentParentId={detail.item.parentId}
+              itemId={detail.item.id}
+              itemSummary={detail.item.summary}
+              itemType={detail.item.type}
+              open={reparentOpen}
+              onOpenChange={setReparentOpen}
+            />
+          </div>
+        ) : null}
         <SummaryEditor id={detail.item.id} summary={detail.item.summary} />
         <div className="flex flex-wrap gap-2" aria-label="Property Chips">
           <StatusChip

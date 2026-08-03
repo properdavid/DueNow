@@ -50,7 +50,7 @@ _Avoid_: parents (plural), children (when meaning more than one rung), lineage
 
 **Reparent**:
 Moving a work item under a different parent of the same type it already sits under — a Task moves to another Project. The work item carries its subtree with it, and no type changes.
-_Avoid_: move, re-assign, transfer
+_Avoid_: move, re-assign, transfer — except the Work Items tree row menu label **Move…**, where the affordance names the action in the tightest possible row-menu language.
 
 **Promotion** / **Demotion**:
 Changing a work item's type, shifting it and its whole subtree one rung up or down the ladder — a Task that turns out to be a Project. Not in v1; the term is reserved so that retyping, when it arrives, is not confused with Reparent.
@@ -275,4 +275,3 @@ _Avoid_: local time, server time, user timezone, locale
 **Today**:
 The calendar day in the Household Timezone. The only thing a Due Date is ever compared against, so overdue and due-today mean the same thing to both household members.
 _Avoid_: now, current date, the current time
-

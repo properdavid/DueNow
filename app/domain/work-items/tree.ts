@@ -257,8 +257,12 @@ export function reparentWouldNeedReopen(
   id: number,
   newParentId: number | null,
 ): TerminalAncestorNotice[] {
-  const item = requireRow(rows, id);
-  return creationWouldNeedReopen(rows, newParentId, item.status);
+  requireRow(rows, id);
+  if (newParentId === null) {
+    return [];
+  }
+  const parent = requireRow(rows, newParentId);
+  return toTerminalAncestorNotices([...getAncestors(rows, parent.id), parent]);
 }
 
 export function unsettledStatusWouldNeedReopen(

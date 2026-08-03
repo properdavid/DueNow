@@ -313,6 +313,7 @@ describe("Work Item detail rendering seam", () => {
     expect(markup).not.toContain("<strong>");
     expect(markup).toContain("Unassigned");
     expect(markup).toContain("No Due Date");
+    expect(markup).not.toContain("Reparent…");
   });
 
   test("renders the Children Checklist with a settled reveal and omits it for Subtasks", () => {
@@ -383,6 +384,7 @@ describe("Work Item detail rendering seam", () => {
     expect(markup).toContain("1 settled");
     expect(markup).not.toContain("Choose colour");
     expect(markup).toContain("Add Task");
+    expect(markup).toContain("Reparent…");
 
     const subtaskDetail = { ...projectDetail, item: { ...projectDetail.item, id: 5, type: "subtask" as const }, children: [] };
     const SubtaskStub = createRoutesStub([
