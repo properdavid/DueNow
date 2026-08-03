@@ -12,7 +12,7 @@ const badgeVariants = cva(
       variant: {
         status:
           "px-1.5 py-0 text-[10px] font-bold uppercase tracking-wide border-border bg-muted text-muted-foreground",
-        chip: "rounded-full px-2 py-0.5 text-xs border-border bg-muted text-muted-foreground",
+        chip: "rounded-full px-2 py-0.5 text-sm border-border bg-muted text-muted-foreground",
       },
     },
     defaultVariants: {

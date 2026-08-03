@@ -1,0 +1,511 @@
+---
+version: alpha
+name: DueNow
+description: >-
+  Design system for DueNow, a self-hosted household work tracker. Dense,
+  professional and calm — JIRA's shape at a household's scale. This file is
+  canonical for design DECISIONS, token NAMING, and rationale; app/app.css is
+  canonical for the literal token VALUES. Where a value here disagrees with
+  app.css, app.css wins and this file must be updated to match. Colours are
+  expressed in the same HSL form app.css uses so the two can be diffed directly.
+  The system is integral-grc's, ported onto Tailwind v4's CSS-first architecture
+  (ADR-0014); dark mode resolves entirely in CSS (ADR-0015).
+colors:
+  # --- Brand / surfaces (mirror app/app.css :root; dark values live in the same file) ---
+  primary: "hsl(245 55% 52%)"
+  primary-foreground: "hsl(0 0% 100%)"
+  primary-soft: "hsl(245 60% 96%)" # the disc behind a Surface Mark (ADR-0030)
+  background: "hsl(240 6% 98%)"
+  foreground: "hsl(240 10% 12%)"
+  card: "hsl(0 0% 100%)"
+  card-foreground: "hsl(240 10% 12%)"
+  popover: "hsl(0 0% 100%)"
+  popover-foreground: "hsl(240 10% 12%)"
+  sidebar: "hsl(240 5% 96%)"
+  sidebar-foreground: "hsl(240 10% 12%)"
+  sidebar-border: "hsl(240 6% 88%)"
+  secondary: "hsl(240 5% 95%)"
+  secondary-foreground: "hsl(240 10% 20%)"
+  muted: "hsl(240 5% 95%)"
+  muted-foreground: "hsl(240 5% 45%)"
+  accent: "hsl(245 30% 95%)"
+  accent-foreground: "hsl(245 45% 40%)"
+  border: "hsl(240 6% 88%)"
+  input: "hsl(240 6% 82%)"
+  ring: "hsl(245 55% 52%)"
+  destructive: "hsl(0 72% 52%)"
+  destructive-foreground: "hsl(0 0% 100%)"
+  destructive-subtle: "hsl(0 72% 95%)"
+  # --- Type colours: one per rung of the Type Ladder, never blue, never a circle ---
+  type-topic: "hsl(38 85% 46%)" # amber
+  type-project: "hsl(265 50% 55%)" # violet
+  type-task: "hsl(140 45% 34%)" # green
+  type-subtask: "hsl(178 55% 30%)" # teal
+  # --- Status colours: two greys and one blue, shared by In Progress and Completed ---
+  status-open: "hsl(240 4% 55%)"
+  status-open-foreground: "hsl(0 0% 100%)"
+  status-open-subtle: "hsl(240 5% 94%)"
+  status-in-progress: "hsl(215 75% 48%)"
+  status-in-progress-foreground: "hsl(0 0% 100%)"
+  status-in-progress-subtle: "hsl(215 70% 94%)"
+  status-completed: "hsl(215 75% 48%)"
+  status-completed-foreground: "hsl(0 0% 100%)"
+  status-completed-subtle: "hsl(215 70% 94%)"
+  status-closed: "hsl(240 4% 40%)"
+  status-closed-foreground: "hsl(0 0% 100%)"
+  status-closed-subtle: "hsl(240 5% 92%)"
+typography:
+  # role : recipe is the exact Tailwind class string engineers type.
+  heading-page: # text-xl font-semibold
+    fontFamily: Inter
+    fontSize: 20px
+    fontWeight: 600
+    lineHeight: 1.3
+  heading-section: # text-lg font-semibold
+    fontFamily: Inter
+    fontSize: 18px
+    fontWeight: 600
+    lineHeight: 1.3
+  heading-sub: # text-base font-semibold
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: 600
+    lineHeight: 1.4
+  body: # text-base  (default body — 16px, ADR-0017's amendment to ADR-0014)
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: 400
+    lineHeight: 1.5
+  body-strong: # text-base font-medium
+    fontFamily: Inter
+    fontSize: 16px
+    fontWeight: 500
+    lineHeight: 1.5
+  caption: # text-sm  (THE FLOOR for ordinary text)
+    fontFamily: Inter
+    fontSize: 14px
+    fontWeight: 400
+    lineHeight: 1.4
+  micro: # text-[11px]  (SANCTIONED, restricted use -- see Typography prose)
+    fontFamily: Inter
+    fontSize: 11px
+    fontWeight: 500
+    lineHeight: 1.3
+  micro-label: # text-[10px] font-bold uppercase tracking-wide (SANCTIONED, restricted use)
+    fontFamily: Inter
+    fontSize: 10px
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: 0.04em
+rounded:
+  sm: 6px
+  DEFAULT: 8px # rounded-md -- buttons, inputs, badges, menu items
+  lg: 10px # cards, dialogs, popovers
+  xl: 14px
+  full: 9999px # Avatars, the tab capsule, Label chips
+spacing:
+  # Native Tailwind 4px scale is blessed as-is. No semantic spacing tokens.
+  # Density conventions live in the Layout prose. base is informational only.
+  base: 4px
+touch:
+  # Density and touch comfort are different axes (ADR-0014).
+  coarse-pointer-minimum: 44px # @media (any-pointer: coarse), inside the primitives only
+components:
+  button-default: # primary action -- one per view
+    backgroundColor: "{colors.primary}"
+    textColor: "{colors.primary-foreground}"
+    rounded: "{rounded.DEFAULT}"
+  button-secondary:
+    backgroundColor: "{colors.secondary}"
+    textColor: "{colors.secondary-foreground}"
+    rounded: "{rounded.DEFAULT}"
+  button-outline:
+    backgroundColor: "{colors.card}"
+    borderColor: "{colors.input}"
+    textColor: "{colors.foreground}"
+    rounded: "{rounded.DEFAULT}"
+  button-destructive:
+    backgroundColor: "{colors.destructive}"
+    textColor: "{colors.destructive-foreground}"
+    rounded: "{rounded.DEFAULT}"
+  badge-status: # uppercase micro-badge -- statuses are treatment, not only hue
+    backgroundColor: "{colors.muted}"
+    textColor: "{colors.muted-foreground}"
+    typography: "{typography.micro-label}"
+    rounded: "{rounded.DEFAULT}"
+  badge-chip: # a Label chip -- neutral, detail view only, carries no colour (ADR-0018)
+    backgroundColor: "{colors.muted}"
+    textColor: "{colors.muted-foreground}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.full}"
+  dialog: # floating, temporary UI -- one of the few things allowed a shadow
+    backgroundColor: "{colors.popover}"
+    textColor: "{colors.popover-foreground}"
+    borderColor: "{colors.border}"
+    rounded: "{rounded.lg}"
+---
+
+# DueNow -- Design System
+
+This is the single design "bible" for DueNow. It codifies the design system the
+app expresses in code and is the forward template for all new UI work.
+
+**Source of truth.** This file is canonical for _decisions, token naming, and
+rationale_; [app/app.css](app/app.css) is canonical for the literal token
+_values_ and wires them into Tailwind utilities through `@theme inline`. The YAML
+frontmatter above carries the agreed vocabulary and representative values for
+tooling; when a value here disagrees with `app.css`, `app.css` wins and this file
+is corrected to match. There is no token codegen pipeline, so never hardcode a
+colour: if you need a colour that is not a token, add it to the token system
+first, then use it. `design-lint` enforces this.
+
+**Stack.** React 19 + React Router v7 (framework mode, SSR) + Vite, with a local
+shadcn-style primitive library under
+[app/components/ui](app/components/ui) built on Radix UI + Tailwind v4 +
+class-variance-authority, and `lucide-react` icons. There is no
+`tailwind.config.*`: the token set is declared in CSS. Theming resolves entirely
+in CSS -- `light` / `dark` on `<html>` for an explicit choice, and
+`prefers-color-scheme` for System (ADR-0015).
+
+## Overview
+
+DueNow is a work tracker for one two-person household -- a four-rung tree, four
+statuses, a filter bar. The product should feel **dense, professional, calm and
+precise**, closer to a serious work tool than a consumer to-do app. A rounded,
+airy, Reminders-style skin would fight the model it wraps.
+
+The register is set by three decisions: `body` is 16px (dense but comfortable to
+read), spacing stays on the native 4px scale with no semantic aliases, and
+hierarchy comes from tone and hairline borders rather than shadow. Colour is
+restrained -- an indigo primary on near-neutral greys -- because the screens are
+dominated by two icon vocabularies (four **Type Marks**, four **Status Marks**)
+that tinted chrome would pull off-true.
+
+When no specific token or rule below covers a case, choose the option that is
+calmer, denser and more legible.
+
+## Colors
+
+All app colour flows through semantic CSS variables in
+[app/app.css](app/app.css), exposed as Tailwind utilities (`bg-primary`,
+`text-muted-foreground`, and so on). Raw Tailwind colour utilities
+(`bg-slate-50`, `text-blue-600`), raw hex and arbitrary colour values are **not**
+permitted -- they bypass the token system and break theming.
+
+### Brand and surfaces
+
+The palette is a single indigo brand colour on near-neutral greys.
+
+- **Primary -- `hsl(245 55% 52%)` light, `hsl(245 60% 68%)` dark.** In the
+  serious-tool family without being the default corporate blue, and clear of the
+  215 blue the statuses use. It carries the single most important action on a
+  screen, the active navigation item, the focus ring and the **Wordmark**.
+  Validated against blue 220 and purple 270 in a mock Due tab.
+- **Background / Foreground.** Page background is a near-white neutral
+  (`hsl(240 6% 98%)`) in light and `hsl(240 8% 9%)` in dark; text inverts.
+- **Card / Popover.** White (light) / `hsl(240 8% 12%)` (dark) surfaces sitting
+  _above_ the page background -- the primary depth mechanism (see Elevation).
+- **Secondary / Muted / Accent.** Low-emphasis fills for secondary buttons, muted
+  metadata (`muted-foreground`), and the tinted accent behind an active sidebar
+  item or a hover.
+- **Border / Input / Ring.** Hairline separators, input outlines and the focus
+  ring, which tracks `primary`.
+- **Destructive.** Delete, and the red an **Overdue** date is carried in.
+
+**Greys are near-neutral, at or below 8% saturation, and are not tinted toward
+the brand hue.** The chrome carries two icon axes; tinted chrome pulls both off
+true and eats the contrast that makes them scannable.
+
+### Type colours
+
+Four, one per rung of the **Type Ladder**. **Type owns shape and hue.** No Type
+Mark is ever a circle and none is ever blue, so type and status can never be
+confused, and both pair shape with hue so neither depends on colour alone.
+
+| Token          | Rung    | Mark    | Light value        |
+| -------------- | ------- | ------- | ------------------ |
+| `type-topic`   | Topic   | star    | `hsl(38 85% 46%)`  |
+| `type-project` | Project | diamond | `hsl(265 50% 55%)` |
+| `type-task`    | Task    | square  | `hsl(140 45% 34%)` |
+| `type-subtask` | Subtask | triangle| `hsl(178 55% 30%)` |
+
+### Status colours
+
+Exactly **four** status roles exist, drawn from **two greys and one blue**.
+**Status owns the circle and the blue.** In Progress and Completed share the blue
+because both mean the work is live or landed; they are told apart by fill.
+
+| Token                | Meaning                     | Mark             | Light value        |
+| -------------------- | --------------------------- | ---------------- | ------------------ |
+| `status-open`        | Not started                 | empty grey ring  | `hsl(240 4% 55%)`  |
+| `status-in-progress` | Underway                    | half-filled blue | `hsl(215 75% 48%)` |
+| `status-completed`   | Terminal and achieved       | blue check       | `hsl(215 75% 48%)` |
+| `status-closed`      | Terminal and not achieved   | filled grey      | `hsl(240 4% 40%)`  |
+
+Each role has three parts: the **solid** colour (marks and icons), a
+**`-foreground`** (text that sits on the solid fill), and a **`-subtle`** tint
+(badge and callout backgrounds).
+
+**Don't:** raw `bg-green-600`, `text-amber-500` or `bg-blue-600` for status. Use
+the four roles.
+
+### Dark mode
+
+Theme is stored per user as System, Light or Dark and **resolves entirely in
+CSS** (ADR-0015). An explicit choice renders as a `light` or `dark` class on the
+document element; System renders no class and is resolved by
+`prefers-color-scheme`. The dark values are written **once**, inside
+`@variant dark`, and expanded to both selectors by the matching
+`@custom-variant dark`, so the two can never drift apart.
+
+The `-subtle` tints **invert** rather than dim: the ~94%-lightness light-mode
+tints become low-lightness tints of the same hue, so a badge reads as a dark
+tinted pill and not a glaring light block.
+
+**`dark:` utilities are banned and theme is unreadable from JavaScript.** Every
+colour comes from a semantic token and the token block redefines itself per mode,
+so no component needs to know what mode it is in. Anything that would need to
+branch on theme -- a canvas, an embed, an image swap -- gets tokens of its own.
+
+### Families deliberately absent
+
+Four families from integral-grc are **not** ported, and reaching for them is a
+design change, not a styling choice:
+
+- **The chart ramp** (`chart-1..N`) -- v1 draws no charts.
+- **The computed-border indirection** (`--primary-border` and friends, derived
+  through `hsl(from …)`) -- borders come from `border` and `input`.
+- **The serif, signature and monospace families.** Inter is the only family, and
+  it is self-hosted. Dropping mono drops the `mono` typography role with it:
+  DueNow displays no code, hashes or identifiers.
+- **`--label-1..8`.** A **Label** carries no colour (ADR-0018). Labels turned out
+  to be filter vocabulary rather than identity, so they render only on the Detail
+  View, as neutral chips.
+
+## Typography
+
+One family for the product UI: **Inter** (`--font-sans`), self-hosted, with no
+remote font fetch. There is no second family.
+
+Each role below is a **semantic name** bound to an **exact Tailwind recipe**. Use
+the recipe verbatim; the name is the shared vocabulary. **A role is not a
+component and not an `@utility` alias** -- each recipe is two utilities long, so a
+name buys no compression, and a named role invites the variant that erodes the
+scale from inside (`heading-section-sm`). Enforcement comes from closing the
+scale, not from naming the rungs.
+
+| Role              | Tailwind recipe                                 | Use                                                                          |
+| ----------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| `heading-page`    | `text-xl font-semibold`                         | Page title (one per page)                                                    |
+| `heading-section` | `text-lg font-semibold`                         | Major section heading                                                        |
+| `heading-sub`     | `text-base font-semibold`                       | Sub-section / card title                                                     |
+| `body`            | `text-base`                                     | Default body, list and row text                                              |
+| `body-strong`     | `text-base font-medium`                         | Emphasised body -- a row's Summary                                           |
+| `caption`         | `text-sm`                                       | Helper text, metadata, breadcrumbs -- **the floor for ordinary text**        |
+| `micro`           | `text-[11px]`                                   | **Sanctioned, restricted** -- dense table cells                              |
+| `micro-label`     | `text-[10px] font-bold uppercase tracking-wide` | **Sanctioned, restricted** -- Avatar initials, status badges, eyebrow labels |
+
+**`body` is 16px, not 14px.** ADR-0017 amends ADR-0014 on this one rung and only
+this one: at 14px on a 15-inch laptop the register read as cramped rather than
+dense. Spacing and the coarse-pointer minimums are unchanged, so the interface is
+denser than a consumer app at a comfortable reading size rather than uniformly
+tighter. Because `body` moved up, `heading-sub` takes its distinction from weight
+(`font-semibold`) rather than size, which is what keeps it apart from
+`body-strong`.
+
+### The 14px floor and the two sanctioned micro roles
+
+`caption` (`text-sm`, 14px) is the **floor for all ordinary text** -- body,
+helper, validation and informational messages never go below it.
+
+Below it, only **two** roles exist, and each is allowed **only** for a documented
+reason:
+
+- **`micro` (11px)** -- dense table cells where `caption` would force the row to
+  grow, principally the Search tab's Results Table.
+- **`micro-label` (10px)** -- one of three justified reasons:
+  1. **Geometry** -- text must fit a fixed shape (an Avatar's initial in a small
+     disc, a badge inside a tree row).
+  2. **Typographic tiering** -- an uppercase status micro-badge or eyebrow label
+     that must visually recede below the content it annotates.
+  3. **Row density** -- compact pills (`py-0`) inside dense tree or table rows
+     that must not increase row height.
+
+Any other sub-14px text converges up to `caption`. Arbitrary one-off sizes
+(`text-[13px]`, `text-[0.8rem]`) are banned; `text-[11px]` and `text-[10px]` are
+the only arbitrary sizes `design-lint` allows, and only as these two roles.
+
+**Headings.** Page titles are `heading-page` (`text-xl font-semibold`) -- not
+`font-bold`, not `text-2xl`.
+
+## Layout
+
+The app uses native Tailwind spacing (the 4px scale). **No semantic spacing
+tokens are introduced** -- the scale is already consistent and the code speaks
+Tailwind directly. Instead, follow density conventions:
+
+| Context                     | Convention                      |
+| --------------------------- | ------------------------------- |
+| Related controls in a row   | `gap-2`                         |
+| Distinct control groups     | `gap-4`                         |
+| Stacked page sections       | `space-y-6`                     |
+| Card internal padding       | `p-6`                           |
+| Page content region padding | `p-6`                           |
+| Page header region padding  | `p-4` with a `border-b` divider |
+
+Arbitrary `gap-[Npx]` / `p-[Npx]` values are banned; use the scale.
+
+### Density and touch comfort are different axes
+
+Type size and spacing are **density**; control height is **touch comfort**. They
+move independently. Interactive minimums rise to **44px** under
+`@media (any-pointer: coarse)` while type and spacing stay put, so a phone gets
+safe targets without the whole interface loosening.
+
+`any-pointer` is chosen over `pointer` deliberately: it reports _any_ attached
+input rather than the primary one, so a hybrid touchscreen laptop gets the larger
+controls permanently. Neither query re-evaluates when a person switches hand to
+trackpad, so the choice is which way to be wrong forever -- and a miss-tap on a
+real touchscreen costs more than a few pixels of density.
+
+**The rule is expressed only inside the primitives -- roughly six files -- and
+never at a call site.** A test fails the build if
+`[@media(any-pointer:coarse)]` appears outside `app/components/ui`.
+
+## Elevation & Depth
+
+Hierarchy is conveyed through **tonal layering**, not shadow. The page
+`background` is the base layer; `card` and `popover` surfaces sit above it,
+reinforced by hairline `border`s, with `muted` / `accent` as further tonal steps.
+The `--elevate-1` / `--elevate-2` overlays supply hover and active feedback
+through the `hover-elevate` and `active-elevate-2` utilities, which paint over
+whatever background the element already has.
+
+**Shadows are reserved exclusively for floating, temporary, dismissible UI** --
+dropdown, dialog, popover, toast, sheet. The shadow says "this is ephemeral and
+sits above the page". Inline cards, rows and panels use tone and border, never
+shadow. The ramp is trimmed to `sm` / `md` / `lg`, because three rungs is all
+that transient overlays need.
+
+## Shapes
+
+| Token          | Value  | Use                                                       |
+| -------------- | ------ | --------------------------------------------------------- |
+| `rounded-md`   | 8px    | Buttons, inputs, badges, menu items -- the default        |
+| `rounded-lg`   | 10px   | Cards, dialogs, popovers                                  |
+| `rounded-full` | 9999px | Avatars, the tab capsule, Label chips                     |
+
+`rounded-sm` (6px) and `rounded-xl` (14px) exist in the ramp but have no current
+call site; reach for one only with a reason. **Do not mix sharp and rounded
+corners in the same view.**
+
+## Components
+
+All interactive components come from the local primitive library at
+[app/components/ui](app/components/ui): shadcn-style CVA + `cn` over Radix.
+Conventions adopted verbatim from integral-grc:
+
+- Focus is `focus-visible:ring-1 focus-visible:ring-ring` -- thin,
+  token-coloured and keyboard-only, with `ring-inset` on tabs so the ring is not
+  clipped in an overflow-x container.
+- Disabled is `disabled:pointer-events-none disabled:opacity-50`.
+- Alerts render as a `-subtle` fill with a `/40` border and a tinted icon.
+- Icons are `lucide-react`, sized by the primitive
+  (`[&_svg]:size-4 [&_svg]:shrink-0`), never by the call site.
+
+### Button
+
+[app/components/ui/button.tsx](app/components/ui/button.tsx).
+`variant="default"` is backed by the `primary` token and **is** the
+primary-action style. Faking one with a raw colour utility is banned.
+
+| Variant       | Role                                                                  |
+| ------------- | --------------------------------------------------------------------- |
+| `default`     | Primary action -- **one per view** (the single most important action) |
+| `secondary`   | Secondary action                                                      |
+| `outline`     | Bordered, low/medium emphasis                                         |
+| `ghost`       | Lowest emphasis, toolbar and inline actions                           |
+| `destructive` | Destructive action (backed by `destructive`)                          |
+
+Sizes use `min-h`, never a fixed `h`, so a button grows with its content rather
+than clipping it: `default` is `min-h-9 px-4 py-2`, `sm` is `min-h-8 px-3`, `lg`
+is `min-h-10 px-8`, `icon` is square. **`ghost` carries
+`border border-transparent`** so it does not jump on hover.
+
+### Input and Textarea
+
+[input.tsx](app/components/ui/input.tsx) /
+[textarea.tsx](app/components/ui/textarea.tsx). A `card` fill inside an `input`
+border, with the same focus ring as everything else. The Detail View's free-text
+fields commit on an explicit ✓ rather than on blur, so a textarea is a control
+that holds uncommitted text by design -- never auto-save it.
+
+### Badge
+
+[app/components/ui/badge.tsx](app/components/ui/badge.tsx), in two treatments
+that are **deliberately different jobs, not two skins**:
+
+| Variant  | Surface                                            | Use                                     |
+| -------- | -------------------------------------------------- | --------------------------------------- |
+| `status` | `muted` fill, hairline border, `micro-label` size  | Uppercase status micro-badge            |
+| `chip`   | `muted` fill, `rounded-full`, `caption` size       | A Label, on the Detail View only        |
+
+Labels and statuses are distinguished by **treatment, not hue**: a Label carries
+no colour at all (ADR-0018), so a chip can never be mistaken for a status.
+
+### Dialog
+
+[app/components/ui/dialog.tsx](app/components/ui/dialog.tsx), over Radix Dialog.
+Floating and temporary, so it is one of the few surfaces allowed a shadow
+(`shadow-lg`) and it uses `rounded-lg` with a `popover` fill. The close control
+is a `lucide-react` `X` with an `sr-only` label.
+
+## design-lint
+
+The token discipline, the closed type scale and the ban on `dark:` are
+conventions a linter enforces; without one they decay quietly. `npm run
+design-lint` is a **hard gate from day one, with no ratchet baseline** -- any
+violation fails. Five rules:
+
+1. **No raw Tailwind palette utilities** -- `bg-slate-50`, `text-blue-600`.
+2. **No raw hex** -- `#fff`, `#4d41c8`.
+3. **No `dark:` utilities**, stacked behind another variant or not.
+4. **No arbitrary colour values** -- `bg-[#ff0000]`, `text-[rgb(…)]`,
+   `bg-[var(--x)]`, `[color:…]`.
+5. **No arbitrary font sizes**, with `text-[11px]` and `text-[10px]` allowlisted
+   as the two restricted roles.
+
+`prototypes/` sits outside the lint's source root -- prototype tickets exist to
+break these rules and live on throwaway branches -- as does `public/offline.html`
+(ADR-0029), which is hand-written, self-contained and monochrome.
+
+**Two homes for the primary indigo are outside the token set and beyond the
+lint's reach** (ADR-0030): the exported App Icon artwork and the manifest's
+`theme_color: "#4d41c8"`. Retuning the primary means re-exporting the icons.
+
+## Do's and Don'ts
+
+- **Do** use `primary` for the single most important action per screen; **don't**
+  use it for more than one primary action in a view.
+- **Don't** hardcode colours -- no raw Tailwind colour utilities, no raw hex, no
+  arbitrary colour values. Add a token first.
+- **Don't** express status with raw colours. Use the four status roles.
+- **Don't** give a Type Mark a circle or the colour blue -- the circle and the
+  blue belong to status.
+- **Don't** use raw neutral palettes (`gray-*`, `slate-*`, `zinc-*`). Use the
+  semantic neutrals (`background`, `foreground`, `muted`, `border`).
+- **Don't** write a `dark:` utility, and **don't** read the theme from
+  JavaScript. The token block redefines itself per mode.
+- **Do** keep ordinary text at `text-sm` (14px) or larger; **don't** use smaller
+  text except the two sanctioned roles for their stated reasons.
+- **Don't** use arbitrary one-off sizes (`text-[13px]`, `gap-[7px]`). Stay on the
+  type roles and the 4px spacing scale.
+- **Do** express the 44px coarse-pointer minimum inside a primitive; **never** at
+  a call site.
+- **Do** convey depth with tone and border; reserve shadows for floating
+  overlays.
+- **Don't** turn a typography role into a component or an `@utility` alias. The
+  recipe is what you type.
+- **Do** treat the absent families (chart ramp, computed borders, serif /
+  signature / mono, `--label-1..8`) as decisions. Adding one back is an ADR, not
+  a commit.
