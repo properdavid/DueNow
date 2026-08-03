@@ -7,8 +7,10 @@ import {
   unfinishedDescendantsForSettleConfirmation,
   parentTypeForWorkItemType,
   planCreateStatusEffects,
+  planReopenTerminalAncestors,
   planStartCascade,
   planSettleCascade,
+  planUnsettle,
   type TerminalAncestorNotice,
   type TreeWorkItem,
 } from "./tree";
@@ -35,9 +37,16 @@ export interface WorkItemsTreeReadModel {
 export interface WorkItemDetailReadModel {
   item: WorkItemsTreeRow;
   breadcrumb: { id: number; label: string; type: WorkItemType }[];
+  children: WorkItemDetailChild[];
   labels: { id: number; name: string }[];
   unfinishedDescendants: { id: number; summary: string; type: WorkItemType }[];
+  reopenNotice: TerminalAncestorNotice[];
   startCascadeAncestors: { id: number; summary: string }[];
+}
+
+export interface WorkItemDetailChild extends WorkItemsTreeRow {
+  unfinishedDescendants: { id: number; summary: string; type: WorkItemType }[];
+  reopenNotice: TerminalAncestorNotice[];
 }
 
 interface WorkItemSelectRow {
@@ -110,8 +119,16 @@ export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkIt
   return {
     item,
     breadcrumb: [...ancestorsForWorkItem(rows, id).map(({ id, summary: label, type }) => ({ id, label, type })), { id: item.id, label: typeLabel(item.type), type: item.type }],
+    children: rows
+      .filter((row) => row.parentId === id)
+      .map((child) => ({
+        ...child,
+        unfinishedDescendants: unfinishedDescendantsForSettleConfirmation(rows, child.id).map(({ id, summary, type }) => ({ id, summary, type })),
+        reopenNotice: planUnsettle(rows, child.id, "open").reopenNotice,
+      })),
     labels: selectedLabels,
     unfinishedDescendants: unfinishedDescendantsForSettleConfirmation(rows, id).map(({ id, summary, type }) => ({ id, summary, type })),
+    reopenNotice: planUnsettle(rows, id, "open").reopenNotice,
     startCascadeAncestors:
       item.status === "open"
         ? planStartCascade(rows, id)
@@ -291,7 +308,28 @@ export function unsettleWorkItem(database: DatabaseClient, id: number, actorId: 
     if (target.status === "open") {
       return { ok: true as const, changed: 0 };
     }
-    const changes = [{ id, status: "open" as const }];
+    const plan = planUnsettle(rows, id, "open");
+    if (plan.reopenNotice.length > 0) {
+      return { ok: false as const, error: { field: "confirmed", message: "Confirm the Reopen Notice first." } };
+    }
+    const changes = plan.statusChanges;
+    applyStatusChanges(database, changes, actorId, now);
+    return { ok: true as const, changed: changes.length };
+  })();
+}
+
+export function reopenAndUnsettleWorkItem(database: DatabaseClient, id: number, actorId: number, now = Date.now()): UpdateWorkItemStatusResult {
+  return database.sqlite.transaction(() => {
+    const rows = loadTreeRows(database);
+    const target = rows.find((row) => row.id === id);
+    if (!target) {
+      throw new Response("Work Item not found", { status: 404 });
+    }
+    if (target.status === "open") {
+      return { ok: true as const, changed: 0 };
+    }
+    const plan = planUnsettle(rows, id, "open");
+    const changes = [...plan.statusChanges, ...planReopenTerminalAncestors(plan.reopenNotice)];
     applyStatusChanges(database, changes, actorId, now);
     return { ok: true as const, changed: changes.length };
   })();

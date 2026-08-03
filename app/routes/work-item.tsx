@@ -4,14 +4,15 @@ import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { Check, X } from "lucide-react";
 
 import { getDatabase, requireUser } from "~/auth/session.server";
+import { useCreationDialog } from "~/components/shell/creation-dialog";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
 import { Textarea } from "~/components/ui/textarea";
 import { Avatar, StatusMark } from "~/components/ui/work-item-marks";
-import type { WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
+import type { WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
-import type { WorkItemStatus } from "~/db/schema";
+import type { WorkItemStatus, WorkItemType } from "~/db/schema";
 
 type ShellData = {
   user: { id: number };
@@ -75,6 +76,7 @@ export function WorkItemDocument({
         <div className="flex flex-wrap gap-2" aria-label="Property Chips">
           <StatusChip
             id={detail.item.id}
+            reopenNotice={detail.reopenNotice}
             status={detail.item.status}
             startCascadeAncestors={detail.startCascadeAncestors}
             unfinishedDescendants={detail.unfinishedDescendants}
@@ -84,8 +86,201 @@ export function WorkItemDocument({
           <LabelsChip labels={detail.labels} />
         </div>
         <DescriptionEditor description={detail.item.description} id={detail.item.id} />
+        <ChildrenChecklist
+          childrenRows={detail.children}
+          currentUserId={currentUserId}
+          parentId={detail.item.id}
+          parentSummary={detail.item.summary}
+          parentType={detail.item.type}
+        />
       </div>
     </article>
+  );
+}
+
+function ChildrenChecklist({
+  childrenRows,
+  currentUserId,
+  parentId,
+  parentSummary,
+  parentType,
+}: {
+  childrenRows: WorkItemDetailChild[];
+  currentUserId: number;
+  parentId: number;
+  parentSummary: string;
+  parentType: WorkItemType;
+}) {
+  const childType = childTypeFor(parentType);
+  const { openCreationDialog } = useCreationDialog();
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    setRevealed(false);
+  }, [parentId]);
+
+  if (childType === null) {
+    return null;
+  }
+
+  const unfinished = childrenRows.filter((child) => !isTerminalStatus(child.status));
+  const settled = childrenRows.filter((child) => isTerminalStatus(child.status));
+  const visibleRows = revealed ? childrenRows : unfinished;
+  const childLabel = typeLabel(childType);
+
+  return (
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">{childLabel}s</h2>
+      {childrenRows.length === 0 ? (
+        <div className="rounded-lg border border-border bg-card text-card-foreground">
+          <p className="p-4 text-sm text-muted-foreground">No {childLabel}s yet.</p>
+        </div>
+      ) : visibleRows.length > 0 ? (
+        <div className="rounded-lg border border-border bg-card text-card-foreground">
+          <div className="divide-y divide-border">
+            {visibleRows.map((child) => (
+              <ChildrenChecklistRow key={child.id} child={child} currentUserId={currentUserId} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+      {settled.length > 0 && !revealed ? (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>{settled.length} settled —</span>
+          <Button size="sm" type="button" variant="ghost" onClick={() => setRevealed(true)}>
+            show
+          </Button>
+        </div>
+      ) : null}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => openCreationDialog({ type: childType, parentId, parentSummary, stayOnSuccess: true })}
+      >
+        Add {childLabel}
+      </Button>
+    </section>
+  );
+}
+
+function ChildrenChecklistRow({ child, currentUserId }: { child: WorkItemDetailChild; currentUserId: number }) {
+  const fetcher = useFetcher<ActionResult>();
+  const [confirmSettle, setConfirmSettle] = useState(false);
+  const [confirmReopen, setConfirmReopen] = useState(false);
+  const pending = fetcher.state !== "idle";
+  const error = fetcher.data?.ok === false ? fetcher.data.error.message : null;
+
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data?.ok) {
+      setConfirmSettle(false);
+      setConfirmReopen(false);
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  function toggle() {
+    if (isTerminalStatus(child.status)) {
+      if (child.reopenNotice.length > 0) {
+        setConfirmReopen(true);
+        return;
+      }
+      submitStatus(fetcher, child.id, "open", false);
+      return;
+    }
+    if (child.unfinishedDescendants.length > 0) {
+      setConfirmSettle(true);
+      return;
+    }
+    submitStatus(fetcher, child.id, "completed", false);
+  }
+
+  return (
+    <div className="p-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          aria-label={isTerminalStatus(child.status) ? `Un-settle ${child.summary}` : `Complete ${child.summary}`}
+          className="p-0"
+          disabled={pending}
+          size="icon"
+          type="button"
+          variant="ghost"
+          onClick={toggle}
+        >
+          <StatusMark status={child.status} />
+        </Button>
+        <Link className={`min-w-0 flex-1 text-base font-medium ${isTerminalStatus(child.status) ? "text-muted-foreground line-through" : ""}`} to={`/items/${child.id}`}>
+          {child.summary}
+        </Link>
+        <span className="text-sm text-muted-foreground">{child.dueDate ?? "No Due Date"}</span>
+        <Avatar assignee={child.assignee} currentUserId={currentUserId} withName />
+      </div>
+      {confirmSettle ? (
+        <ChecklistNotice
+          title={`Settle ${child.unfinishedDescendants.length} ${child.unfinishedDescendants.length === 1 ? "descendant" : "descendants"} as Completed?`}
+          body="The Settle Cascade will sweep every Unfinished descendant named here."
+          items={child.unfinishedDescendants.map((descendant) => descendant.summary)}
+          pending={pending}
+          confirmLabel="Confirm"
+          onCancel={() => setConfirmSettle(false)}
+          onConfirm={() => submitStatus(fetcher, child.id, "completed", true)}
+        />
+      ) : null}
+      {confirmReopen ? (
+        <ChecklistNotice
+          title="Reopen Notice"
+          body={`Un-settling will move ${formatSummaryList(child.reopenNotice.map((item) => item.summary))} to In Progress.`}
+          items={[]}
+          pending={pending}
+          confirmLabel="Un-settle"
+          onCancel={() => setConfirmReopen(false)}
+          onConfirm={() => submitStatus(fetcher, child.id, "open", true)}
+        />
+      ) : null}
+      {error ? <p className="mt-2 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+    </div>
+  );
+}
+
+function ChecklistNotice({
+  body,
+  confirmLabel,
+  items,
+  onCancel,
+  onConfirm,
+  pending,
+  title,
+}: {
+  body: string;
+  confirmLabel: string;
+  items: string[];
+  onCancel: () => void;
+  onConfirm: () => void;
+  pending: boolean;
+  title: string;
+}) {
+  return (
+    <div className="mt-3 space-y-3 rounded-lg border border-border bg-popover p-3 text-popover-foreground">
+      <div className="space-y-1">
+        <p className="text-base font-semibold">{title}</p>
+        <p className="text-sm text-muted-foreground">{body}</p>
+      </div>
+      {items.length > 0 ? (
+        <ul className="max-h-56 space-y-1 overflow-auto text-sm">
+          {items.map((item) => (
+            <li key={item} className="rounded-md border border-border bg-muted px-2 py-1">
+              {item}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="flex items-center gap-2">
+        <Button disabled={pending} size="sm" type="button" variant="outline" onClick={onConfirm}>
+          {confirmLabel}
+        </Button>
+        <Button disabled={pending} size="sm" type="button" variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -219,11 +414,13 @@ function TextEditor({
 
 function StatusChip({
   id,
+  reopenNotice,
   status,
   startCascadeAncestors,
   unfinishedDescendants,
 }: {
   id: number;
+  reopenNotice: { id: number; summary: string; status: WorkItemStatus }[];
   status: WorkItemStatus;
   startCascadeAncestors: { id: number; summary: string }[];
   unfinishedDescendants: { id: number; summary: string; type: string }[];
@@ -231,11 +428,16 @@ function StatusChip({
   const fetcher = useFetcher<ActionResult>();
   const [open, setOpen] = useState(false);
   const [confirmingStatus, setConfirmingStatus] = useState<WorkItemStatus | null>(null);
+  const [confirmingReopen, setConfirmingReopen] = useState(false);
   const error = fetcher.data?.ok === false ? fetcher.data.error.message : null;
   const pending = fetcher.state !== "idle";
   const settleCount = unfinishedDescendants.length;
 
   const chooseStatus = (nextStatus: WorkItemStatus) => {
+    if (nextStatus === "open" && reopenNotice.length > 0) {
+      setConfirmingReopen(true);
+      return;
+    }
     if (isTerminalStatus(nextStatus) && settleCount > 0) {
       setConfirmingStatus(nextStatus);
       return;
@@ -248,7 +450,10 @@ function StatusChip({
     <div>
       <Menu open={open} onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) setConfirmingStatus(null);
+        if (!nextOpen) {
+          setConfirmingStatus(null);
+          setConfirmingReopen(false);
+        }
       }}>
         <MenuTrigger asChild>
           <Button className="rounded-full" size="sm" type="button" variant="outline">
@@ -257,7 +462,27 @@ function StatusChip({
           </Button>
         </MenuTrigger>
         <MenuContent align="start" className="w-80">
-          {confirmingStatus ? (
+          {confirmingReopen ? (
+            <div className="space-y-3 p-2">
+              <div className="space-y-1">
+                <p className="text-base font-semibold">Reopen Notice</p>
+                <p className="text-sm text-muted-foreground">
+                  Changing this Work Item to Open will move {formatSummaryList(reopenNotice.map((item) => item.summary))} to In Progress.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button disabled={pending} size="sm" type="button" variant="outline" onClick={() => {
+                  submitStatus(fetcher, id, "open", true);
+                  setOpen(false);
+                }}>
+                  Confirm
+                </Button>
+                <Button disabled={pending} size="sm" type="button" variant="ghost" onClick={() => setConfirmingReopen(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : confirmingStatus ? (
             <div className="space-y-3 p-2">
               <div className="space-y-1">
                 <p className="text-base font-semibold">
@@ -273,7 +498,7 @@ function StatusChip({
                 ))}
               </ul>
               <div className="flex items-center gap-2">
-                <Button disabled={pending} size="sm" type="button" variant="default" onClick={() => {
+                <Button disabled={pending} size="sm" type="button" variant="outline" onClick={() => {
                   submitStatus(fetcher, id, confirmingStatus, true);
                   setOpen(false);
                 }}>
@@ -291,7 +516,7 @@ function StatusChip({
                   key={option}
                   disabled={pending || option === status}
                   onSelect={(event) => {
-                    if (isTerminalStatus(option) && settleCount > 0) event.preventDefault();
+                    if ((isTerminalStatus(option) && settleCount > 0) || (option === "open" && reopenNotice.length > 0)) event.preventDefault();
                     chooseStatus(option);
                   }}
                 >
@@ -427,6 +652,14 @@ function statusLabel(status: WorkItemStatus) {
 
 function isTerminalStatus(status: WorkItemStatus) {
   return status === "completed" || status === "closed";
+}
+
+function childTypeFor(type: WorkItemType) {
+  return { topic: "project", project: "task", task: "subtask", subtask: null }[type] as WorkItemType | null;
+}
+
+function typeLabel(type: WorkItemType) {
+  return { topic: "Topic", project: "Project", task: "Task", subtask: "Subtask" }[type];
 }
 
 function formatSummaryList(summaries: string[]) {
