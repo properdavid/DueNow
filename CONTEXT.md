@@ -146,6 +146,18 @@ _Avoid_: mobile, phone layout, small screen
 The navigation shell at 1024px and above — a left sidebar of four destinations beside a resizable two-column split, the destination's list on the left and the selected work item's detail on the right. What a desktop gets, and a tablet in landscape.
 _Avoid_: desktop layout, two-pane, master-detail, wide screen
 
+**Wordmark**:
+The name set as type — DueNow, Inter semibold, tracking tight, in the primary indigo — and nothing beside it. It appears over the sign-in card and in the Split Layout's sidebar header, and nowhere else; the App Icon never accompanies it.
+_Avoid_: logo, logotype, brand, lockup
+
+**App Icon**:
+The square DueNow installs as — two white ticks down the left, D over N down the right, on the primary indigo, edge to edge. One artwork at every size the manifest ships, favicon included.
+_Avoid_: logo, favicon (for the artwork itself), launcher icon, app mark
+
+**Surface Mark**:
+The picture at the top of an empty card, saying which surface came up empty — a list for the tree, a check for *All settled*, a clock for the Due tab, a split pane for the unselected column. It is a picture of the surface, never the App Icon, and it appears on no populated screen.
+_Avoid_: empty state icon, illustration, placeholder art, brand mark
+
 **Unreachable State**:
 What DueNow shows when it cannot reach the server — a message and a Retry, worn by a cold launch with no connection, a navigation whose data never arrives, and a save that never lands. It names the symptom and never the cause: the household runs one instance, so a dead box and a dead connection are the same fact, and nothing on screen claims to tell them apart.
 _Avoid_: offline mode, offline state, disconnected, network error
