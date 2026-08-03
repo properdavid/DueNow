@@ -11,6 +11,7 @@ interface RequestOptions {
   method?: string;
   headers?: HeadersInit;
   formData?: Record<string, string>;
+  params?: Record<string, string>;
 }
 
 export function createRouteTestHarness(options: RouteHarnessOptions = {}) {
@@ -49,7 +50,7 @@ export function createRouteTestHarness(options: RouteHarnessOptions = {}) {
     try {
       return await routeFunction({
         request: buildRequest(path, requestOptions),
-        params: {},
+        params: requestOptions?.params ?? {},
         context,
       });
     } catch (error) {
