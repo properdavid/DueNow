@@ -22,16 +22,16 @@ type TypeSizePx = 12 | 14 | 16;
  * Recorded measurements, taken on a canvas with the self-hosted Inter Variable
  * (ADR-0031). The average glyph is over nine representative household
  * summaries at weight 500; the due date is the widest string the shared
- * formatter can produce ("May 20"), because a budget defended with a
+ * formatter can produce ("May 30"), because a budget defended with a
  * representative date is not a guarantee.
  *
  * Re-measure if the typeface changes. This is the only input to the guarantee
  * that lives outside the code.
  */
 const MEASURED: Record<TypeSizePx, { averageGlyphPx: number; widestDueDatePx: number }> = {
-  16: { averageGlyphPx: 8.053, widestDueDatePx: 56.55 },
-  14: { averageGlyphPx: 7.046, widestDueDatePx: 49.48 },
-  12: { averageGlyphPx: 6.04, widestDueDatePx: 42.41 },
+  16: { averageGlyphPx: 8.053, widestDueDatePx: 56.66 },
+  14: { averageGlyphPx: 7.046, widestDueDatePx: 49.59 },
+  12: { averageGlyphPx: 6.04, widestDueDatePx: 42.5 },
 };
 
 /** The two typography roles the row's own width depends on. */

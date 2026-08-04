@@ -54,7 +54,7 @@ The bottom navigation's labels follow the ladder to 12 pixels rather than being 
 
 ## Consequences
 
-**ADR-0031's constants are recomputed.** Its geometry is derived from a Summary at 16 pixels and a due date at 14. Both drop a rung, so the 24-character budget falls from 194 pixels to 170 and the date from 52 to 39. The stack threshold moves from 536 to 504 and the floor from 416 to 388. This is the geometry module earning its keep on its first day: a few numbers change and the unit test re-proves the guarantee.
+**ADR-0031's constants are recomputed.** Its geometry is derived from the Summary and the due date, and both drop a rung. The geometry module recomputes them from its recorded measurements; read the numbers there rather than here. The direction is the point: every constant falls, so the tree fits its guarantee in a narrower column than before. This is the module earning its keep on its first day — a type role moves and the arithmetic follows it.
 
 **The gap between the floor and the smallest sanctioned text narrows to 2 pixels.** `caption` at 12 and `micro-label` at 10 are adjacent rungs now. `micro-label` survives because it is distinguished by weight, case and tracking as well as size, not by size alone — which is exactly the argument `micro` could not make.
 
