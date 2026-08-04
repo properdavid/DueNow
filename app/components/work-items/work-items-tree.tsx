@@ -9,6 +9,8 @@ import { Button } from "~/components/ui/button";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
 import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
 import { ReparentDialog } from "~/components/work-items/reparent-dialog";
+import { DUE_DATE_SLOT_PX, treeRowIndentPx } from "~/components/work-items/tree-geometry";
+import { formatDueDate } from "~/lib/dates";
 import type { WorkItemsTreeReadModel, WorkItemsTreeRow } from "~/domain/work-items/work-items.server";
 import { expandableRowIds, isTerminalStatus, rootIsAllSettled, rootRows, terminalParentIdsInPath, workItemsTreeLines } from "~/domain/work-items/tree-view";
 import { controlErrorMessage } from "~/pwa/unreachable";
@@ -115,7 +117,7 @@ export function WorkItemsTree({ loaderData }: { loaderData: ItemsLoaderData }) {
 
 function SettledRevealLine({ parentId, level, count, reveal }: { parentId: number | null; level: number; count: number; reveal: (parentId: number | null) => void }) {
   return (
-    <div className={`flex items-center gap-2 py-2 pr-4 text-sm text-muted-foreground ${indentClass(level)}`}>
+    <div className="flex items-center gap-2 py-2 pr-4 text-sm text-muted-foreground" style={{ paddingLeft: treeRowIndentPx(level) }}>
       <span>{count} settled —</span>
       <Button variant="ghost" size="sm" type="button" onClick={() => reveal(parentId)}>
         show
@@ -124,6 +126,11 @@ function SettledRevealLine({ parentId, level, count, reveal }: { parentId: numbe
   );
 }
 
+/* The row chooses between one line and two from the width of its own column
+   rather than the window's (ADR-0031). The threshold below is
+   `LIST_COLUMN_STACK_THRESHOLD_PX`, spelled out because Tailwind reads class
+   names from the source and cannot follow a constant; the test beside this
+   module holds the two in step. */
 function TreeRow({
   row,
   level,
@@ -148,7 +155,8 @@ function TreeRow({
   const terminal = isTerminalStatus(row.status);
   return (
     <div
-      className={`group flex flex-col gap-1 py-3 pr-4 ${indentClass(level)} ${isSelected ? "bg-accent text-accent-foreground" : ""} ${terminal ? "text-muted-foreground line-through" : ""}`}
+      className={`group flex flex-col gap-1 py-3 pr-4 ${isSelected ? "bg-accent text-accent-foreground" : ""} ${terminal ? "text-muted-foreground line-through" : ""}`}
+      style={{ paddingLeft: treeRowIndentPx(level) }}
     >
       <div className="flex items-center gap-2">
         {hasChildren ? (
@@ -170,14 +178,14 @@ function TreeRow({
           <Link to={`/items/${row.id}`}>{row.summary}</Link>
         </Button>
         {settledCount > 0 ? <span className="rounded-md border border-border bg-muted px-2 py-0 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{settledCount} settled</span> : null}
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-3 @min-[556px]:flex">
           <StatusMark status={row.status} />
           <Avatar assignee={row.assignee} currentUserId={currentUserId} />
-          {row.dueDate ? <DueDate dueDate={row.dueDate} /> : <span className="w-20" />}
+          {row.dueDate ? <DueDate dueDate={row.dueDate} /> : <span style={{ width: DUE_DATE_SLOT_PX }} />}
         </div>
         <RowMenu row={row} returnTo={returnTo} />
       </div>
-      <div className="ml-16 flex flex-wrap items-center gap-2 text-sm text-muted-foreground lg:hidden">
+      <div className="ml-16 flex flex-wrap items-center gap-2 text-sm text-muted-foreground @min-[556px]:hidden">
         <StatusMark status={row.status} />
         {row.assignee ? <Avatar assignee={row.assignee} currentUserId={currentUserId} withName /> : <Avatar assignee={null} currentUserId={currentUserId} />}
         {row.dueDate ? <DueDate dueDate={row.dueDate} /> : null}
@@ -241,9 +249,5 @@ function childTypeFor(type: WorkItemsTreeRow["type"]) {
 }
 
 function DueDate({ dueDate }: { dueDate: string }) {
-  return <time className="text-sm text-muted-foreground" dateTime={dueDate}>{dueDate}</time>;
-}
-
-function indentClass(level: number) {
-  return ["pl-4", "pl-10", "pl-16", "pl-24"][level] ?? "pl-24";
+  return <time className="text-sm text-muted-foreground" dateTime={dueDate}>{formatDueDate(dueDate)}</time>;
 }

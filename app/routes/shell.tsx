@@ -4,6 +4,7 @@ import { NavLink, Outlet, useMatches } from "react-router";
 import type { Route } from "./+types/shell";
 import { getDatabase, requireUser } from "~/auth/session.server";
 import { CreationDialogProvider, CreationDialogTrigger } from "~/components/shell/creation-dialog";
+import { listColumnWidthFromCookieHeader } from "~/components/shell/list-column-width";
 
 type ShellMember = { id: number; email: string; name: string; theme: "system" | "light" | "dark" };
 type ShellLabel = { id: number; name: string };
@@ -19,7 +20,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const householdTimezone = database.sqlite
     .prepare("SELECT timezone FROM household_settings WHERE id = 1")
     .get() as HouseholdTimezone;
-  return { user, members, labels, householdTimezone };
+  /* The split's geometry is settled here, beneath every route that draws one, so
+     the first paint is the width the browser already chose (ADR-0031). */
+  const listColumnWidthPx = listColumnWidthFromCookieHeader(request.headers.get("Cookie"));
+  return { user, members, labels, householdTimezone, listColumnWidthPx };
 }
 
 export const destinations = [

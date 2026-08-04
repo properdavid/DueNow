@@ -13,6 +13,7 @@ import { Select } from "~/components/ui/select";
 import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
 import { ParentPicker } from "~/components/work-items/parent-picker";
 import type { DatabaseClient } from "~/db/client";
+import { formatDueDate } from "~/lib/dates";
 import { searchWorkItems, type ParentCandidate, type SearchDirection, type SearchSort, type SearchWorkItemRow } from "~/domain/work-items/work-items.server";
 import type { WorkItemStatus, WorkItemType } from "~/db/schema";
 import { searchWorkItemsInputFromUrl } from "./search-params";
@@ -510,8 +511,7 @@ function dueSummary(params: URLSearchParams) {
 
 function formatDate(date: string | null) {
   if (!date) return "No due date";
-  const [year, month, day] = date.split("-").map(Number);
-  return new Intl.DateTimeFormat("en-US", { timeZone: "UTC", month: "short", day: "numeric" }).format(new Date(Date.UTC(year, month - 1, day)));
+  return formatDueDate(date);
 }
 
 function formatTimestamp(timestamp: number) {
