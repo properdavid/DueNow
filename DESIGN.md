@@ -71,31 +71,26 @@ typography:
     fontSize: 18px
     fontWeight: 600
     lineHeight: 1.3
-  heading-sub: # text-base font-semibold
-    fontFamily: Inter
-    fontSize: 16px
-    fontWeight: 600
-    lineHeight: 1.4
-  body: # text-base  (default body — 16px, ADR-0017's amendment to ADR-0014)
-    fontFamily: Inter
-    fontSize: 16px
-    fontWeight: 400
-    lineHeight: 1.5
-  body-strong: # text-base font-medium
+  heading-sub: # text-base font-medium
     fontFamily: Inter
     fontSize: 16px
     fontWeight: 500
-    lineHeight: 1.5
-  caption: # text-sm  (THE FLOOR for ordinary text)
+    lineHeight: 1.4
+  body: # text-sm  (default body — 14px, ADR-0032 restores integral-grc's rung)
     fontFamily: Inter
     fontSize: 14px
     fontWeight: 400
-    lineHeight: 1.4
-  micro: # text-[11px]  (SANCTIONED, restricted use -- see Typography prose)
+    lineHeight: 1.5
+  body-strong: # text-sm font-medium
     fontFamily: Inter
-    fontSize: 11px
+    fontSize: 14px
     fontWeight: 500
-    lineHeight: 1.3
+    lineHeight: 1.5
+  caption: # text-xs  (THE FLOOR for ordinary text)
+    fontFamily: Inter
+    fontSize: 12px
+    fontWeight: 400
+    lineHeight: 1.4
   micro-label: # text-[10px] font-bold uppercase tracking-wide (SANCTIONED, restricted use)
     fontFamily: Inter
     fontSize: 10px
@@ -185,9 +180,10 @@ statuses, a filter bar. The product should feel **dense, professional, calm and
 precise**, closer to a serious work tool than a consumer to-do app. A rounded,
 airy, Reminders-style skin would fight the model it wraps.
 
-The register is set by three decisions: `body` is 16px (dense but comfortable to
-read), spacing stays on the native 4px scale with no semantic aliases, and
-hierarchy comes from tone and hairline borders rather than shadow. Colour is
+The register is set by three decisions: `body` is 14px (integral-grc's ladder,
+restored by ADR-0032), spacing stays on the native 4px scale with no semantic
+aliases, and hierarchy comes from tone and hairline borders rather than shadow.
+Colour is
 restrained -- an indigo primary on near-neutral greys -- because the screens are
 dominated by two icon vocabularies (four **Type Marks**, four **Status Marks**)
 that tinted chrome would pull off-true.
@@ -317,31 +313,36 @@ scale, not from naming the rungs.
 | ----------------- | ----------------------------------------------- | ---------------------------------------------------------------------------- |
 | `heading-page`    | `text-xl font-semibold`                         | Page title (one per page)                                                    |
 | `heading-section` | `text-lg font-semibold`                         | Major section heading                                                        |
-| `heading-sub`     | `text-base font-semibold`                       | Sub-section / card title                                                     |
-| `body`            | `text-base`                                     | Default body, list and row text                                              |
-| `body-strong`     | `text-base font-medium`                         | Emphasised body -- a row's Summary                                           |
-| `caption`         | `text-sm`                                       | Helper text, metadata, breadcrumbs -- **the floor for ordinary text**        |
-| `micro`           | `text-[11px]`                                   | **Sanctioned, restricted** -- dense table cells                              |
+| `heading-sub`     | `text-base font-medium`                         | Sub-section / card title                                                     |
+| `body`            | `text-sm`                                       | Default body, list and row text                                              |
+| `body-strong`     | `text-sm font-medium`                           | Emphasised body -- a row's Summary                                           |
+| `caption`         | `text-xs`                                       | Helper text, metadata, breadcrumbs -- **the floor for ordinary text**        |
 | `micro-label`     | `text-[10px] font-bold uppercase tracking-wide` | **Sanctioned, restricted** -- Avatar initials, status badges, eyebrow labels |
 
-**`body` is 16px, not 14px.** ADR-0017 amends ADR-0014 on this one rung and only
-this one: at 14px on a 15-inch laptop the register read as cramped rather than
-dense. Spacing and the coarse-pointer minimums are unchanged, so the interface is
-denser than a consumer app at a comfortable reading size rather than uniformly
-tighter. Because `body` moved up, `heading-sub` takes its distinction from weight
-(`font-semibold`) rather than size, which is what keeps it apart from
-`body-strong`.
+**`body` is 14px.** ADR-0032 reverses ADR-0017's amendment and returns the scale
+to integral-grc's ladder unmodified. The app is a dense work tool more often than
+it is a page of prose, and the extra rung was paid for on every dense surface --
+most visibly the Work Items tree row, where every role competes for one
+horizontal budget. The root font size stays 16px: Tailwind's breakpoints and the
+4px spacing scale are rem-based, so moving it would move the split breakpoint and
+the spacing scale too. Because `body` moved back down, `heading-sub` recovers its
+distinction from size rather than weight.
 
-### The 14px floor and the two sanctioned micro roles
+**Form controls are pinned to 16px on coarse pointers**
+(`[@media(any-pointer:coarse)]:text-base` on `Input`, `Textarea` and `Select`).
+iOS Safari zooms the page when a control under 16px takes focus, and the viewport
+meta carries no `maximum-scale` to stop it. Desktop keeps the dense register;
+touch stops zooming. A control's text therefore does not match its label's size
+on touch -- the correct trade, since the label is not what triggers the zoom.
 
-`caption` (`text-sm`, 14px) is the **floor for all ordinary text** -- body,
+### The 12px floor and the one sanctioned micro role
+
+`caption` (`text-xs`, 12px) is the **floor for all ordinary text** -- body,
 helper, validation and informational messages never go below it.
 
-Below it, only **two** roles exist, and each is allowed **only** for a documented
+Below it, only **one** role exists, and it is allowed **only** for a documented
 reason:
 
-- **`micro` (11px)** -- dense table cells where `caption` would force the row to
-  grow, principally the Search tab's Results Table.
 - **`micro-label` (10px)** -- one of three justified reasons:
   1. **Geometry** -- text must fit a fixed shape (an Avatar's initial in a small
      disc, a badge inside a tree row).
@@ -350,9 +351,13 @@ reason:
   3. **Row density** -- compact pills (`py-0`) inside dense tree or table rows
      that must not increase row height.
 
-Any other sub-14px text converges up to `caption`. Arbitrary one-off sizes
-(`text-[13px]`, `text-[0.8rem]`) are banned; `text-[11px]` and `text-[10px]` are
-the only arbitrary sizes `design-lint` allows, and only as these two roles.
+`micro` (11px) is **retired** (ADR-0032): one pixel below the floor is not a
+typographic tier. Its only user, the Search Results Table, converges up to
+`caption`.
+
+Any other sub-12px text converges up to `caption`. Arbitrary one-off sizes
+(`text-[13px]`, `text-[0.8rem]`) are banned; `text-[10px]` is the only arbitrary
+size `design-lint` allows, and only as `micro-label`.
 
 **Headings.** Page titles are `heading-page` (`text-xl font-semibold`) -- not
 `font-bold`, not `text-2xl`.
@@ -374,12 +379,39 @@ Tailwind directly. Instead, follow density conventions:
 
 Arbitrary `gap-[Npx]` / `p-[Npx]` values are banned; use the scale.
 
+### The list column has a width contract
+
+In the split layout the list column is resizable, so its width is an input to the
+layout rather than a constant. ADR-0031 makes that safe: the **Work Items tree
+row chooses between its one-line and stacked shapes from its own column width**
+(a container query), not from the viewport, and the tree guarantees a **pixel
+budget for the Summary at the deepest rung at every width the column can take**.
+
+The constants -- indent per rung, the row's fixed chrome, the stack threshold,
+the column's floor, default and ceiling -- live in **one geometry module with
+unit-tested arithmetic**. Adding an element to a tree row means recomputing them
+there; the test asserts the Summary budget survives. The character-to-pixel
+figure behind the budget is a recorded measurement, not an assumed constant --
+see ADR-0031 for the table and when to re-measure it.
+
+The splitter itself is a **full-height target on the shared border** with a
+visible hover state and keyboard support, and its width **persists in a cookie**
+shared by `/due`, `/items` and `/search`, so the server renders the correct
+geometry on first paint. Native CSS `resize-x` is not used: its grip is invisible
+under overlay scrollbars and sits in the window's bottom corner.
+
 ### Density and touch comfort are different axes
 
 Type size and spacing are **density**; control height is **touch comfort**. They
 move independently. Interactive minimums rise to **44px** under
 `@media (any-pointer: coarse)` while type and spacing stay put, so a phone gets
 safe targets without the whole interface loosening.
+
+**One exception, and it is not a density decision.** `Input`, `Textarea` and
+`Select` raise their *type* to 16px under the same query, because iOS Safari
+zooms the viewport when a focused control sits below 16px. That is a platform
+behaviour being suppressed, not the interface loosening -- no other role moves,
+and the surrounding labels stay at `body`.
 
 `any-pointer` is chosen over `pointer` deliberately: it reports _any_ attached
 input rather than the primary one, so a hybrid touchscreen laptop gets the larger
@@ -491,8 +523,8 @@ violation fails. Five rules:
 3. **No `dark:` utilities**, stacked behind another variant or not.
 4. **No arbitrary colour values** -- `bg-[#ff0000]`, `text-[rgb(…)]`,
    `bg-[var(--x)]`, `[color:…]`.
-5. **No arbitrary font sizes**, with `text-[11px]` and `text-[10px]` allowlisted
-   as the two restricted roles.
+5. **No arbitrary font sizes**, with `text-[10px]` allowlisted as the one
+   restricted role.
 
 `prototypes/` sits outside the lint's source root -- prototype tickets exist to
 break these rules and live on throwaway branches -- as does `public/offline.html`
@@ -517,8 +549,8 @@ metadata literals in lockstep with `app.css`.
   semantic neutrals (`background`, `foreground`, `muted`, `border`).
 - **Don't** write a `dark:` utility, and **don't** read the theme from
   JavaScript. The token block redefines itself per mode.
-- **Do** keep ordinary text at `text-sm` (14px) or larger; **don't** use smaller
-  text except the two sanctioned roles for their stated reasons.
+- **Do** keep ordinary text at `text-xs` (12px) or larger; **don't** use smaller
+  text except `micro-label` for its stated reasons.
 - **Don't** use arbitrary one-off sizes (`text-[13px]`, `gap-[7px]`). Stay on the
   type roles and the 4px spacing scale.
 - **Do** express the 44px coarse-pointer minimum inside a primitive; **never** at
