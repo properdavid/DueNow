@@ -20,7 +20,7 @@ import {
 
 describe("the Summary budget", () => {
   test("is twenty-four characters of measured Inter, stated in pixels", () => {
-    expect(SUMMARY_BUDGET_PX).toBe(194);
+    expect(SUMMARY_BUDGET_PX).toBe(170);
   });
 
   test("survives at the deepest rung at every width the column can take", () => {
@@ -82,6 +82,6 @@ describe("the indent", () => {
 
 describe("the due date slot", () => {
   test("reserves the widest date the formatter can produce, and no more", () => {
-    expect(DUE_DATE_SLOT_PX).toBe(50);
+    expect(DUE_DATE_SLOT_PX).toBe(43);
   });
 });

@@ -49,7 +49,7 @@ export default function Shell({ loaderData }: Route.ComponentProps) {
             {destinations.map(({ href, label }) => (
               <NavLink
                 className={({ isActive }) =>
-                  `block rounded-md border border-transparent px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`
+                  `block rounded-md border border-transparent px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`
                 }
                 key={href}
                 to={href}
@@ -74,13 +74,13 @@ export default function Shell({ loaderData }: Route.ComponentProps) {
           {destinations.map(({ href, label, Icon }) => (
             <NavLink
               className={({ isActive }) =>
-                `flex min-w-16 flex-col items-center rounded-full px-3 py-2 text-sm ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`
+                `flex min-w-16 flex-col items-center rounded-full px-3 py-2 text-xs ${isActive ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`
               }
               key={href}
               to={href}
             >
-              <Icon aria-hidden="true" />
-              <span className="text-sm">{label}</span>
+              <Icon aria-hidden="true" className="size-5" />
+              <span className="text-xs">{label}</span>
             </NavLink>
           ))}
         </nav>

@@ -62,7 +62,7 @@ export default function Due({ loaderData }: Route.ComponentProps) {
         <header className="space-y-4">
           <div>
             <h1 className="text-xl font-semibold">Due</h1>
-            <p className="mt-1 text-sm text-muted-foreground">What is approaching in the next 30 days.</p>
+            <p className="mt-1 text-xs text-muted-foreground">What is approaching in the next 30 days.</p>
           </div>
           <FilterSentence scope={scope} setScope={setScope} />
         </header>
@@ -81,7 +81,7 @@ export default function Due({ loaderData }: Route.ComponentProps) {
 function FilterSentence({ scope, setScope }: { scope: DueRadarScope; setScope: (scope: DueRadarScope) => void }) {
   if (scope === "everyone") {
     return (
-      <div className="flex w-full items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
+      <div className="flex w-full items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 text-xs text-card-foreground">
         <span>Showing everyone</span>
         <button className="font-medium text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="button" onClick={() => setScope("mine")}>
           Show your work
@@ -90,7 +90,7 @@ function FilterSentence({ scope, setScope }: { scope: DueRadarScope; setScope: (
     );
   }
   return (
-    <div className="flex w-full items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 text-sm text-card-foreground">
+    <div className="flex w-full items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 text-xs text-card-foreground">
       <span>Showing your work and unassigned</span>
       <button className="font-medium text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="button" onClick={() => setScope("everyone")}>
         Show everyone
@@ -118,7 +118,7 @@ function DueGroup({ groupKey, cards, currentUserId }: { groupKey: DueGroupKey; c
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-border bg-card p-6 text-sm text-muted-foreground">{details.empty}</div>
+        <div className="rounded-lg border border-dashed border-border bg-card p-6 text-xs text-muted-foreground">{details.empty}</div>
       )}
     </section>
   );
@@ -132,11 +132,11 @@ function DueCard({ card, currentUserId }: { card: DueRadarCard; currentUserId: n
       to={`/due/${card.id}`}
     >
       <span className={`absolute inset-y-0 left-0 w-1.5 ${urgencyEdgeClassName[card.urgency]}`} aria-hidden="true" />
-      <p className="truncate text-sm text-muted-foreground">
+      <p className="truncate text-xs text-muted-foreground">
         <Breadcrumb card={card} />
       </p>
-      <h3 className="mt-2 text-base font-medium">{card.summary}</h3>
-      <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+      <h3 className="mt-2 text-sm font-medium">{card.summary}</h3>
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
         <span className={overdue ? "font-medium text-urgency-overdue" : undefined}>
           {card.relativeDate} <span className="text-muted-foreground">· {card.absoluteDate}</span>
         </span>

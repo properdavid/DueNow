@@ -40,12 +40,12 @@ export default function Login({ loaderData }: Route.ComponentProps) {
                 {isRejected ? "You can't sign in here" : "Your household\u2019s work, in one place"}
               </h2>
               {isRejected ? (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {attemptedEmail} isn&rsquo;t one of the accounts set up for this household. If you have another Google
                   account, try that one — otherwise ask whoever set this up to add you.
                 </p>
               ) : (
-                <p className="text-sm text-muted-foreground">Only accounts set up for this household can sign in.</p>
+                <p className="text-xs text-muted-foreground">Only accounts set up for this household can sign in.</p>
               )}
             </div>
             {button}

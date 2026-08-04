@@ -5,11 +5,11 @@ import * as React from "react";
 import { cn } from "~/lib/utils";
 
 const menuContentVariants = cva(
-  "z-50 min-w-40 rounded-lg border border-border bg-popover p-1 text-sm text-popover-foreground shadow-lg",
+  "z-50 min-w-40 rounded-lg border border-border bg-popover p-1 text-xs text-popover-foreground shadow-lg",
 );
 
 const menuItemVariants = cva(
-  "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-foreground outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [@media(any-pointer:coarse)]:min-h-11 [&_svg]:size-4 [&_svg]:shrink-0",
+  "flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-xs text-foreground outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [@media(any-pointer:coarse)]:min-h-11 [&_svg]:size-4 [&_svg]:shrink-0",
 );
 
 const menuTriggerVariants = cva(

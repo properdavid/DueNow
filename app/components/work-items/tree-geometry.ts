@@ -35,8 +35,8 @@ const MEASURED: Record<TypeSizePx, { averageGlyphPx: number; widestDueDatePx: nu
 };
 
 /** The two typography roles the row's own width depends on. */
-const SUMMARY_TYPE_SIZE_PX: TypeSizePx = 16; // body-strong, `text-base font-medium`
-const DUE_DATE_TYPE_SIZE_PX: TypeSizePx = 14; // caption, `text-sm`
+const SUMMARY_TYPE_SIZE_PX: TypeSizePx = 14; // body-strong, `text-sm font-medium`
+const DUE_DATE_TYPE_SIZE_PX: TypeSizePx = 12; // caption, `text-xs`
 
 /** The guarantee, in the only unit the layout can reason about. */
 export const SUMMARY_BUDGET_PX = Math.ceil(

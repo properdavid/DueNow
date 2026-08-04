@@ -57,7 +57,7 @@ export function WorkItemsTree({ loaderData }: { loaderData: ItemsLoaderData }) {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-xl font-semibold">Work Items</h1>
-          <p className="mt-1 text-sm text-muted-foreground">The full Type Ladder for the household.</p>
+          <p className="mt-1 text-xs text-muted-foreground">The full Type Ladder for the household.</p>
         </div>
         {hasAnyWorkItems ? (
           <div className="flex gap-2">
@@ -117,7 +117,7 @@ export function WorkItemsTree({ loaderData }: { loaderData: ItemsLoaderData }) {
 
 function SettledRevealLine({ parentId, level, count, reveal }: { parentId: number | null; level: number; count: number; reveal: (parentId: number | null) => void }) {
   return (
-    <div className="flex items-center gap-2 py-2 pr-4 text-sm text-muted-foreground" style={{ paddingLeft: treeRowIndentPx(level) }}>
+    <div className="flex items-center gap-2 py-2 pr-4 text-xs text-muted-foreground" style={{ paddingLeft: treeRowIndentPx(level) }}>
       <span>{count} settled —</span>
       <Button variant="ghost" size="sm" type="button" onClick={() => reveal(parentId)}>
         show
@@ -174,18 +174,18 @@ function TreeRow({
           <span className="size-6" />
         )}
         <TypeMark type={row.type} />
-        <Button asChild className="min-w-0 flex-1 justify-start truncate px-0 text-base font-medium" variant="ghost">
+        <Button asChild className="min-w-0 flex-1 justify-start truncate px-0 text-sm font-medium" variant="ghost">
           <Link to={`/items/${row.id}`}>{row.summary}</Link>
         </Button>
         {settledCount > 0 ? <span className="rounded-md border border-border bg-muted px-2 py-0 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{settledCount} settled</span> : null}
-        <div className="hidden items-center gap-3 @min-[556px]:flex">
+        <div className="hidden items-center gap-3 @min-[525px]:flex">
           <StatusMark status={row.status} />
           <Avatar assignee={row.assignee} currentUserId={currentUserId} />
           {row.dueDate ? <DueDate dueDate={row.dueDate} /> : <span style={{ width: DUE_DATE_SLOT_PX }} />}
         </div>
         <RowMenu row={row} returnTo={returnTo} />
       </div>
-      <div className="ml-16 flex flex-wrap items-center gap-2 text-sm text-muted-foreground @min-[556px]:hidden">
+      <div className="ml-16 flex flex-wrap items-center gap-2 text-xs text-muted-foreground @min-[525px]:hidden">
         <StatusMark status={row.status} />
         {row.assignee ? <Avatar assignee={row.assignee} currentUserId={currentUserId} withName /> : <Avatar assignee={null} currentUserId={currentUserId} />}
         {row.dueDate ? <DueDate dueDate={row.dueDate} /> : null}
@@ -239,7 +239,7 @@ function RowMenu({ row, returnTo }: { row: WorkItemsTreeRow; returnTo: string })
         open={reparentOpen}
         onOpenChange={setReparentOpen}
       />
-      {error ? <p className="ml-16 mt-1 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+      {error ? <p className="ml-16 mt-1 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
     </>
   );
 }
@@ -249,5 +249,5 @@ function childTypeFor(type: WorkItemsTreeRow["type"]) {
 }
 
 function DueDate({ dueDate }: { dueDate: string }) {
-  return <time className="text-sm text-muted-foreground" dateTime={dueDate}>{formatDueDate(dueDate)}</time>;
+  return <time className="text-xs text-muted-foreground" dateTime={dueDate}>{formatDueDate(dueDate)}</time>;
 }

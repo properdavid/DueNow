@@ -85,7 +85,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
       <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-4 p-6">
         <div className="space-y-2 rounded-lg border border-border bg-card p-6 text-card-foreground">
           <h1 className="text-xl font-semibold">Can&apos;t reach DueNow</h1>
-          <p className="text-base text-muted-foreground">The server did not answer. Retry when DueNow is reachable again.</p>
+          <p className="text-sm text-muted-foreground">The server did not answer. Retry when DueNow is reachable again.</p>
           <Button variant="outline" type="button" onClick={() => window.location.reload()}>
             Retry
           </Button>
@@ -106,7 +106,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-2 p-6">
       <h1 className="text-xl font-semibold">{heading}</h1>
-      <p className="text-base text-muted-foreground">{detail}</p>
+      <p className="text-sm text-muted-foreground">{detail}</p>
     </main>
   );
 }

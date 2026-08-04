@@ -130,7 +130,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="parentId" value={isTopic ? "" : selectedParentId ?? ""} />
             <fieldset className="grid gap-2">
-              <legend className="text-sm font-medium">Type</legend>
+              <legend className="text-xs font-medium">Type</legend>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Type">
                 {workItemTypes.map((candidateType) => (
                   <Button
@@ -148,10 +148,10 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
               </div>
             </fieldset>
 
-            <label className="grid gap-2 text-sm font-medium">
+            <label className="grid gap-2 text-xs font-medium">
               Summary
               <Input name="summary" required maxLength={200} aria-describedby="summary-help" />
-              <span id="summary-help" className="text-sm font-normal text-muted-foreground">Trimmed on save, 200 characters maximum.</span>
+              <span id="summary-help" className="text-xs font-normal text-muted-foreground">Trimmed on save, 200 characters maximum.</span>
             </label>
 
             {!isTopic && (
@@ -173,17 +173,17 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
               <Notice title="Start Cascade" text={`Create will move ${formatList(startNotice.map((item) => item.summary))} to In Progress.`} />
             ) : null}
 
-            <label className="grid gap-2 text-sm font-medium">
+            <label className="grid gap-2 text-xs font-medium">
               Description
               <Textarea name="description" maxLength={20_000} />
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-sm font-medium">
+              <label className="grid gap-2 text-xs font-medium">
                 Due Date
                 <Input name="dueDate" type="date" />
               </label>
-              <label className="grid gap-2 text-sm font-medium">
+              <label className="grid gap-2 text-xs font-medium">
                 Status
                 <Select name="status" value={status} onChange={(event) => setStatus(event.currentTarget.value as WorkItemStatus)}>
                   {workItemStatuses.map((candidateStatus) => (
@@ -191,7 +191,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
                   ))}
                 </Select>
               </label>
-              <label className="grid gap-2 text-sm font-medium">
+              <label className="grid gap-2 text-xs font-medium">
                 Assignee
                 <Select name="assigneeId" defaultValue="">
                   <option value="">Unassigned</option>
@@ -204,10 +204,10 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
 
             {labels.length > 0 ? (
               <fieldset className="grid gap-2">
-                <legend className="text-sm font-medium">Labels</legend>
+                <legend className="text-xs font-medium">Labels</legend>
                 <div className="flex flex-wrap gap-2">
                   {labels.map((label) => (
-                    <label key={label.id} className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-sm text-muted-foreground">
+                    <label key={label.id} className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
                       <input className="accent-primary" type="checkbox" name="labelIds" value={label.id} />
                       {label.name}
                     </label>
@@ -216,7 +216,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
               </fieldset>
             ) : null}
 
-            {createError ? <p className="text-sm text-destructive">{controlErrorMessage(createError)}</p> : null}
+            {createError ? <p className="text-xs text-destructive">{controlErrorMessage(createError)}</p> : null}
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
@@ -262,7 +262,7 @@ export function useCreationDialog() {
 
 function Notice({ title, text }: { title: string; text: string }) {
   return (
-    <div className="rounded-lg border border-status-in-progress/40 bg-status-in-progress-subtle p-3 text-sm text-foreground">
+    <div className="rounded-lg border border-status-in-progress/40 bg-status-in-progress-subtle p-3 text-xs text-foreground">
       <p className="font-medium">{title}</p>
       <p className="mt-1 text-muted-foreground">{text}</p>
     </div>

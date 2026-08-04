@@ -77,9 +77,12 @@ describe("no arbitrary font sizes", () => {
     expect(rulesFor('className="text-[0.8rem]"')).toEqual(["arbitrary-font-size"]);
   });
 
-  it("allows the two restricted roles", () => {
-    expect(rulesFor('className="text-[11px]"')).toEqual([]);
+  it("allows the one restricted role", () => {
     expect(rulesFor('className="text-[10px] font-bold uppercase tracking-wide"')).toEqual([]);
+  });
+
+  it("rejects the retired micro role", () => {
+    expect(rulesFor('className="text-[11px]"')).toEqual(["arbitrary-font-size"]);
   });
 });
 

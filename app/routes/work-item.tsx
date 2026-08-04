@@ -65,13 +65,13 @@ export function WorkItemDocument({
       <div className="mx-auto max-w-3xl space-y-6">
         {backLink ? (
           <Link
-            className="inline-block text-sm text-muted-foreground"
+            className="inline-block text-xs text-muted-foreground"
             to={backLink.href}
           >
             {backLink.label}
           </Link>
         ) : null}
-        <nav className="text-sm text-muted-foreground" aria-label="Breadcrumb">
+        <nav className="text-xs text-muted-foreground" aria-label="Breadcrumb">
           {detail.breadcrumb.map((crumb, index) => (
             <span key={`${crumb.id}-${index}`}>
               {index > 0 ? " › " : null}
@@ -134,7 +134,7 @@ function CommentsSection({
     <section className="space-y-4">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold">Comments</h2>
-        {comments.length === 0 ? <p className="text-sm text-muted-foreground">No Comments yet.</p> : null}
+        {comments.length === 0 ? <p className="text-xs text-muted-foreground">No Comments yet.</p> : null}
       </div>
       <div className="space-y-4">
         {comments.map((comment) => (
@@ -178,7 +178,7 @@ function CommentRow({ comment, currentUserId }: { comment: WorkItemCommentReadMo
       <div className="flex items-start gap-3">
         <Avatar assignee={comment.author} currentUserId={currentUserId} />
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
             <span className="font-medium text-foreground">{comment.author.name}</span>
             <span>{relativeTime(comment.createdAt)}</span>
             {comment.edited ? <span>· edited</span> : null}
@@ -238,12 +238,12 @@ function CommentRow({ comment, currentUserId }: { comment: WorkItemCommentReadMo
                   <X aria-hidden="true" />
                 </Button>
               </div>
-              {editError ? <p className="text-sm text-destructive">{controlErrorMessage(editError)}</p> : null}
+              {editError ? <p className="text-xs text-destructive">{controlErrorMessage(editError)}</p> : null}
             </editFetcher.Form>
           ) : (
-            <p className="whitespace-pre-wrap text-base">{comment.body}</p>
+            <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
           )}
-          {deleteError ? <p className="text-sm text-destructive">{controlErrorMessage(deleteError)}</p> : null}
+          {deleteError ? <p className="text-xs text-destructive">{controlErrorMessage(deleteError)}</p> : null}
         </div>
       </div>
     </article>
@@ -263,7 +263,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
 
   return (
     <fetcher.Form method="post" action={`/api/work-items/${workItemId}/add-comment`} className="space-y-2 rounded-lg border border-border bg-card p-4 text-card-foreground">
-      <label className="block text-sm font-medium text-muted-foreground" htmlFor={`comment-body-${workItemId}`}>
+      <label className="block text-xs font-medium text-muted-foreground" htmlFor={`comment-body-${workItemId}`}>
         Add Comment
       </label>
       <Textarea
@@ -287,7 +287,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
           <X aria-hidden="true" />
         </Button>
       </div>
-      {error ? <p className="text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+      {error ? <p className="text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
     </fetcher.Form>
   );
 }
@@ -327,7 +327,7 @@ function ChildrenChecklist({
       <h2 className="text-lg font-semibold">{childLabel}s</h2>
       {childrenRows.length === 0 ? (
         <div className="rounded-lg border border-border bg-card text-card-foreground">
-          <p className="p-4 text-sm text-muted-foreground">No {childLabel}s yet.</p>
+          <p className="p-4 text-xs text-muted-foreground">No {childLabel}s yet.</p>
         </div>
       ) : visibleRows.length > 0 ? (
         <div className="rounded-lg border border-border bg-card text-card-foreground">
@@ -339,7 +339,7 @@ function ChildrenChecklist({
         </div>
       ) : null}
       {settled.length > 0 && !revealed ? (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{settled.length} settled —</span>
           <Button size="sm" type="button" variant="ghost" onClick={() => setRevealed(true)}>
             show
@@ -401,10 +401,10 @@ function ChildrenChecklistRow({ child, currentUserId }: { child: WorkItemDetailC
         >
           <StatusMark status={child.status} />
         </Button>
-        <Link className={`min-w-0 flex-1 text-base font-medium ${isTerminalStatus(child.status) ? "text-muted-foreground line-through" : ""}`} to={`/items/${child.id}`}>
+        <Link className={`min-w-0 flex-1 text-sm font-medium ${isTerminalStatus(child.status) ? "text-muted-foreground line-through" : ""}`} to={`/items/${child.id}`}>
           {child.summary}
         </Link>
-        <span className="text-sm text-muted-foreground">{child.dueDate ?? "No Due Date"}</span>
+        <span className="text-xs text-muted-foreground">{child.dueDate ?? "No Due Date"}</span>
         <Avatar assignee={child.assignee} currentUserId={currentUserId} withName />
       </div>
       {confirmSettle ? (
@@ -429,7 +429,7 @@ function ChildrenChecklistRow({ child, currentUserId }: { child: WorkItemDetailC
           onConfirm={() => submitStatus(fetcher, child.id, "open", true)}
         />
       ) : null}
-      {error ? <p className="mt-2 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+      {error ? <p className="mt-2 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
     </div>
   );
 }
@@ -454,11 +454,11 @@ function ChecklistNotice({
   return (
     <div className="mt-3 space-y-3 rounded-lg border border-border bg-popover p-3 text-popover-foreground">
       <div className="space-y-1">
-        <p className="text-base font-semibold">{title}</p>
-        <p className="text-sm text-muted-foreground">{body}</p>
+        <p className="text-base font-medium">{title}</p>
+        <p className="text-xs text-muted-foreground">{body}</p>
       </div>
       {items.length > 0 ? (
-        <ul className="max-h-56 space-y-1 overflow-auto text-sm">
+        <ul className="max-h-56 space-y-1 overflow-auto text-xs">
           {items.map((item) => (
             <li key={item} className="rounded-md border border-border bg-muted px-2 py-1">
               {item}
@@ -508,7 +508,7 @@ function DescriptionEditor({ id, description }: { id: number; description: strin
       multilineEnter
       renderValue={(startEditing) => (
         <button className="block w-full rounded-md border border-transparent text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="button" onClick={startEditing}>
-          {description.trim().length > 0 ? <p className="whitespace-pre-wrap text-base">{description}</p> : <p className="text-sm text-muted-foreground">Add a Description</p>}
+          {description.trim().length > 0 ? <p className="whitespace-pre-wrap text-sm">{description}</p> : <p className="text-xs text-muted-foreground">Add a Description</p>}
         </button>
       )}
     />
@@ -559,7 +559,7 @@ function TextEditor({
 
   return (
     <section className="space-y-2">
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <fetcher.Form ref={formRef} method="post" action={action} className="space-y-2">
         <Textarea
           aria-label={label}
@@ -600,7 +600,7 @@ function TextEditor({
             <X aria-hidden="true" />
           </Button>
         </div>
-        {error ? <p className="text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+        {error ? <p className="text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
       </fetcher.Form>
     </section>
   );
@@ -659,8 +659,8 @@ function StatusChip({
           {confirmingReopen ? (
             <div className="space-y-3 p-2">
               <div className="space-y-1">
-                <p className="text-base font-semibold">Reopen Notice</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-base font-medium">Reopen Notice</p>
+                <p className="text-xs text-muted-foreground">
                   Changing this Work Item to Open will move {formatSummaryList(reopenNotice.map((item) => item.summary))} to In Progress.
                 </p>
               </div>
@@ -679,12 +679,12 @@ function StatusChip({
           ) : confirmingStatus ? (
             <div className="space-y-3 p-2">
               <div className="space-y-1">
-                <p className="text-base font-semibold">
+                <p className="text-base font-medium">
                   Settle {settleCount} {settleCount === 1 ? "descendant" : "descendants"} as {statusLabel(confirmingStatus)}?
                 </p>
-                <p className="text-sm text-muted-foreground">The Settle Cascade will sweep every Unfinished descendant named here.</p>
+                <p className="text-xs text-muted-foreground">The Settle Cascade will sweep every Unfinished descendant named here.</p>
               </div>
-              <ul className="max-h-56 space-y-1 overflow-auto text-sm">
+              <ul className="max-h-56 space-y-1 overflow-auto text-xs">
                 {unfinishedDescendants.map((descendant) => (
                   <li key={descendant.id} className="rounded-md border border-border bg-muted px-2 py-1">
                     {descendant.summary}
@@ -718,7 +718,7 @@ function StatusChip({
                 </MenuItem>
               ))}
               {startCascadeAncestors.length > 0 ? (
-                <p className="px-3 py-2 text-sm text-muted-foreground">
+                <p className="px-3 py-2 text-xs text-muted-foreground">
                   Starting this Work Item will also start {formatSummaryList(startCascadeAncestors.map((ancestor) => ancestor.summary))}.
                 </p>
               ) : null}
@@ -726,7 +726,7 @@ function StatusChip({
           )}
         </MenuContent>
       </Menu>
-      {error ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+      {error ? <p className="mt-1 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
     </div>
   );
 }
@@ -763,7 +763,7 @@ function AssigneeChip({
           ))}
         </MenuContent>
       </Menu>
-      {error ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+      {error ? <p className="mt-1 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
     </div>
   );
 }
@@ -781,7 +781,7 @@ function DueDateChip({ dueDate, id }: { dueDate: string | null; id: number }) {
           </Button>
         </MenuTrigger>
         <MenuContent align="start" className="space-y-2 p-2">
-          <label className="block text-sm text-muted-foreground" htmlFor={`due-date-${id}`}>
+          <label className="block text-xs text-muted-foreground" htmlFor={`due-date-${id}`}>
             Due Date
           </label>
           <Input
@@ -797,7 +797,7 @@ function DueDateChip({ dueDate, id }: { dueDate: string | null; id: number }) {
           </Button>
         </MenuContent>
       </Menu>
-      {error ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+      {error ? <p className="mt-1 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
     </div>
   );
 }
@@ -864,11 +864,11 @@ function LabelsChip({
                 );
               })
             ) : (
-              <p className="px-3 py-2 text-sm text-muted-foreground">No Labels yet.</p>
+              <p className="px-3 py-2 text-xs text-muted-foreground">No Labels yet.</p>
             )}
           </div>
           <createFetcher.Form method="post" action={`/api/work-items/${id}/create-label`} className="space-y-2 border-t border-border pt-2">
-            <label className="block text-sm text-muted-foreground" htmlFor={`label-name-${id}`}>
+            <label className="block text-xs text-muted-foreground" htmlFor={`label-name-${id}`}>
               Create Label
             </label>
             <div className="flex gap-2">
@@ -887,8 +887,8 @@ function LabelsChip({
           </createFetcher.Form>
         </MenuContent>
       </Menu>
-      {mutationError ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(mutationError)}</p> : null}
-      {createError ? <p className="mt-1 text-sm text-destructive">{controlErrorMessage(createError)}</p> : null}
+      {mutationError ? <p className="mt-1 text-xs text-destructive">{controlErrorMessage(mutationError)}</p> : null}
+      {createError ? <p className="mt-1 text-xs text-destructive">{controlErrorMessage(createError)}</p> : null}
     </div>
   );
 }

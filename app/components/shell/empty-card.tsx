@@ -17,7 +17,7 @@ export function EmptyCard({ headline, line, Mark, headingLevel = "h1", children 
         <Mark aria-hidden="true" />
         </div>
         <Heading className="text-lg font-semibold">{headline}</Heading>
-        <p className="mt-2 text-sm text-muted-foreground">{line}</p>
+        <p className="mt-2 text-xs text-muted-foreground">{line}</p>
         {children}
     </div>
   );

@@ -69,7 +69,7 @@ export default function Search({ loaderData }: Route.ComponentProps) {
         <header className="space-y-4">
           <div>
             <h1 className="text-xl font-semibold">Search</h1>
-            <p className="mt-1 text-sm text-muted-foreground">A read-only register over every Work Item.</p>
+            <p className="mt-1 text-xs text-muted-foreground">A read-only register over every Work Item.</p>
           </div>
           <KeywordBox params={params} />
           <div className="hidden lg:block">
@@ -79,7 +79,7 @@ export default function Search({ loaderData }: Route.ComponentProps) {
         </header>
 
         <section className="mt-6 space-y-3" aria-label="Search results">
-          <p className="text-sm font-medium text-muted-foreground">{resultCountText(loaderData.resultCount, loaderData.rows.length, loaderData.limit)}</p>
+          <p className="text-xs font-medium text-muted-foreground">{resultCountText(loaderData.resultCount, loaderData.rows.length, loaderData.limit)}</p>
           {loaderData.rows.length === 0 ? (
             <div className="flex min-h-96 items-center justify-center">
               <EmptyCard
@@ -146,17 +146,17 @@ function MultiFilter({ label, param, options, params }: { label: string; param: 
   const active = selected.length > 0;
   return (
     <details className="relative">
-      <summary className={`list-none rounded-md border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
+      <summary className={`list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
         {label}: {active ? selected.map((value) => options.find((option) => option.value === value)?.label ?? value).join(", ") : "Any"}
       </summary>
       <div className="absolute z-40 mt-1 min-w-56 space-y-1 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg">
-        <Link className="block rounded-md px-3 py-2 text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: [] })}>
+        <Link className="block rounded-md px-3 py-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: [] })}>
           Any
         </Link>
         {options.map((option) => {
           const values = toggleValue(selected, option.value);
           return (
-            <Link key={option.value} className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: values })}>
+            <Link key={option.value} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: values })}>
               <span className="inline-block size-4 rounded-sm border border-border bg-card text-center text-[10px] font-bold uppercase tracking-wide">{selected.includes(option.value) ? "✓" : ""}</span>
               {option.label}
             </Link>
@@ -181,17 +181,17 @@ function ParentFilter({ selectedParents, params }: { selectedParents: SelectedPa
         parentFetchers.load();
       }
     }}>
-      <summary className={`list-none rounded-md border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
+      <summary className={`list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
         Parent: {active ? selectedParents.map((parent) => parent.summary).join(", ") : "Any"}
       </summary>
       <div className="absolute z-40 mt-1 w-80 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
-        <Link className="mb-2 block rounded-md px-3 py-2 text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: [] })}>
+        <Link className="mb-2 block rounded-md px-3 py-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: [] })}>
           Any Parent
         </Link>
         {active ? (
           <div className="mb-2 flex flex-wrap gap-1">
             {selectedParents.map((parent) => (
-              <Link key={parent.id} className="rounded-full border border-border bg-muted px-2 py-0.5 text-sm text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: selectedParentIds.filter((id) => id !== String(parent.id)) })}>
+              <Link key={parent.id} className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: selectedParentIds.filter((id) => id !== String(parent.id)) })}>
                 {parent.summary} ×
               </Link>
             ))}
@@ -217,12 +217,12 @@ function DueFilter({ params }: { params: URLSearchParams }) {
   const active = due !== "any";
   return (
     <details className="relative">
-      <summary className={`list-none rounded-md border px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
+      <summary className={`list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
         Due Date: {dueSummary(params)}
       </summary>
       <div className="absolute z-40 mt-1 min-w-72 space-y-2 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
         {(["any", "overdue", "none"] as const).map((mode) => (
-          <Link key={mode} className="block rounded-md px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, mode === "any" ? { due: [], from: [], to: [] } : { due: [mode], from: [], to: [] })}>
+          <Link key={mode} className="block rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, mode === "any" ? { due: [], from: [], to: [] } : { due: [mode], from: [], to: [] })}>
             {dueLabels[mode]}
           </Link>
         ))}
@@ -238,7 +238,7 @@ function DueDateChoice({ params, mode, navigate }: { params: URLSearchParams; mo
   const selected = (params.get("due") ?? "any") === mode;
   if (!selected) {
     return (
-      <Link className="block rounded-md px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { due: [mode], from: [], to: [] })}>
+      <Link className="block rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { due: [mode], from: [], to: [] })}>
         {dueLabels[mode]}
       </Link>
     );
@@ -248,7 +248,7 @@ function DueDateChoice({ params, mode, navigate }: { params: URLSearchParams; mo
   };
   return (
     <div className="space-y-2 rounded-md border border-border p-2">
-      <p className="text-sm font-medium">{dueLabels[mode]}</p>
+      <p className="text-xs font-medium">{dueLabels[mode]}</p>
       <Input aria-label={`${dueLabels[mode]} from`} type="date" defaultValue={params.get("from") ?? ""} onChange={(event) => setDate("from", event.currentTarget.value)} />
       {mode === "between" ? <Input aria-label="Between to" type="date" defaultValue={params.get("to") ?? ""} onChange={(event) => setDate("to", event.currentTarget.value)} /> : null}
     </div>
@@ -298,7 +298,7 @@ function CompactFilters({ labels, members, params }: { labels: { id: number; nam
 function CompactSort({ params }: { params: URLSearchParams }) {
   return (
     <div className="grid gap-2">
-      <label className="text-sm font-medium" htmlFor="compact-sort">Sort</label>
+      <label className="text-xs font-medium" htmlFor="compact-sort">Sort</label>
       <div className="grid grid-cols-2 gap-2">
         <Select id="compact-sort" name="sort" defaultValue={params.get("sort") ?? "id"}>
           {tableSorts.map((value) => <option key={value} value={value}>{sortLabels[value]}</option>)}
@@ -317,11 +317,11 @@ function CompactSelect({ name, label, options, params }: { name: string; label: 
   const selected = new Set(selectedValues(params, name));
   return (
     <fieldset className="grid gap-2">
-      <legend className="text-sm font-medium">{label}</legend>
+      <legend className="text-xs font-medium">{label}</legend>
       <div className="max-h-44 space-y-1 overflow-auto rounded-lg border border-border p-2">
-        {options.length === 0 ? <p className="px-2 py-1 text-sm text-muted-foreground">Any</p> : null}
+        {options.length === 0 ? <p className="px-2 py-1 text-xs text-muted-foreground">Any</p> : null}
         {options.map((option) => (
-          <label key={option.value} className="flex items-center gap-2 rounded-md px-2 py-1 text-sm">
+          <label key={option.value} className="flex items-center gap-2 rounded-md px-2 py-1 text-xs">
             <input className="size-4 accent-primary" type="checkbox" name={name} value={option.value} defaultChecked={selected.has(option.value)} />
             {option.label}
           </label>
@@ -371,7 +371,7 @@ function useParentCandidateFetchers(query: string) {
 function CompactDue({ params }: { params: URLSearchParams }) {
   return (
     <fieldset className="grid gap-2">
-      <legend className="text-sm font-medium">Due Date</legend>
+      <legend className="text-xs font-medium">Due Date</legend>
       <Select name="due" defaultValue={params.get("due") ?? "any"}>
         {Object.entries(dueLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>
@@ -385,7 +385,7 @@ function Results({ rows, params, currentUserId }: { rows: SearchWorkItemRow[]; p
   return (
     <>
       <div className="hidden overflow-hidden rounded-lg border border-border bg-card text-card-foreground lg:block">
-        <table className="w-full border-collapse text-left text-sm">
+        <table className="w-full border-collapse text-left text-xs">
           <thead className="border-b border-border bg-muted text-muted-foreground">
             <tr>{tableSorts.map((sort) => <SortHeader key={sort} sort={sort} params={params} />)}</tr>
           </thead>
@@ -406,7 +406,7 @@ function SortHeader({ sort, params }: { sort: SearchSort; params: URLSearchParam
   const currentDirection = (params.get("dir") ?? "asc") as SearchDirection;
   const nextDirection = currentSort === sort && currentDirection === "asc" ? "desc" : "asc";
   return (
-    <th className="px-3 py-2 text-[11px] font-medium">
+    <th className="px-3 py-2 text-xs font-medium">
       <Link className="inline-flex items-center gap-1 rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, sort === "id" && nextDirection === "asc" ? { sort: [], dir: [] } : { sort: [sort], dir: [nextDirection] })}>
         {sortLabels[sort]} {currentSort === sort ? (currentDirection === "asc" ? "↑" : "↓") : null}
       </Link>
@@ -417,18 +417,18 @@ function SortHeader({ sort, params }: { sort: SearchSort; params: URLSearchParam
 function ResultTableRow({ row, params, currentUserId }: { row: SearchWorkItemRow; params: URLSearchParams; currentUserId: number }) {
   return (
     <tr className="border-b border-border last:border-b-0">
-      <td className="px-3 py-2 text-[11px] text-muted-foreground">{row.id}</td>
-      <td className="px-3 py-2 text-sm font-medium">
+      <td className="px-3 py-2 text-xs text-muted-foreground">{row.id}</td>
+      <td className="px-3 py-2 text-xs font-medium">
         <Link className="inline-flex items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={`/search/${row.id}?${params.toString()}`}>
           <TypeMark type={row.type} />
           {row.summary}
         </Link>
       </td>
-      <td className="px-3 py-2 text-[11px] text-muted-foreground">{row.parentSummary ?? "Top-level"}</td>
-      <td className="px-3 py-2 text-[11px] text-muted-foreground"><Assignee row={row} currentUserId={currentUserId} /></td>
+      <td className="px-3 py-2 text-xs text-muted-foreground">{row.parentSummary ?? "Top-level"}</td>
+      <td className="px-3 py-2 text-xs text-muted-foreground"><Assignee row={row} currentUserId={currentUserId} /></td>
       <td className="px-3 py-2"><Badge>{statusLabels[row.status]}</Badge></td>
-      <td className="px-3 py-2 text-[11px] text-muted-foreground">{formatDate(row.dueDate)}</td>
-      <td className="px-3 py-2 text-[11px] text-muted-foreground">{formatTimestamp(row.updatedAt)}</td>
+      <td className="px-3 py-2 text-xs text-muted-foreground">{formatDate(row.dueDate)}</td>
+      <td className="px-3 py-2 text-xs text-muted-foreground">{formatTimestamp(row.updatedAt)}</td>
     </tr>
   );
 }
@@ -436,13 +436,13 @@ function ResultTableRow({ row, params, currentUserId }: { row: SearchWorkItemRow
 function CompactResultRow({ row, params, currentUserId }: { row: SearchWorkItemRow; params: URLSearchParams; currentUserId: number }) {
   return (
     <Link className="relative block rounded-lg border border-border bg-card p-4 pr-14 text-card-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={`/search/${row.id}?${params.toString()}`}>
-      <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
         <span>{row.parentSummary ?? "Top-level"}</span>
         <span>{formatDate(row.dueDate)}</span>
       </div>
-      <div className="mt-2 flex items-center gap-2 text-base font-medium"><TypeMark type={row.type} /> {row.summary}</div>
-      <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground"><StatusMark status={row.status} /> <Assignee row={row} currentUserId={currentUserId} /></div>
-      <span className="absolute bottom-3 right-4 text-[11px] font-medium text-muted-foreground">#{row.id}</span>
+      <div className="mt-2 flex items-center gap-2 text-sm font-medium"><TypeMark type={row.type} /> {row.summary}</div>
+      <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><StatusMark status={row.status} /> <Assignee row={row} currentUserId={currentUserId} /></div>
+      <span className="absolute bottom-3 right-4 text-xs font-medium text-muted-foreground">#{row.id}</span>
     </Link>
   );
 }

@@ -46,7 +46,7 @@ export function SettingsPage({ loaderData, shellData }: { loaderData: Route.Comp
     <main className="min-h-screen bg-background p-6 pb-28 text-foreground lg:pb-6">
       <header>
         <h1 className="text-xl font-semibold">Settings</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Personal choices and shared household controls.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Personal choices and shared household controls.</p>
       </header>
 
       <div className="mt-6 space-y-6">
@@ -78,7 +78,7 @@ function Section({ title, description, children }: { title: string; description:
         <h2 id={`${title.toLowerCase()}-settings`} className="text-lg font-semibold">
           {title}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
       </div>
       <div className="space-y-6">{children}</div>
     </section>
@@ -89,7 +89,7 @@ function ThemeForm({ theme }: { theme: "system" | "light" | "dark" }) {
   const fetcher = useFetcher<MutationFetcherData>();
   return (
     <fetcher.Form action="/api/settings/theme" method="post" className="grid gap-2 sm:max-w-sm">
-      <label className="text-sm font-medium" htmlFor="theme">
+      <label className="text-xs font-medium" htmlFor="theme">
         Theme
       </label>
       <div className="flex items-center gap-2">
@@ -104,10 +104,10 @@ function ThemeForm({ theme }: { theme: "system" | "light" | "dark" }) {
           {fetcher.state === "idle" ? "Save" : "Saving"}
         </Button>
       </div>
-      <p id="theme-help" className="text-sm text-muted-foreground">
+      <p id="theme-help" className="text-xs text-muted-foreground">
         System uses your device preference without JavaScript.
       </p>
-      {fetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
+      {fetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
     </fetcher.Form>
   );
 }
@@ -115,7 +115,7 @@ function ThemeForm({ theme }: { theme: "system" | "light" | "dark" }) {
 function MembersList({ members, currentUserId }: { members: SettingsMember[]; currentUserId: number }) {
   return (
     <section className="space-y-3" aria-labelledby="members-heading">
-      <h3 id="members-heading" className="text-base font-semibold">
+      <h3 id="members-heading" className="text-base font-medium">
         Members
       </h3>
       <div className="divide-y divide-border rounded-lg border border-border">
@@ -124,8 +124,8 @@ function MembersList({ members, currentUserId }: { members: SettingsMember[]; cu
             <div className="flex items-center gap-3">
               <Avatar assignee={member} currentUserId={currentUserId} />
               <div>
-                <p className="text-base font-medium">{member.name}</p>
-                <p className="text-sm text-muted-foreground">{member.email}</p>
+                <p className="text-sm font-medium">{member.name}</p>
+                <p className="text-xs text-muted-foreground">{member.email}</p>
               </div>
             </div>
           </div>
@@ -139,7 +139,7 @@ function TimezoneForm({ timezone, timezones }: { timezone: string; timezones: st
   const fetcher = useFetcher<MutationFetcherData>();
   return (
     <fetcher.Form action="/api/settings/timezone" method="post" className="grid gap-2 sm:max-w-xl">
-      <label className="text-sm font-medium" htmlFor="timezone">
+      <label className="text-xs font-medium" htmlFor="timezone">
         Household Timezone
       </label>
       <div className="flex items-center gap-2">
@@ -154,10 +154,10 @@ function TimezoneForm({ timezone, timezones }: { timezone: string; timezones: st
           {fetcher.state === "idle" ? "Save" : "Saving"}
         </Button>
       </div>
-      <p id="timezone-help" className="text-sm text-muted-foreground">
+      <p id="timezone-help" className="text-xs text-muted-foreground">
         Today and Due tab groups are computed in this timezone for both members.
       </p>
-      {fetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
+      {fetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
     </fetcher.Form>
   );
 }
@@ -167,14 +167,14 @@ function LabelManagement({ labels }: { labels: SettingsLabel[] }) {
   return (
     <section className="space-y-4" aria-labelledby="labels-heading">
       <div>
-        <h3 id="labels-heading" className="text-base font-semibold">
+        <h3 id="labels-heading" className="text-base font-medium">
           Labels
         </h3>
-        <p className="mt-1 text-sm text-muted-foreground">Create, rename and delete the household Label vocabulary.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Create, rename and delete the household Label vocabulary.</p>
       </div>
       <createFetcher.Form action="/api/labels/create" method="post" className="flex max-w-xl items-end gap-2">
         <div className="flex-1 space-y-2">
-          <label className="text-sm font-medium" htmlFor="new-label-name">
+          <label className="text-xs font-medium" htmlFor="new-label-name">
             New Label
           </label>
           <Input id="new-label-name" name="name" maxLength={30} placeholder="Groceries" />
@@ -183,10 +183,10 @@ function LabelManagement({ labels }: { labels: SettingsLabel[] }) {
           {createFetcher.state === "idle" ? "Create Label" : "Creating"}
         </Button>
       </createFetcher.Form>
-      {createFetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(createFetcher.data.error.message)}</p> : null}
+      {createFetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(createFetcher.data.error.message)}</p> : null}
 
       {labels.length === 0 ? (
-        <div className="rounded-lg border border-border bg-muted p-4 text-sm text-muted-foreground">No Labels yet.</div>
+        <div className="rounded-lg border border-border bg-muted p-4 text-xs text-muted-foreground">No Labels yet.</div>
       ) : (
         <div className="divide-y divide-border rounded-lg border border-border">
           {labels.map((label) => (
@@ -207,7 +207,7 @@ function LabelRow({ label }: { label: SettingsLabel }) {
       <div className="space-y-2">
         <renameFetcher.Form action={`/api/labels/${label.id}/rename`} method="post" className="flex max-w-xl items-end gap-2">
           <div className="flex-1 space-y-2">
-            <label className="text-sm font-medium" htmlFor={`label-${label.id}-name`}>
+            <label className="text-xs font-medium" htmlFor={`label-${label.id}-name`}>
               {label.name}
             </label>
             <Input id={`label-${label.id}-name`} name="name" defaultValue={label.name} maxLength={30} />
@@ -216,18 +216,18 @@ function LabelRow({ label }: { label: SettingsLabel }) {
             {renameFetcher.state === "idle" ? "Rename" : "Renaming"}
           </Button>
         </renameFetcher.Form>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {label.usageCount} {workItemWord}
         </p>
-        <p className="text-sm text-destructive">Deleting detaches this Label everywhere.</p>
-        {renameFetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(renameFetcher.data.error.message)}</p> : null}
+        <p className="text-xs text-destructive">Deleting detaches this Label everywhere.</p>
+        {renameFetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(renameFetcher.data.error.message)}</p> : null}
       </div>
       <deleteFetcher.Form action={`/api/labels/${label.id}/delete`} method="post">
         <Button type="submit" variant="destructive">
           {deleteFetcher.state === "idle" ? "Delete" : "Deleting"}
         </Button>
       </deleteFetcher.Form>
-      {deleteFetcher.data?.ok === false ? <p className="text-sm text-destructive">{controlErrorMessage(deleteFetcher.data.error.message)}</p> : null}
+      {deleteFetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(deleteFetcher.data.error.message)}</p> : null}
     </div>
   );
 }

@@ -57,8 +57,8 @@ const COLOUR_FUNCTIONS = "rgba?|hsla?|oklch|oklab|lab|lch|color-mix";
 /** Utilities whose arbitrary value would be a colour. */
 const COLOUR_PREFIXES = PALETTE_PREFIXES;
 
-/** The two restricted typography roles, and the only sizes off the scale. */
-const ALLOWED_ARBITRARY_FONT_SIZES = new Set(["10px", "11px"]);
+/** The one restricted typography role, and the only size off the scale. */
+const ALLOWED_ARBITRARY_FONT_SIZES = new Set(["10px"]);
 
 export const RULES = [
   {
@@ -92,7 +92,7 @@ export const RULES = [
   },
   {
     name: "arbitrary-font-size",
-    message: "arbitrary font size — the scale is closed (text-[11px]/text-[10px] excepted)",
+    message: "arbitrary font size — the scale is closed (text-[10px] excepted)",
     patterns: [/\btext-\[(?:length:)?(-?[\d.]+(?:px|rem|em|pt|ch|vw|vh))\]/g],
     ignore: (match) => ALLOWED_ARBITRARY_FONT_SIZES.has(match[1]),
   },

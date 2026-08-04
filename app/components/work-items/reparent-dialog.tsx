@@ -93,12 +93,12 @@ export function ReparentDialog({
             setSelectedParentId={setSelectedParentId}
           />
           {reopenNotice.length > 0 ? (
-            <div className="rounded-lg border border-status-in-progress/40 bg-status-in-progress-subtle p-3 text-sm text-foreground">
+            <div className="rounded-lg border border-status-in-progress/40 bg-status-in-progress-subtle p-3 text-xs text-foreground">
               <p className="font-medium">Reopen Notice</p>
               <p className="mt-1 text-muted-foreground">Reparenting here will move {formatList(reopenNotice.map((item) => item.summary))} to In Progress.</p>
             </div>
           ) : null}
-          {error ? <p className="text-sm text-destructive">{controlErrorMessage(error)}</p> : null}
+          {error ? <p className="text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
           <DialogFooter>
             <Button type="button" variant="outline" disabled={pending} onClick={() => onOpenChange(false)}>
               Cancel
