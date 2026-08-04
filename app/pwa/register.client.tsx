@@ -45,9 +45,9 @@ function UpdateBanner({ onDismiss, onSwitch }: { onDismiss: () => void; onSwitch
       aria-label="Update Banner"
       className="fixed inset-x-4 bottom-24 z-50 mx-auto flex max-w-xl flex-wrap items-center gap-3 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-lg"
     >
-      <p className="min-w-0 flex-1 text-xs">A newer DueNow is ready.</p>
+      <p className="min-w-0 flex-1 text-xs">A newer version of DueNow is ready.</p>
       <Button type="button" onClick={onSwitch}>
-        Switch
+        Update
       </Button>
       <Button type="button" variant="outline" onClick={onDismiss}>
         Not now
