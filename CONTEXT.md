@@ -268,6 +268,14 @@ _Avoid_: ordering, ranking, sequence
 
 ### Settings
 
+**User Settings**:
+The settings that belong to one household member and follow them rather than the deployment — currently the Theme. Named for the scope, not the reader: the section says **User** where an app with an account would say "You" or "Profile", because what distinguishes it from Household Settings is who a change reaches, not who is looking at it.
+_Avoid_: you, your settings, profile, preferences, account
+
+**Household Settings**:
+The settings both members share, where one person's change is the other's change too — the Household Timezone, the Label set, and the members themselves. There is exactly one row of them, present from First Run.
+_Avoid_: global settings, app settings, admin, workspace settings
+
 **Household Timezone**:
 The single timezone the household shares, stored once and editable in Settings. It starts as the timezone of the server the household deployed onto, and there is no per-user or per-work-item timezone.
 _Avoid_: local time, server time, user timezone, locale

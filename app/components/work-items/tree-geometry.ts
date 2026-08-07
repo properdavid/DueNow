@@ -49,16 +49,19 @@ export const DUE_DATE_SLOT_PX = Math.ceil(MEASURED[DUE_DATE_TYPE_SIZE_PX].widest
 /* Measured from the rendered row rather than estimated. */
 const PAGE_PADDING_PX = 48; // `p-6` on the tab's wrapper, both sides
 const CARD_BORDER_PX = 2; // the tree card's hairline, both sides
-const ROW_PADDING_RIGHT_PX = 16; // `pr-4`
-const ROW_INDENT_BASE_PX = 16; // the root rung's own left padding
+const ROW_PADDING_RIGHT_PX = 4; // `pr-1`
+const ROW_INDENT_BASE_PX = 4; // the root rung's own left padding
 const ROW_INDENT_PER_RUNG_PX = 14; // ADR-0018
 const ROW_GAP_PX = 8; // `gap-2` along the row
 const META_GAP_PX = 12; // `gap-3` inside the metadata group
-const DISCLOSURE_PX = 36; // the chevron's icon button, the wider of the two slots
+const DISCLOSURE_PX = 36; // the chevron's icon button, matched by the spacer a childless row renders
 const TYPE_MARK_PX = 16;
 const STATUS_MARK_PX = 16;
 const AVATAR_PX = 28;
 const ROW_MENU_PX = 36;
+
+/** Where the Summary starts, so the stacked row's second line sits under it. */
+export const TREE_ROW_META_INDENT_PX = DISCLOSURE_PX + ROW_GAP_PX + TYPE_MARK_PX + ROW_GAP_PX;
 
 /** Gaps sit between flex children, so `count` of them buy one gap fewer. */
 function gapsPx(count: number, gapPx: number) {
