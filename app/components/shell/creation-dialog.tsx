@@ -124,7 +124,6 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New Work Item</DialogTitle>
-            <DialogDescription>Create any rung of the Type Ladder from one Creation Dialog.</DialogDescription>
           </DialogHeader>
           <createFetcher.Form method="post" action="/api/work-items/create" className="grid gap-4">
             <input type="hidden" name="type" value={type} />
