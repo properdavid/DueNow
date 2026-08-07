@@ -56,10 +56,10 @@ sqlite.transaction(() => {
 
 const now = Date.now();
 const insertUser = sqlite.prepare(
-  "INSERT INTO users (email, name, theme, createdAt, updatedAt) VALUES (?, ?, 'system', ?, ?) ON CONFLICT(email) DO UPDATE SET name = excluded.name, updatedAt = excluded.updatedAt RETURNING id",
+  "INSERT INTO users (googleSubject, email, name, theme, createdAt, updatedAt) VALUES (?, ?, ?, 'system', ?, ?) ON CONFLICT(email) DO UPDATE SET name = excluded.name, updatedAt = excluded.updatedAt RETURNING id",
 );
-const dana = insertUser.get("dana@example.com", "Dana", now, now).id;
-const alex = insertUser.get("alex@example.com", "Alex", now, now).id;
+const dana = insertUser.get("dev-seed:dana@example.com", "dana@example.com", "Dana", now, now).id;
+const alex = insertUser.get("dev-seed:alex@example.com", "alex@example.com", "Alex", now, now).id;
 const insertWorkItem = sqlite.prepare(`
   INSERT INTO work_items
     (type, parentId, parentType, summary, description, assigneeId, status, dueDate, createdAt, updatedAt, createdBy, updatedBy)
