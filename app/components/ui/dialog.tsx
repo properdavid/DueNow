@@ -42,7 +42,10 @@ function DialogContent({
         )}
         {...props}
       >
-        <div className="overflow-y-auto overscroll-contain p-6">{children}</div>
+        {/* Setting overflow-y alone computes overflow-x to auto, which iOS bounces
+           horizontally even with nothing to scroll to; hiding x also means floating
+           UI in here must portal out rather than overflow the panel. */}
+        <div className="overflow-y-auto overflow-x-hidden overscroll-y-contain p-6">{children}</div>
         <DialogPrimitive.Close
           className={cn(
             "absolute right-4 top-4 inline-flex h-8 w-8 items-center justify-center rounded-md",

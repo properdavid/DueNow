@@ -512,6 +512,23 @@ Floating and temporary, so it is one of the few surfaces allowed a shadow
 (`shadow-lg`) and it uses `rounded-lg` with a `popover` fill. The close control
 is a `lucide-react` `X` with an `sr-only` label.
 
+**A dialog scrolls down, never sideways.** The inner region carries
+`overflow-y-auto overflow-x-hidden overscroll-y-contain`: `overflow-y` alone
+would compute `overflow-x` to `auto`, and iOS treats that as a horizontal
+scrollport and rubber-bands it even when `scrollWidth` equals `clientWidth` --
+the form slides sideways under a stationary close control with nothing to scroll
+to. `overscroll-y-contain` keeps the vertical bounce, which is wanted, while
+stopping the scroll chaining to the page behind. The axis is settled by
+`overflow`, not by `touch-action`: this is a layout rule, and a `pan-y` gesture
+lock would miss the trackpad and put the deliberate pinch-zoom at risk.
+
+Two constraints follow, and the clip is a backstop for the first rather than a
+cover for it. **Horizontal overflow inside a dialog is a layout defect**: text
+that cannot wrap truncates at its own control and never pushes a row wide, so
+the clip should never fire. And **floating UI inside a dialog must portal out**
+-- a date picker popup or an autocomplete cannot rely on overflowing the panel,
+because it will be clipped silently at the padding edge.
+
 ## design-lint
 
 The token discipline, the closed type scale and the ban on `dark:` are

@@ -16,4 +16,12 @@ describe("the dialog panel on a short viewport", () => {
   test("scrolls its own overflow rather than spilling past both edges", () => {
     expect(panel).toContain("overflow-y-auto");
   });
+
+  test("does not rubber-band horizontally", () => {
+    expect(panel).toContain("overflow-x-hidden");
+  });
+
+  test("keeps its vertical bounce without chaining to the page behind", () => {
+    expect(panel).toContain("overscroll-y-contain");
+  });
 });

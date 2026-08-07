@@ -150,7 +150,6 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
             <label className="grid gap-2 text-xs font-medium">
               Summary
               <Input name="summary" required maxLength={200} aria-describedby="summary-help" />
-              <span id="summary-help" className="text-xs font-normal text-muted-foreground">Trimmed on save, 200 characters maximum.</span>
             </label>
 
             {!isTopic && (
