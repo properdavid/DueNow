@@ -178,10 +178,15 @@ function TreeRow({
           <Link to={`/items/${row.id}`}>{row.summary}</Link>
         </Button>
         {settledCount > 0 ? <span className="rounded-md border border-border bg-muted px-2 py-0 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">{settledCount} settled</span> : null}
+        {/* The due date leads the group so a dateless row spends its reserved
+            slot next to the Summary's own slack rather than as a hole at the
+            row's right edge. */}
         <div className="hidden items-center gap-3 @min-[525px]:flex">
+          <span className="flex justify-end" style={{ width: DUE_DATE_SLOT_PX }}>
+            {row.dueDate ? <DueDate dueDate={row.dueDate} /> : null}
+          </span>
           <StatusMark status={row.status} />
           <Avatar assignee={row.assignee} currentUserId={currentUserId} />
-          {row.dueDate ? <DueDate dueDate={row.dueDate} /> : <span style={{ width: DUE_DATE_SLOT_PX }} />}
         </div>
         <RowMenu row={row} returnTo={returnTo} />
       </div>
