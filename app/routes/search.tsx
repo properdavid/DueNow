@@ -62,8 +62,8 @@ export default function Search({ loaderData }: Route.ComponentProps) {
   const isKeywordMiss = Boolean(params.get("q")?.trim()) || activeFilters > 0;
 
   return (
-    <main className="min-h-screen bg-background p-6 pb-28 text-foreground lg:pb-6">
-      <div className={hasSelection ? "hidden" : undefined}>
+    <main className="min-h-screen bg-background text-foreground">
+      <div className={hasSelection ? "hidden" : "p-6 pb-28 lg:pb-6"}>
         <header className="space-y-4">
           <div>
             <h1 className="text-xl font-semibold">Search</h1>

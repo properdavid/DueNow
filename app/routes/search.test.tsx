@@ -136,6 +136,25 @@ describe("Due Date filter seam", () => {
   });
 });
 
+describe("Search selection seam", () => {
+  test("a selected work item is not nested inside the results screen's own padding", () => {
+    const loaderData = { rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] };
+    const Stub = createRoutesStub([
+      {
+        path: "/search",
+        Component: () => searchRoute.default({ loaderData, params: {}, matches: [] } as unknown as Parameters<typeof searchRoute.default>[0]),
+        children: [{ id: "search-item", path: ":id", Component: () => <article>Detail View placeholder</article> }],
+      },
+    ]);
+
+    const markup = renderToStaticMarkup(<Stub initialEntries={["/search/3"]} />);
+
+    expect(markup).toContain("Detail View placeholder");
+    expect(markup).toContain('<main class="min-h-screen bg-background text-foreground">');
+    expect(markup).toContain('<div class="hidden">');
+  });
+});
+
 function renderSearch(loaderData: React.ComponentProps<typeof searchRoute.default>["loaderData"], path = "/search") {
   const Stub = createRoutesStub([
     {

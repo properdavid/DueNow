@@ -28,7 +28,7 @@ export function SplitRoute({ children, hasSelection }: SplitRouteProps) {
       <aside
         className={
           hasSelection
-            ? "min-h-screen bg-background lg:min-h-0 lg:flex-1 lg:overflow-auto"
+            ? "min-h-screen bg-background pb-28 lg:min-h-0 lg:flex-1 lg:overflow-auto lg:pb-0"
             : "hidden items-center justify-center lg:flex lg:min-h-0 lg:flex-1 lg:overflow-auto"
         }
       >

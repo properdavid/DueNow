@@ -42,6 +42,21 @@ describe("split route layout seam", () => {
     expect(markup).not.toContain("Nothing selected");
   });
 
+  test("the compact detail column ends above the tab bar so its last control can be reached", () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/items",
+        Component: () => <SplitRoute hasSelection>Work Items Tree placeholder</SplitRoute>,
+        children: [{ path: ":id", Component: () => <article>Detail View placeholder</article> }],
+      },
+    ]);
+
+    const markup = renderToStaticMarkup(<Stub initialEntries={["/items/12"]} />);
+
+    expect(markup).toContain("min-h-screen bg-background pb-28 lg:min-h-0");
+    expect(markup).toContain("lg:pb-0");
+  });
+
   test("the shared border carries a splitter over the range the tree can survive", () => {
     const Stub = createRoutesStub([
       {

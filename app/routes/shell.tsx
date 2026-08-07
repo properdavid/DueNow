@@ -60,8 +60,11 @@ export default function Shell({ loaderData }: Route.ComponentProps) {
           </nav>
         </aside>
         <div
-          className={isFullLayout ? "lg:pl-64 lg:pb-0" : "lg:h-screen lg:overflow-hidden lg:pl-64"}
-          style={isFullLayout ? { paddingBottom: "calc(7rem + env(safe-area-inset-bottom))" } : undefined}
+          className={
+            isFullLayout
+              ? "pb-[calc(7rem+env(safe-area-inset-bottom))] lg:pb-0 lg:pl-64"
+              : "lg:h-screen lg:overflow-hidden lg:pl-64"
+          }
         >
           <Outlet />
         </div>
