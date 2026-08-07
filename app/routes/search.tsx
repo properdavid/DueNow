@@ -509,8 +509,12 @@ function activeFilterCount(params: URLSearchParams) {
 
 function dueSummary(params: URLSearchParams) {
   const due = dueModeFromValue(params.get("due"));
-  if (due === "before" || due === "after") return `${dueLabels[due]} ${formatDate(params.get("from"))}`;
-  if (due === "between") return `Between ${formatDate(params.get("from"))} and ${formatDate(params.get("to"))}`;
+  const fields = dueDateFields(due);
+  const dates = fields.map((field) => params.get(field)).filter((date): date is string => Boolean(date));
+  // A mode whose dates aren't all picked yet reads as just the mode name.
+  if (dates.length < fields.length) return dueLabels[due];
+  if (due === "between") return `Between ${formatDueDate(dates[0])} and ${formatDueDate(dates[1])}`;
+  if (dates.length === 1) return `${dueLabels[due]} ${formatDueDate(dates[0])}`;
   return dueLabels[due];
 }
 

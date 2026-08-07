@@ -119,6 +119,25 @@ describe("Due Date filter seam", () => {
     expect(markup.includes(`aria-label="${label} from"`)).toBe(expectedFrom);
     expect(markup.includes(`aria-label="${label} to"`)).toBe(expectedTo);
   });
+
+  test.each([
+    ["due=before", "Due Date: Before"],
+    ["due=after", "Due Date: After"],
+    ["due=between", "Due Date: Between"],
+    ["due=between&from=2026-08-04", "Due Date: Between"],
+    ["due=between&to=2026-08-06", "Due Date: Between"],
+    ["due=before&from=2026-08-04", "Due Date: Before Aug 4"],
+    ["due=between&from=2026-08-04&to=2026-08-06", "Due Date: Between Aug 4 and Aug 6"],
+  ])("the wide summary for %s names only the dates that are set", (query, expected) => {
+    const markup = renderSearch(
+      { rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] },
+      `/search?${query}`,
+    );
+
+    expect(markup).toContain(expected);
+    expect(markup).not.toContain("Before No due date");
+    expect(markup).not.toContain("and No due date");
+  });
 });
 
 function renderSearch(loaderData: React.ComponentProps<typeof searchRoute.default>["loaderData"], path = "/search") {
