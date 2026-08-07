@@ -81,7 +81,7 @@ export function WorkItemDocument({
         </nav>
         {detail.item.parentId !== null ? (
           <div>
-            <Button size="sm" type="button" variant="outline" onClick={() => setReparentOpen(true)}>
+            <Button size="sm" type="button" variant="open" onClick={() => setReparentOpen(true)}>
               Reparent…
             </Button>
             <ReparentDialog
@@ -186,19 +186,19 @@ function CommentRow({ comment, currentUserId }: { comment: WorkItemCommentReadMo
               confirmingDelete ? (
                 <span className="inline-flex items-center gap-2">
                   <span>Delete?</span>
-                  <Button disabled={pendingDelete} size="sm" type="button" variant="ghost" onClick={() => submitDeleteComment(deleteFetcher, comment.id)}>
+                  <Button disabled={pendingDelete} size="sm" type="button" variant="destroy" onClick={() => submitDeleteComment(deleteFetcher, comment.id)}>
                     Yes
                   </Button>
-                  <Button disabled={pendingDelete} size="sm" type="button" variant="ghost" onClick={() => setConfirmingDelete(false)}>
+                  <Button disabled={pendingDelete} size="sm" type="button" variant="bare" onClick={() => setConfirmingDelete(false)}>
                     No
                   </Button>
                 </span>
               ) : (
                 <>
-                  <Button size="sm" type="button" variant="ghost" onClick={() => setEditing(true)}>
+                  <Button size="sm" type="button" variant="open" onClick={() => setEditing(true)}>
                     Edit
                   </Button>
-                  <Button disabled={pendingDelete} size="sm" type="button" variant="ghost" onClick={() => setConfirmingDelete(true)}>
+                  <Button disabled={pendingDelete} size="sm" type="button" variant="bare" onClick={() => setConfirmingDelete(true)}>
                     Delete
                   </Button>
                 </>
@@ -222,14 +222,14 @@ function CommentRow({ comment, currentUserId }: { comment: WorkItemCommentReadMo
                 }}
               />
               <div className="flex items-center gap-2">
-                <Button aria-label="Save Comment" disabled={editFetcher.state !== "idle"} size="sm" type="submit" variant="outline">
+                <Button aria-label="Save Comment" disabled={editFetcher.state !== "idle"} size="sm" type="submit" variant="write">
                   <Check aria-hidden="true" />
                 </Button>
                 <Button
                   aria-label="Discard Comment"
                   size="sm"
                   type="button"
-                  variant="ghost"
+                  variant="discard"
                   onClick={() => {
                     setBody(comment.body);
                     setEditing(false);
@@ -280,10 +280,10 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
         }}
       />
       <div className="flex items-center gap-2">
-        <Button aria-label="Save Comment" disabled={fetcher.state !== "idle"} size="sm" type="submit" variant="outline">
+        <Button aria-label="Save Comment" disabled={fetcher.state !== "idle"} size="sm" type="submit" variant="write">
           <Check aria-hidden="true" />
         </Button>
-        <Button aria-label="Discard Comment" size="sm" type="button" variant="ghost" onClick={() => setValue("")}>
+        <Button aria-label="Discard Comment" size="sm" type="button" variant="discard" onClick={() => setValue("")}>
           <X aria-hidden="true" />
         </Button>
       </div>
@@ -341,14 +341,14 @@ function ChildrenChecklist({
       {settled.length > 0 && !revealed ? (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>{settled.length} settled —</span>
-          <Button size="sm" type="button" variant="ghost" onClick={() => setRevealed(true)}>
+          <Button size="sm" type="button" variant="bare" onClick={() => setRevealed(true)}>
             show
           </Button>
         </div>
       ) : null}
       <Button
         type="button"
-        variant="outline"
+        variant="open"
         onClick={() => openCreationDialog({ type: childType, parentId, parentSummary, stayOnSuccess: true })}
       >
         Add {childLabel}
@@ -392,11 +392,11 @@ function ChildrenChecklistRow({ child, currentUserId }: { child: WorkItemDetailC
       <div className="flex flex-wrap items-center gap-3">
         <Button
           aria-label={isTerminalStatus(child.status) ? `Un-settle ${child.summary}` : `Complete ${child.summary}`}
-          className="p-0"
+          className="rounded-full p-0"
           disabled={pending}
           size="icon"
           type="button"
-          variant="ghost"
+          variant="open"
           onClick={toggle}
         >
           <StatusMark status={child.status} />
@@ -467,10 +467,10 @@ function ChecklistNotice({
         </ul>
       ) : null}
       <div className="flex items-center gap-2">
-        <Button disabled={pending} size="sm" type="button" variant="outline" onClick={onConfirm}>
+        <Button disabled={pending} size="sm" type="button" variant="write" onClick={onConfirm}>
           {confirmLabel}
         </Button>
-        <Button disabled={pending} size="sm" type="button" variant="ghost" onClick={onCancel}>
+        <Button disabled={pending} size="sm" type="button" variant="bare" onClick={onCancel}>
           Cancel
         </Button>
       </div>
@@ -487,9 +487,9 @@ function SummaryEditor({ id, summary }: { id: number; summary: string }) {
       label="Summary"
       multilineEnter={false}
       renderValue={(startEditing) => (
-        <button className="block w-full rounded-md border border-transparent text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="button" onClick={startEditing}>
+        <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
           <h1 className="text-xl font-semibold">{summary}</h1>
-        </button>
+        </Button>
       )}
       required
       textareaClassName="text-xl font-semibold"
@@ -507,9 +507,9 @@ function DescriptionEditor({ id, description }: { id: number; description: strin
       label="Description"
       multilineEnter
       renderValue={(startEditing) => (
-        <button className="block w-full rounded-md border border-transparent text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="button" onClick={startEditing}>
+        <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
           {description.trim().length > 0 ? <p className="whitespace-pre-wrap text-sm">{description}</p> : <p className="text-xs text-muted-foreground">Add a Description</p>}
-        </button>
+        </Button>
       )}
     />
   );
@@ -584,14 +584,14 @@ function TextEditor({
           }}
         />
         <div className="flex items-center gap-2">
-          <Button aria-label={`Save ${label}`} disabled={fetcher.state !== "idle" || (required && trimmed.length === 0)} size="sm" type="submit" variant="outline">
+          <Button aria-label={`Save ${label}`} disabled={fetcher.state !== "idle" || (required && trimmed.length === 0)} size="sm" type="submit" variant="write">
             <Check aria-hidden="true" />
           </Button>
           <Button
             aria-label={`Discard ${label}`}
             size="sm"
             type="button"
-            variant="ghost"
+            variant="discard"
             onClick={() => {
               setValue(initialValue);
               setEditing(false);
@@ -650,7 +650,7 @@ function StatusChip({
         }
       }}>
         <MenuTrigger asChild>
-          <Button className="rounded-full" size="sm" type="button" variant="outline">
+          <Button className="rounded-full" size="sm" type="button" variant="open">
             <StatusMark status={status} />
             Status: {statusLabel(status)}
           </Button>
@@ -665,13 +665,13 @@ function StatusChip({
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Button disabled={pending} size="sm" type="button" variant="outline" onClick={() => {
+                <Button disabled={pending} size="sm" type="button" variant="write" onClick={() => {
                   submitStatus(fetcher, id, "open", true);
                   setOpen(false);
                 }}>
                   Confirm
                 </Button>
-                <Button disabled={pending} size="sm" type="button" variant="ghost" onClick={() => setConfirmingReopen(false)}>
+                <Button disabled={pending} size="sm" type="button" variant="bare" onClick={() => setConfirmingReopen(false)}>
                   Cancel
                 </Button>
               </div>
@@ -692,13 +692,13 @@ function StatusChip({
                 ))}
               </ul>
               <div className="flex items-center gap-2">
-                <Button disabled={pending} size="sm" type="button" variant="outline" onClick={() => {
+                <Button disabled={pending} size="sm" type="button" variant="write" onClick={() => {
                   submitStatus(fetcher, id, confirmingStatus, true);
                   setOpen(false);
                 }}>
                   Confirm
                 </Button>
-                <Button disabled={pending} size="sm" type="button" variant="ghost" onClick={() => setConfirmingStatus(null)}>
+                <Button disabled={pending} size="sm" type="button" variant="bare" onClick={() => setConfirmingStatus(null)}>
                   Cancel
                 </Button>
               </div>
@@ -748,7 +748,7 @@ function AssigneeChip({
     <div>
       <Menu>
         <MenuTrigger asChild>
-          <Button className="rounded-full" size="sm" type="button" variant="outline">
+          <Button className="rounded-full" size="sm" type="button" variant="open">
             <Avatar assignee={assignee} currentUserId={currentUserId} withName />
           </Button>
         </MenuTrigger>
@@ -776,7 +776,7 @@ function DueDateChip({ dueDate, id }: { dueDate: string | null; id: number }) {
     <div>
       <Menu>
         <MenuTrigger asChild>
-          <Button className="rounded-full" size="sm" type="button" variant="outline">
+          <Button className="rounded-full" size="sm" type="button" variant="open">
             Due Date: {dueDate ?? "No Due Date"}
           </Button>
         </MenuTrigger>
@@ -792,7 +792,7 @@ function DueDateChip({ dueDate, id }: { dueDate: string | null; id: number }) {
               submitDueDate(fetcher, id, event.currentTarget.value);
             }}
           />
-          <Button className="w-full justify-start" size="sm" type="button" variant="ghost" onClick={() => submitDueDate(fetcher, id, "")}>
+          <Button className="w-full justify-start" size="sm" type="button" variant="bare" onClick={() => submitDueDate(fetcher, id, "")}>
             Clear Due Date
           </Button>
         </MenuContent>
@@ -829,7 +829,7 @@ function LabelsChip({
     <div>
       <Menu>
         <MenuTrigger asChild>
-          <Button className="max-w-full rounded-full whitespace-normal text-left" type="button" variant="outline">
+          <Button className="max-w-full rounded-full whitespace-normal text-left" type="button" variant="open">
             <span>Labels:</span>
             {labels.length > 0 ? (
               <span className="flex flex-wrap gap-1">
@@ -880,7 +880,7 @@ function LabelsChip({
                 value={newLabelName}
                 onChange={(event) => setNewLabelName(event.currentTarget.value)}
               />
-              <Button disabled={pending || newLabelName.trim().length === 0} size="sm" type="submit" variant="outline">
+              <Button disabled={pending || newLabelName.trim().length === 0} size="sm" type="submit" variant="write">
                 Add
               </Button>
             </div>

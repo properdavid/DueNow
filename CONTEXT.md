@@ -198,8 +198,16 @@ _Avoid_: warning, prompt, alert, confirmation
 The whole of one work item on one surface — breadcrumb, Summary, Property Chips, Description, children, Comments — in that order, the same for all four types. The only place a work item is settled — from its own Status Chip, or from its parent's Children Checklist — and the only place Labels are shown.
 _Avoid_: item page, work item page, record, form, inspector
 
+**Chip**:
+A control that is the value *and* the control: it names what it currently holds, and tapping it opens a picker. Three of them — the Search tab's Filter Chips, the Detail View's Property Chips, and the Due tab's scope.
+_Avoid_: pill, tag, badge, toggle
+
+**Set**:
+A Chip that names a value rather than `Any`, `Unassigned` or `No Due Date`. A Set chip carries a tint to say so, but the name it carries already says it — the tint never carries the meaning alone.
+_Avoid_: active, applied, selected, on
+
 **Property Chip**:
-One of the four pill-shaped controls under the Summary — Status, Assignee, Due Date, Labels. The chip is the value *and* the control: tapping it opens a small picker and the choice commits at once, with no edit mode and no Save.
+One of the four Chips under the Summary — Status, Assignee, Due Date, Labels. The choice commits at once, with no edit mode and no Save.
 _Avoid_: field, property panel, pill, tag
 
 **Settle Confirmation**:

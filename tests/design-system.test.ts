@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
+import { buttonVariants } from "../app/components/ui/button";
+
 const css = readFileSync(new URL("../app/app.css", import.meta.url), "utf8");
 /** The rules only — a comment may name a dropped family in order to say it is dropped. */
 const declarations = css.replace(/\/\*[\s\S]*?\*\//g, "");
@@ -54,5 +56,36 @@ describe("dark mode", () => {
     expect(variant).toContain(".dark");
     expect(variant).toContain("prefers-color-scheme: dark");
     expect(variant).toContain(":root:not(.light)");
+  });
+});
+
+describe("a button's colour states its effect on stored data (ADR-0034)", () => {
+  /* Hue is valence, fill versus border is persistence. Asserted here so the
+     table in DESIGN.md cannot drift from the primitive. */
+  const table = {
+    write: "bg-primary text-primary-foreground",
+    open: "border border-primary bg-card text-primary",
+    destroy: "bg-destructive text-destructive-foreground",
+    discard: "border border-destructive bg-card text-destructive",
+    neutral: "border border-input bg-card text-muted-foreground",
+    bare: "border border-transparent text-muted-foreground",
+    inline: "border border-transparent text-foreground",
+  } as const;
+
+  for (const [variant, expected] of Object.entries(table)) {
+    it(`resolves \`${variant}\` to its documented treatment`, () => {
+      expect(buttonVariants({ variant: variant as keyof typeof table, size: "sm" })).toContain(expected);
+    });
+  }
+
+  it("commits with a fill and leads with a border, in both hues", () => {
+    expect(table.write).not.toContain("border");
+    expect(table.destroy).not.toContain("border");
+    expect(table.open).toContain("bg-card");
+    expect(table.discard).toContain("bg-card");
+  });
+
+  it("defaults to neutral, so an unclassified button never claims to write", () => {
+    expect(buttonVariants({ size: "sm" })).toContain(table.neutral);
   });
 });

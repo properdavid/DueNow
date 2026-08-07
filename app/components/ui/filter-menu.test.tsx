@@ -24,12 +24,12 @@ describe("a Filter Bar menu", () => {
     expect(markup).toContain("Topic");
   });
 
-  test("marks itself as active so a narrowed filter is legible in the bar", () => {
-    const inactive = renderToStaticMarkup(<FilterMenu active={false} label="Type: Any">x</FilterMenu>);
-    const active = renderToStaticMarkup(<FilterMenu active label="Type: Task">x</FilterMenu>);
+  test("tints itself when Set, so a chip carrying a value is legible in the bar", () => {
+    const unset = renderToStaticMarkup(<FilterMenu active={false} label="Type: Any">x</FilterMenu>);
+    const set = renderToStaticMarkup(<FilterMenu active label="Type: Task">x</FilterMenu>);
 
-    expect(inactive).toContain("border-input");
-    expect(active).toContain("border-primary");
+    expect(unset).not.toContain("bg-accent");
+    expect(set).toContain("bg-accent");
   });
 });
 

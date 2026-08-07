@@ -100,10 +100,10 @@ export function ReparentDialog({
           ) : null}
           {error ? <p className="text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
           <DialogFooter>
-            <Button type="button" variant="outline" disabled={pending} onClick={() => onOpenChange(false)}>
+            <Button type="button" variant="discard" disabled={pending} onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={pending || selectedParent === null}>
+            <Button type="submit" variant="write" disabled={pending || selectedParent === null}>
               {pending ? "Reparenting" : reopenNotice.length > 0 ? "Reopen and reparent" : "Reparent"}
             </Button>
           </DialogFooter>

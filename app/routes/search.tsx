@@ -109,7 +109,7 @@ function KeywordBox({ params }: { params: URLSearchParams }) {
     >
       <PreservedInputs params={params} except={["q"]} />
       <Input aria-label="Keyword" name="q" defaultValue={params.get("q") ?? ""} placeholder="Keyword" />
-      <Button type="submit" variant="outline">Search</Button>
+      <Button type="submit" variant="neutral">Search</Button>
     </Form>
   );
 }

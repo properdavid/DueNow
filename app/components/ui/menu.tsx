@@ -20,8 +20,16 @@ export function Menu(props: React.ComponentProps<typeof DropdownMenu.Root>) {
   return <DropdownMenu.Root {...props} />;
 }
 
-export function MenuTrigger({ className, ...props }: React.ComponentProps<typeof DropdownMenu.Trigger>) {
-  return <DropdownMenu.Trigger className={cn(menuTriggerVariants(), className)} {...props} />;
+/* With `asChild` the child owns its own appearance — imposing the trigger's
+   colours here silently overrode whatever variant the call site asked for. */
+export function MenuTrigger({ className, asChild, ...props }: React.ComponentProps<typeof DropdownMenu.Trigger>) {
+  return (
+    <DropdownMenu.Trigger
+      asChild={asChild}
+      className={asChild ? className : cn(menuTriggerVariants(), className)}
+      {...props}
+    />
+  );
 }
 
 export function MenuContent({ className, align = "end", ...props }: React.ComponentProps<typeof DropdownMenu.Content>) {

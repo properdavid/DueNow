@@ -6,6 +6,7 @@ import type { Route } from "./+types/due";
 import { getDatabase, requireUser } from "~/auth/session.server";
 import { EmptyCard } from "~/components/shell/empty-card";
 import { SplitRoute } from "~/components/shell/split-route";
+import { Button } from "~/components/ui/button";
 import { Avatar, StatusMark } from "~/components/ui/work-item-marks";
 import { loadDueRadar, type DueRadarCard, type DueRadarScope, type DueRadarUrgency } from "~/domain/work-items/work-items.server";
 
@@ -82,18 +83,18 @@ function FilterSentence({ scope, setScope }: { scope: DueRadarScope; setScope: (
     return (
       <div className="flex w-full items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 text-xs text-card-foreground">
         <span>Showing everyone</span>
-        <button className="font-medium text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="button" onClick={() => setScope("mine")}>
+        <Button className="rounded-full" size="sm" type="button" variant="open" onClick={() => setScope("mine")}>
           Show your work
-        </button>
+        </Button>
       </div>
     );
   }
   return (
     <div className="flex w-full items-center justify-between gap-4 rounded-lg border border-border bg-card p-4 text-xs text-card-foreground">
       <span>Showing your work and unassigned</span>
-      <button className="font-medium text-primary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" type="button" onClick={() => setScope("everyone")}>
+      <Button className="rounded-full" size="sm" type="button" variant="open" onClick={() => setScope("everyone")}>
         Show everyone
-      </button>
+      </Button>
     </div>
   );
 }

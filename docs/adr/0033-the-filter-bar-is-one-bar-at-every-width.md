@@ -22,4 +22,4 @@ ADR-0021's reason for the batch was that "on a phone the results are hidden behi
 
 **The `Filters` button's missing bold is moot.** ADR-0021 specified it as "bold, in the primary colour" and the code only ever shipped the colour; the button ceases to exist rather than getting fixed.
 
-**The purple-default button treatment is not part of this.** Making `outline` buttons primary-bordered app-wide, with fill reserved for "something is selected behind this", was raised alongside and deliberately split out: it lands on every screen and needs judging on its own.
+**The purple-default button treatment is not part of this.** Making `outline` buttons primary-bordered app-wide, with fill reserved for "something is selected behind this", was raised alongside and deliberately split out: it lands on every screen and needs judging on its own. It was settled by ADR-0034, which took the border but gave fill a different meaning — a fill commits to stored data, and a Chip carrying a value is Set and tinted.

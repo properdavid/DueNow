@@ -55,7 +55,8 @@ export function FilterMenu({
       <summary
         className={cn(
           "list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-          active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground",
+          "border-primary bg-card text-primary",
+          active ? "bg-accent text-accent-foreground" : null,
         )}
       >
         {label}
