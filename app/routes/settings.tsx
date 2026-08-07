@@ -27,6 +27,10 @@ const themeOptions = [
   { value: "dark", label: "Dark" },
 ] as const;
 
+/* Settings holds nothing the create dialog would land in, so it declares the FAB
+   away rather than the shell knowing this route by name (ADR-0022). */
+export const handle = { fab: "none" };
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   await requireUser(request, context);
   return loadSettings(getDatabase(context));

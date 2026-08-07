@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 
 import { ErrorBoundary, isUnreachableRouteError, links, themeClassNameFor, themeColorMetaFor } from "~/root";
 import { createRouteTestHarness } from "~/test/route-harness";
+import * as settingsRoute from "./settings";
 import * as shellRoute from "./shell";
 
 describe("navigation shell route seam", () => {
@@ -68,6 +69,34 @@ describe("navigation shell route seam", () => {
     expect(markup).toContain('aria-label="New Work Item"');
     expect(markup).toContain("lg:fixed");
     expect(markup).toContain("env(safe-area-inset-bottom)");
+  });
+
+  test("a route that declares fab: none loses the compact create button but keeps the sidebar one", () => {
+    const Stub = createRoutesStub([
+      {
+        path: "/",
+        Component: () =>
+          shellRoute.default({
+            loaderData: {
+              user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" },
+              members: [{ id: 1, email: "dana@example.com", name: "Dana", theme: "system" }],
+              labels: [],
+              householdTimezone: { timezone: "UTC" },
+            },
+            params: {},
+            matches: [],
+          } as unknown as Parameters<typeof shellRoute.default>[0]),
+        children: [
+          { path: "due", Component: () => <main>Due placeholder</main> },
+          { path: "settings", Component: () => <main>Settings placeholder</main>, handle: settingsRoute.handle },
+        ],
+      },
+    ]);
+
+    expect(settingsRoute.handle).toEqual({ fab: "none" });
+    expect(renderToStaticMarkup(<Stub initialEntries={["/settings"]} />)).not.toContain('aria-label="New Work Item"');
+    expect(renderToStaticMarkup(<Stub initialEntries={["/due"]} />)).toContain('aria-label="New Work Item"');
+    expect(renderToStaticMarkup(<Stub initialEntries={["/settings"]} />)).toContain("New Work Item");
   });
 
   test("root theme helpers render explicit theme class and server theme-color", () => {
