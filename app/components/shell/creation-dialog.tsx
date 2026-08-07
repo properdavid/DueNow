@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "~/components/ui/dialog";
+import { Fieldset, FieldsetLegend } from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Select } from "~/components/ui/select";
 import { Textarea } from "~/components/ui/textarea";
@@ -128,8 +129,8 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
           <createFetcher.Form method="post" action="/api/work-items/create" className="grid gap-4">
             <input type="hidden" name="type" value={type} />
             <input type="hidden" name="parentId" value={isTopic ? "" : selectedParentId ?? ""} />
-            <fieldset className="grid gap-2">
-              <legend className="text-xs font-medium">Type</legend>
+            <Fieldset>
+              <FieldsetLegend>Type</FieldsetLegend>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Type">
                 {workItemTypes.map((candidateType) => (
                   <Button
@@ -145,7 +146,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
                   </Button>
                 ))}
               </div>
-            </fieldset>
+            </Fieldset>
 
             <label className="grid gap-2 text-xs font-medium">
               Summary
@@ -201,8 +202,8 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
             </div>
 
             {labels.length > 0 ? (
-              <fieldset className="grid gap-2">
-                <legend className="text-xs font-medium">Labels</legend>
+              <Fieldset>
+                <FieldsetLegend>Labels</FieldsetLegend>
                 <div className="flex flex-wrap gap-2">
                   {labels.map((label) => (
                     <label key={label.id} className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
@@ -211,7 +212,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
                     </label>
                   ))}
                 </div>
-              </fieldset>
+              </Fieldset>
             ) : null}
 
             {createError ? <p className="text-xs text-destructive">{controlErrorMessage(createError)}</p> : null}

@@ -492,6 +492,24 @@ border, with the same focus ring as everything else. The Detail View's free-text
 fields commit on an explicit ✓ rather than on blur, so a textarea is a control
 that holds uncommitted text by design -- never auto-save it.
 
+### Field Label
+
+A control's own caption, in either of HTML's two spellings: a `<label>` wrapping
+a single control, or a `<legend>` naming a group of them. Both are `text-xs
+font-medium` and both sit **8px above** what they name -- one rhythm, so a
+grouped set of controls reads at the same density as a single field.
+
+The two spellings do not reach that 8px the same way. A `<label className="grid
+gap-2">` puts its caption in the grid, so the gap does the work. A **rendered
+`<legend>` is excluded from its fieldset's formatting context** -- it is not a
+grid item, so `gap` never reaches it and a `grid gap-2` fieldset silently draws
+its legend flush against the first control. Use
+[app/components/ui/fieldset.tsx](app/components/ui/fieldset.tsx) rather than a
+bare `<fieldset>` / `<legend>` pair: `Fieldset` carries the `grid gap-2` and
+`FieldsetLegend` carries the compensating `mb-2`. Native `<fieldset>` semantics
+are kept -- the `group` role and its accessible name are worth more than the
+layout convenience of swapping in a `<div role="group">`.
+
 ### Badge
 
 [app/components/ui/badge.tsx](app/components/ui/badge.tsx), in two treatments

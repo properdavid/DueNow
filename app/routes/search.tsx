@@ -8,6 +8,7 @@ import { EmptyCard } from "~/components/shell/empty-card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
+import { Fieldset, FieldsetLegend } from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { Select } from "~/components/ui/select";
 import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
@@ -315,8 +316,8 @@ function CompactSort({ params }: { params: URLSearchParams }) {
 function CompactSelect({ name, label, options, params }: { name: string; label: string; options: { value: string; label: string }[]; params: URLSearchParams }) {
   const selected = new Set(selectedValues(params, name));
   return (
-    <fieldset className="grid gap-2">
-      <legend className="text-xs font-medium">{label}</legend>
+    <Fieldset>
+      <FieldsetLegend>{label}</FieldsetLegend>
       <div className="max-h-44 space-y-1 overflow-auto rounded-lg border border-border p-2">
         {options.length === 0 ? <p className="px-2 py-1 text-xs text-muted-foreground">Any</p> : null}
         {options.map((option) => (
@@ -326,7 +327,7 @@ function CompactSelect({ name, label, options, params }: { name: string; label: 
           </label>
         ))}
       </div>
-    </fieldset>
+    </Fieldset>
   );
 }
 
@@ -369,14 +370,14 @@ function useParentCandidateFetchers(query: string) {
 
 function CompactDue({ params }: { params: URLSearchParams }) {
   return (
-    <fieldset className="grid gap-2">
-      <legend className="text-xs font-medium">Due Date</legend>
+    <Fieldset>
+      <FieldsetLegend>Due Date</FieldsetLegend>
       <Select name="due" defaultValue={params.get("due") ?? "any"}>
         {Object.entries(dueLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
       </Select>
       <Input type="date" name="from" aria-label="Due Date from" defaultValue={params.get("from") ?? ""} />
       <Input type="date" name="to" aria-label="Due Date to" defaultValue={params.get("to") ?? ""} />
-    </fieldset>
+    </Fieldset>
   );
 }
 

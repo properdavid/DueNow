@@ -1,4 +1,5 @@
 import { Button } from "~/components/ui/button";
+import { Fieldset, FieldsetLegend } from "~/components/ui/fieldset";
 import { Input } from "~/components/ui/input";
 import { StatusMark } from "~/components/ui/work-item-marks";
 import type { ParentCandidate } from "~/domain/work-items/work-items.server";
@@ -21,8 +22,8 @@ export function ParentPicker({
   setSelectedParentId: (value: number) => void;
 }) {
   return (
-    <fieldset className="grid gap-2">
-      <legend className="text-xs font-medium">Parent</legend>
+    <Fieldset>
+      <FieldsetLegend>Parent</FieldsetLegend>
       <Input value={parentQuery} onChange={(event) => setParentQuery(event.currentTarget.value)} placeholder="Filter parents by Summary" aria-label="Filter parents by Summary" />
       {selectedParentId !== null && prefilledParentSummary ? (
         <p className="text-xs text-muted-foreground">Pre-filled Parent: {prefilledParentSummary}</p>
@@ -46,6 +47,6 @@ export function ParentPicker({
           </Button>
         ))}
       </div>
-    </fieldset>
+    </Fieldset>
   );
 }
