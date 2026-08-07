@@ -169,7 +169,7 @@ describe("Settings route seam", () => {
 
     const markup = renderToStaticMarkup(<Stub initialEntries={["/settings"]} />);
 
-    expect(markup).toContain("You");
+    expect(markup).toContain("User");
     expect(markup).toContain("Theme");
     expect(markup).toContain("Sign out");
     expect(markup).toContain("Household");
@@ -178,7 +178,7 @@ describe("Settings route seam", () => {
     expect(markup).toContain("lee@example.com");
     expect(markup).toContain("House");
     expect(markup).toContain("2 Work Items");
-    expect(markup).toContain("Deleting detaches this Label everywhere.");
+    expect(markup).toContain("Deleting removes this Label everywhere.");
     expect(markup).toContain("maxLength=\"30\"");
     expect(markup).not.toContain("Default Assignee");
     expect(markup).not.toContain("allowlist");
