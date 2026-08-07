@@ -25,3 +25,10 @@ describe("the dialog panel on a short viewport", () => {
     expect(panel).toContain("overscroll-y-contain");
   });
 });
+
+describe("the dialog panel when it opens", () => {
+  test("takes focus onto itself instead of its first control", () => {
+    expect(panel).toContain("onOpenAutoFocus");
+    expect(panel).toContain("event.preventDefault()");
+  });
+});

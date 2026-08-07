@@ -40,6 +40,13 @@ function DialogContent({
           "rounded-lg border border-border bg-popover text-popover-foreground shadow-lg",
           className,
         )}
+        /* Focus the panel itself rather than its first control: iOS Safari opens a
+           native select's picker the moment it takes focus, so a dialog that opens
+           onto a select appears to have been tapped twice. */
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          (event.currentTarget as HTMLElement | null)?.focus();
+        }}
         {...props}
       >
         {/* Setting overflow-y alone computes overflow-x to auto, which iOS bounces
