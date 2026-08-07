@@ -73,7 +73,17 @@ describe("Search tab rendering seam", () => {
     expect(markup).toContain("Prime cabinets");
     expect(markup).toContain("Aug 3");
     expect(markup).toContain("#3");
-    expect(markup).toContain("Filters");
+    expect(markup).toContain("Sort: Due \u2193");
+    expect(markup).toContain("Clear");
+  });
+
+  test("offers Clear only once a filter is on, and never reaches the Sort Order", () => {
+    const unfiltered = renderSearch({ rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] }, "/search?q=paint&sort=due&dir=desc");
+    const filtered = renderSearch({ rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] }, "/search?q=paint&type=task&sort=due&dir=desc");
+
+    expect(unfiltered).not.toContain(">Clear<");
+    expect(filtered).toContain(">Clear<");
+    expect(filtered).toContain("/search?q=paint&amp;sort=due&amp;dir=desc");
   });
 
   test("uses distinct empty copy for First Run and missed Keyword states", () => {
@@ -95,21 +105,7 @@ describe("Due Date filter seam", () => {
     ["before", true, false],
     ["after", true, false],
     ["between", true, true],
-  ])("the compact %s mode reveals only the date inputs the shared rule allows", (due, expectedFrom, expectedTo) => {
-    const markup = renderToStaticMarkup(<searchRoute.CompactDue params={new URLSearchParams(`due=${due}`)} />);
-
-    expect(markup.includes('name="from"')).toBe(expectedFrom);
-    expect(markup.includes('name="to"')).toBe(expectedTo);
-  });
-
-  test.each([
-    ["any", false, false],
-    ["overdue", false, false],
-    ["none", false, false],
-    ["before", true, false],
-    ["after", true, false],
-    ["between", true, true],
-  ])("the wide %s mode reveals the same date inputs as the compact surface", (due, expectedFrom, expectedTo) => {
+  ])("the %s mode reveals only the date inputs the shared rule allows", (due, expectedFrom, expectedTo) => {
     const markup = renderSearch(
       { rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] },
       `/search?due=${due}`,
@@ -128,7 +124,7 @@ describe("Due Date filter seam", () => {
     ["due=between&to=2026-08-06", "Due Date: Between"],
     ["due=before&from=2026-08-04", "Due Date: Before Aug 4"],
     ["due=between&from=2026-08-04&to=2026-08-06", "Due Date: Between Aug 4 and Aug 6"],
-  ])("the wide summary for %s names only the dates that are set", (query, expected) => {
+  ])("the summary for %s names only the dates that are set", (query, expected) => {
     const markup = renderSearch(
       { rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] },
       `/search?${query}`,

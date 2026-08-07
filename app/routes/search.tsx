@@ -1,5 +1,5 @@
 import { Search as SearchIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Form, Link, Outlet, useFetcher, useLocation, useMatches, useNavigate } from "react-router";
 
 import type { Route } from "./+types/search";
@@ -7,11 +7,8 @@ import { getDatabase, requireUser } from "~/auth/session.server";
 import { EmptyCard } from "~/components/shell/empty-card";
 import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
-import { Fieldset, FieldsetLegend } from "~/components/ui/fieldset";
 import { FilterMenu } from "~/components/ui/filter-menu";
 import { Input } from "~/components/ui/input";
-import { Select } from "~/components/ui/select";
 import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
 import { ParentPicker } from "~/components/work-items/parent-picker";
 import type { DatabaseClient } from "~/db/client";
@@ -72,14 +69,14 @@ export default function Search({ loaderData }: Route.ComponentProps) {
             <h1 className="text-xl font-semibold">Search</h1>
           </div>
           <KeywordBox params={params} />
-          <div className="hidden lg:block">
-            <FilterBar labels={shellData.labels} members={shellData.members} selectedParents={loaderData.selectedParents} params={params} />
-          </div>
-          <CompactFilters labels={shellData.labels} members={shellData.members} params={params} />
+          <FilterBar labels={shellData.labels} members={shellData.members} selectedParents={loaderData.selectedParents} params={params} />
         </header>
 
         <section className="mt-6 space-y-3" aria-label="Search results">
-          <p className="text-xs font-medium text-muted-foreground">{resultCountText(loaderData.resultCount, loaderData.rows.length, loaderData.limit)}</p>
+          <div className="relative flex items-center justify-between gap-2">
+            <p className="text-xs font-medium text-muted-foreground">{resultCountText(loaderData.resultCount, loaderData.rows.length, loaderData.limit)}</p>
+            <div className="lg:hidden"><SortMenu params={params} /></div>
+          </div>
           {loaderData.rows.length === 0 ? (
             <div className="flex min-h-96 items-center justify-center">
               <EmptyCard
@@ -112,7 +109,7 @@ function KeywordBox({ params }: { params: URLSearchParams }) {
     >
       <PreservedInputs params={params} except={["q"]} />
       <Input aria-label="Keyword" name="q" defaultValue={params.get("q") ?? ""} placeholder="Keyword" />
-      <Button type="submit" variant="outline">Search</Button>
+      <Button type="submit" variant="neutral">Search</Button>
     </Form>
   );
 }
@@ -130,15 +127,32 @@ function PreservedInputs({ params, except }: { params: URLSearchParams; except: 
 
 function FilterBar({ labels, members, selectedParents, params }: { labels: { id: number; name: string }[]; members: { id: number; name: string; email: string }[]; selectedParents: SelectedParent[]; params: URLSearchParams }) {
   return (
-    <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-card p-3 text-card-foreground">
+    <div className="relative flex flex-wrap gap-2 rounded-lg border border-border bg-card p-3 text-card-foreground">
       <MultiFilter label="Type" param="type" options={Object.entries(typeLabels).map(([value, label]) => ({ value, label }))} params={params} />
       <MultiFilter label="Status" param="status" options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))} params={params} />
       <MultiFilter label="Assignee" param="who" options={[{ value: "unassigned", label: "Unassigned" }, ...members.map((member) => ({ value: String(member.id), label: member.name }))]} params={params} />
       <ParentFilter selectedParents={selectedParents} params={params} />
       <DueFilter params={params} />
       <MultiFilter label="Labels" param="labels" options={labels.map((label) => ({ value: String(label.id), label: label.name }))} params={params} />
+      <ClearFilters params={params} />
     </div>
   );
+}
+
+function ClearFilters({ params }: { params: URLSearchParams }) {
+  if (activeFilterCount(params) === 0) return null;
+  return (
+    <Link
+      className="rounded-md border border-destructive bg-card px-3 py-2 text-xs font-medium text-destructive focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      to={searchHref(params, { type: [], status: [], who: [], parent: [], due: [], from: [], to: [], labels: [] })}
+    >
+      Clear
+    </Link>
+  );
+}
+
+function OptionCheck({ checked }: { checked: boolean }) {
+  return <span className="inline-block size-4 rounded-sm border border-border bg-card text-center text-[10px] font-bold uppercase tracking-wide">{checked ? "\u2713" : ""}</span>;
 }
 
 function MultiFilter({ label, param, options, params }: { label: string; param: string; options: { value: string; label: string }[]; params: URLSearchParams }) {
@@ -147,7 +161,7 @@ function MultiFilter({ label, param, options, params }: { label: string; param: 
   return (
     <FilterMenu
       active={active}
-      panelClassName="min-w-56 space-y-1 p-1"
+      panelClassName="space-y-1 p-1 lg:min-w-56"
       label={<>{label}: {active ? selected.map((value) => options.find((option) => option.value === value)?.label ?? value).join(", ") : "Any"}</>}
     >
       <Link className="block rounded-md px-3 py-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: [] })}>
@@ -157,7 +171,7 @@ function MultiFilter({ label, param, options, params }: { label: string; param: 
         const values = toggleValue(selected, option.value);
         return (
           <Link key={option.value} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: values })}>
-            <span className="inline-block size-4 rounded-sm border border-border bg-card text-center text-[10px] font-bold uppercase tracking-wide">{selected.includes(option.value) ? "✓" : ""}</span>
+            <OptionCheck checked={selected.includes(option.value)} />
             {option.label}
           </Link>
         );
@@ -177,7 +191,7 @@ function ParentFilter({ selectedParents, params }: { selectedParents: SelectedPa
   return (
     <FilterMenu
       active={active}
-      panelClassName="w-80 p-3"
+      panelClassName="p-3 lg:w-80"
       onOpen={parentFetchers.load}
       label={<>Parent: {active ? selectedParents.map((parent) => parent.summary).join(", ") : "Any"}</>}
     >
@@ -211,7 +225,7 @@ function DueFilter({ params }: { params: URLSearchParams }) {
   const due = params.get("due") ?? "any";
   const active = due !== "any";
   return (
-    <FilterMenu active={active} panelClassName="min-w-72 space-y-2 p-3" label={<>Due Date: {dueSummary(params)}</>}>
+    <FilterMenu active={active} panelClassName="space-y-2 p-3 lg:min-w-72" label={<>Due Date: {dueSummary(params)}</>}>
       {dueModes.filter((mode) => dueDateFields(mode).length === 0).map((mode) => (
         <Link key={mode} className="block rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, mode === "any" ? { due: [], from: [], to: [] } : { due: [mode], from: [], to: [] })}>
           {dueLabels[mode]}
@@ -249,94 +263,28 @@ function DueDateChoice({ params, mode, navigate }: { params: URLSearchParams; mo
   );
 }
 
-function CompactFilters({ labels, members, params }: { labels: { id: number; name: string }[]; members: { id: number; name: string; email: string }[]; params: URLSearchParams }) {
-  const active = activeFilterCount(params) > 0;
-  const navigate = useNavigate();
+/** Compact Layout has no column headers, so Sort Order is chosen here (ADR-0033). */
+function SortMenu({ params }: { params: URLSearchParams }) {
+  const sort = (params.get("sort") ?? "id") as SearchSort;
+  const direction = (params.get("dir") ?? "asc") as SearchDirection;
+  const optionClass = "flex items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
   return (
-    <div className="lg:hidden">
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button className={active ? "text-primary" : undefined} type="button" variant="outline">Filters</Button>
-        </DialogTrigger>
-        <DialogContent className="bottom-0 top-auto max-h-[85vh] translate-y-0 overflow-auto rounded-b-none">
-          <DialogHeader>
-            <DialogTitle>Filters</DialogTitle>
-            <DialogDescription>Choose filters, then apply them together.</DialogDescription>
-          </DialogHeader>
-          <Form
-            action="/search"
-            method="get"
-            className="space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              navigate(searchPathFromForm(event.currentTarget));
-            }}
-          >
-            <CompactSort params={params} />
-            <CompactSelect name="type" label="Type" options={Object.entries(typeLabels).map(([value, label]) => ({ value, label }))} params={params} />
-            <CompactSelect name="status" label="Status" options={Object.entries(statusLabels).map(([value, label]) => ({ value, label }))} params={params} />
-            <CompactSelect name="who" label="Assignee" options={[{ value: "unassigned", label: "Unassigned" }, ...members.map((member) => ({ value: String(member.id), label: member.name }))]} params={params} />
-            <CompactParentSelect params={params} />
-            <CompactDue params={params} />
-            <CompactSelect name="labels" label="Labels" options={labels.map((label) => ({ value: String(label.id), label: label.name }))} params={params} />
-            <DialogFooter>
-              <Button type="submit">Apply</Button>
-            </DialogFooter>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
-
-function CompactSort({ params }: { params: URLSearchParams }) {
-  return (
-    <div className="grid gap-2">
-      <label className="text-xs font-medium" htmlFor="compact-sort">Sort</label>
-      <div className="grid grid-cols-2 gap-2">
-        <Select id="compact-sort" name="sort" defaultValue={params.get("sort") ?? "id"}>
-          {tableSorts.map((value) => <option key={value} value={value}>{sortLabels[value]}</option>)}
-        </Select>
-        <Select name="dir" aria-label="Sort direction" defaultValue={params.get("dir") ?? "asc"}>
-          <option value="asc">Ascending</option>
-          <option value="desc">Descending</option>
-        </Select>
-      </div>
-      <PreservedInputs params={params} except={["sort", "dir", "type", "status", "who", "parent", "due", "from", "to", "labels"]} />
-    </div>
-  );
-}
-
-function CompactSelect({ name, label, options, params }: { name: string; label: string; options: { value: string; label: string }[]; params: URLSearchParams }) {
-  const selected = new Set(selectedValues(params, name));
-  return (
-    <Fieldset>
-      <FieldsetLegend>{label}</FieldsetLegend>
-      <div className="max-h-44 space-y-1 overflow-auto rounded-lg border border-border p-2">
-        {options.length === 0 ? <p className="px-2 py-1 text-xs text-muted-foreground">Any</p> : null}
-        {options.map((option) => (
-          <label key={option.value} className="flex items-center gap-2 rounded-md px-2 py-1 text-xs">
-            <input className="size-4 accent-primary" type="checkbox" name={name} value={option.value} defaultChecked={selected.has(option.value)} />
-            {option.label}
-          </label>
+    <FilterMenu active={sort !== "id" || direction !== "asc"} panelClassName="space-y-1 p-1" label={<>Sort: {sortLabels[sort]} {direction === "asc" ? "↑" : "↓"}</>}>
+      {tableSorts.map((value) => (
+        <Link key={value} className={optionClass} to={searchHref(params, value === "id" ? { sort: [], dir: [] } : { sort: [value], dir: [direction] })}>
+          <OptionCheck checked={sort === value} />
+          {sortLabels[value]}
+        </Link>
+      ))}
+      <div className="mt-1 space-y-1 border-t border-border pt-1">
+        {(["asc", "desc"] as const).map((value) => (
+          <Link key={value} className={optionClass} to={searchHref(params, { sort: sort === "id" ? [] : [sort], dir: value === "asc" ? [] : [value] })}>
+            <OptionCheck checked={direction === value} />
+            {value === "asc" ? "Ascending ↑" : "Descending ↓"}
+          </Link>
         ))}
       </div>
-    </Fieldset>
-  );
-}
-
-function CompactParentSelect({ params }: { params: URLSearchParams }) {
-  const parentFetchers = useParentCandidateFetchers("");
-  useEffect(() => {
-    parentFetchers.load();
-  }, []);
-  return (
-    <CompactSelect
-      name="parent"
-      label="Parent"
-      options={parentFetchers.candidates.map((candidate) => ({ value: String(candidate.id), label: candidate.lineage }))}
-      params={params}
-    />
+    </FilterMenu>
   );
 }
 
@@ -360,21 +308,6 @@ function useParentCandidateFetchers(query: string) {
       });
     },
   };
-}
-
-export function CompactDue({ params }: { params: URLSearchParams }) {
-  const [mode, setMode] = useState(dueModeFromValue(params.get("due")));
-  return (
-    <Fieldset>
-      <FieldsetLegend>Due Date</FieldsetLegend>
-      <Select name="due" value={mode} onChange={(event) => setMode(dueModeFromValue(event.currentTarget.value))}>
-        {dueModes.map((value) => <option key={value} value={value}>{dueLabels[value]}</option>)}
-      </Select>
-      {dueDateFields(mode).map((field) => (
-        <Input key={field} type="date" name={field} aria-label={`Due Date ${field}`} defaultValue={params.get(field) ?? ""} />
-      ))}
-    </Fieldset>
-  );
 }
 
 function Results({ rows, params, currentUserId }: { rows: SearchWorkItemRow[]; params: URLSearchParams; currentUserId: number }) {

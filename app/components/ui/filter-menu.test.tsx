@@ -24,12 +24,12 @@ describe("a Filter Bar menu", () => {
     expect(markup).toContain("Topic");
   });
 
-  test("marks itself as active so a narrowed filter is legible in the bar", () => {
-    const inactive = renderToStaticMarkup(<FilterMenu active={false} label="Type: Any">x</FilterMenu>);
-    const active = renderToStaticMarkup(<FilterMenu active label="Type: Task">x</FilterMenu>);
+  test("tints itself when Set, so a chip carrying a value is legible in the bar", () => {
+    const unset = renderToStaticMarkup(<FilterMenu active={false} label="Type: Any">x</FilterMenu>);
+    const set = renderToStaticMarkup(<FilterMenu active label="Type: Task">x</FilterMenu>);
 
-    expect(inactive).toContain("border-input");
-    expect(active).toContain("border-primary");
+    expect(unset).not.toContain("bg-accent");
+    expect(set).toContain("bg-accent");
   });
 });
 
@@ -49,8 +49,10 @@ describe("dismissing a Filter Bar menu", () => {
     expect(source).toContain('removeEventListener("keydown"');
   });
 
-  test("is the only way the Search tab builds a filter menu", () => {
+  test("is the only way the Search tab builds a filter menu, at every width", () => {
     expect(routeSource).not.toContain("<details");
     expect(routeSource).toContain("<FilterMenu");
+    // ADR-0033: one bar, so no compact sheet and nothing to apply.
+    expect(routeSource).not.toContain("<Dialog");
   });
 });

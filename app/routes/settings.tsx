@@ -53,7 +53,7 @@ export function SettingsPage({ loaderData, shellData }: { loaderData: Route.Comp
           <ThemeForm theme={shellData.user.theme} />
           <div className="border-t border-border pt-4">
             <Form action="/auth/logout" method="post">
-              <Button type="submit" variant="outline">
+              <Button type="submit" variant="discard">
                 Sign out
               </Button>
             </Form>
@@ -99,7 +99,7 @@ function ThemeForm({ theme }: { theme: "system" | "light" | "dark" }) {
             </option>
           ))}
         </Select>
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="write">
           {fetcher.state === "idle" ? "Save" : "Saving"}
         </Button>
       </div>
@@ -146,7 +146,7 @@ function TimezoneForm({ timezone, timezones }: { timezone: string; timezones: st
             </option>
           ))}
         </Select>
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="write">
           {fetcher.state === "idle" ? "Save" : "Saving"}
         </Button>
       </div>
@@ -172,7 +172,7 @@ function LabelManagement({ labels }: { labels: SettingsLabel[] }) {
           </label>
           <Input id="new-label-name" name="name" maxLength={30} placeholder="Groceries" />
         </div>
-        <Button type="submit" variant="secondary">
+        <Button type="submit" variant="write">
           {createFetcher.state === "idle" ? "Create Label" : "Creating"}
         </Button>
       </createFetcher.Form>
@@ -205,7 +205,7 @@ function LabelRow({ label }: { label: SettingsLabel }) {
             </label>
             <Input id={`label-${label.id}-name`} name="name" defaultValue={label.name} maxLength={30} />
           </div>
-          <Button type="submit" variant="outline">
+          <Button type="submit" variant="write">
             {renameFetcher.state === "idle" ? "Rename" : "Renaming"}
           </Button>
         </renameFetcher.Form>
@@ -216,7 +216,7 @@ function LabelRow({ label }: { label: SettingsLabel }) {
         {renameFetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(renameFetcher.data.error.message)}</p> : null}
       </div>
       <deleteFetcher.Form action={`/api/labels/${label.id}/delete`} method="post">
-        <Button type="submit" variant="destructive">
+        <Button type="submit" variant="destroy">
           {deleteFetcher.state === "idle" ? "Delete" : "Deleting"}
         </Button>
       </deleteFetcher.Form>

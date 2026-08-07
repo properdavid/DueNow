@@ -111,22 +111,32 @@ touch:
   # Density and touch comfort are different axes (ADR-0014).
   coarse-pointer-minimum: 44px # @media (any-pointer: coarse), inside the primitives only
 components:
-  button-default: # primary action -- one per view
+  button-write: # commits to stored data
     backgroundColor: "{colors.primary}"
     textColor: "{colors.primary-foreground}"
     rounded: "{rounded.DEFAULT}"
-  button-secondary:
-    backgroundColor: "{colors.secondary}"
-    textColor: "{colors.secondary-foreground}"
-    rounded: "{rounded.DEFAULT}"
-  button-outline:
+  button-open: # leads toward a write
     backgroundColor: "{colors.card}"
-    borderColor: "{colors.input}"
-    textColor: "{colors.foreground}"
+    borderColor: "{colors.primary}"
+    textColor: "{colors.primary}"
     rounded: "{rounded.DEFAULT}"
-  button-destructive:
+  button-destroy: # deletes stored data
     backgroundColor: "{colors.destructive}"
     textColor: "{colors.destructive-foreground}"
+    rounded: "{rounded.DEFAULT}"
+  button-discard: # throws away user-produced content or a selection
+    backgroundColor: "{colors.card}"
+    borderColor: "{colors.destructive}"
+    textColor: "{colors.destructive}"
+    rounded: "{rounded.DEFAULT}"
+  button-neutral: # neither, standalone
+    backgroundColor: "{colors.card}"
+    borderColor: "{colors.input}"
+    textColor: "{colors.muted-foreground}"
+    rounded: "{rounded.DEFAULT}"
+  button-bare: # neither, inline or icon
+    borderColor: transparent
+    textColor: "{colors.muted-foreground}"
     rounded: "{rounded.DEFAULT}"
   badge-status: # uppercase micro-badge -- statuses are treatment, not only hue
     backgroundColor: "{colors.muted}"
@@ -468,24 +478,63 @@ Conventions adopted verbatim from integral-grc:
 ### Button
 
 [app/components/ui/button.tsx](app/components/ui/button.tsx).
-`variant="default"` is backed by the `primary` token and **is** the
-primary-action style. Faking one with a raw colour utility is banned.
+**A button's colour states its effect on stored data** (ADR-0034). Hue is
+valence -- indigo constructive, red destructive, grey neither. Fill versus border
+is persistence -- **a fill commits, a border leads toward**. Faking either with a
+raw colour utility is banned.
 
-| Variant       | Role                                                                  |
-| ------------- | --------------------------------------------------------------------- |
-| `default`     | Primary action -- **one per view** (the single most important action) |
-| `secondary`   | Secondary action                                                      |
-| `outline`     | Bordered, low/medium emphasis                                         |
-| `ghost`       | Lowest emphasis, toolbar and inline actions                           |
-| `destructive` | Destructive action (backed by `destructive`)                          |
+| Variant   | What the click does                                          |
+| --------- | ------------------------------------------------------------ |
+| `write`   | Posts to a mutation route -- creates or updates stored data   |
+| `open`    | Opens a dialog, picker or menu that leads to a write          |
+| `destroy` | Deletes stored data                                           |
+| `discard` | Throws away user-produced content or an accumulated selection |
+| `neutral` | Neither -- standalone (Search, Retry, Collapse all)           |
+| `bare`    | Neither -- inline or icon (chevrons, row menus, `show`)       |
+| `inline`  | A click target **on content**, which takes no bucket          |
+
+The mechanical test for `write` is ADR-0022's verb-shaped resource routes: a
+button either posts to an `api.*` action or it does not. `neutral` is the
+default, so an unclassified button never claims to write.
+
+**The two hues are deliberately asymmetric.** You are *led toward* a write --
+anything that opens a picker or dialog carries the indigo border -- but *gated
+before* a delete: a button that merely opens a delete confirmation is `neutral`,
+because the confirmation is the warning and warning twice is noise.
+
+**The scheme colours chrome, not content.** A click target on a heading, a
+paragraph or a row summary takes `size="inline"` and no bucket -- the Detail
+View's Summary and Description triggers, and the Work Items Tree's row summary.
+ADR-0019's "one editable document" survives only if the document does not turn
+into a form.
+
+**Menus are exempt.** A menu is already a committed context -- you opened it to
+choose -- so a menu item that writes takes no fill.
+
+**One exception, named on purpose: the FAB.** The floating create button carries
+the `write` fill even though it opens a dialog, because it is the app's standing
+invitation to create and has no label to carry that meaning. It is the one place
+where a fill does not mean "this click commits".
 
 Sizes use `min-h`, never a fixed `h`, so a button grows with its content rather
 than clipping it: `default` is `min-h-9 px-4 py-2`, `sm` is `min-h-8 px-3`, `lg`
-is `min-h-10 px-8`, `icon` is square. **`ghost` carries
-`border border-transparent`** so it does not jump on hover.
+is `min-h-10 px-8`, `icon` is square, and `inline` drops padding, type size and
+the coarse-pointer minimum so it can dress content. **`bare` and `inline` carry
+`border border-transparent`** so they do not jump on hover. The focus ring is
+offset (`ring-offset-2`) because it tracks `primary` and would otherwise sit
+hard against an indigo edge.
+
+### Chip
+
+A control that is both the value and the control, in three places: the Search
+tab's **Filter Chips**, the Detail View's **Property Chips**, and the Due tab's
+scope. All three are `open` -- they name a value and tapping one opens a picker
+-- and all three are **Set** when they name a value rather than `Any`,
+`Unassigned` or `No Due Date`. **A Set chip is tinted** (`bg-accent`); an unset
+one is not. Activeness never rests on colour alone: a chip reading `Any` is off
+and one naming a value is on, whether or not the tint is perceived.
 
 ### Input and Textarea
-
 [input.tsx](app/components/ui/input.tsx) /
 [textarea.tsx](app/components/ui/textarea.tsx). A `card` fill inside an `input`
 border, with the same focus ring as everything else. The Detail View's free-text
@@ -574,8 +623,9 @@ metadata literals in lockstep with `app.css`.
 
 ## Do's and Don'ts
 
-- **Do** use `primary` for the single most important action per screen; **don't**
-  use it for more than one primary action in a view.
+- **Do** let a button's colour state its effect on stored data; **don't** ration
+  `primary` by importance. A screen carries as many `write` fills as it has ways
+  to change stored data.
 - **Don't** hardcode colours -- no raw Tailwind colour utilities, no raw hex, no
   arbitrary colour values. Add a token first.
 - **Don't** express status with raw colours. Use the four status roles.

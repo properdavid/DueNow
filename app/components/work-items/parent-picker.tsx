@@ -35,7 +35,7 @@ export function ParentPicker({
           <Button
             key={candidate.id}
             type="button"
-            variant="ghost"
+            variant="neutral"
             className={`w-full justify-start whitespace-normal text-left ${selectedParentId === candidate.id ? "border-ring bg-accent text-accent-foreground" : ""}`}
             onClick={() => setSelectedParentId(candidate.id)}
           >

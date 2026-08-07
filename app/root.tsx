@@ -86,7 +86,7 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         <div className="space-y-2 rounded-lg border border-border bg-card p-6 text-card-foreground">
           <h1 className="text-xl font-semibold">Can&apos;t reach DueNow</h1>
           <p className="text-sm text-muted-foreground">The server did not answer. Retry when DueNow is reachable again.</p>
-          <Button variant="outline" type="button" onClick={() => window.location.reload()}>
+          <Button variant="neutral" type="button" onClick={() => window.location.reload()}>
             Retry
           </Button>
         </div>

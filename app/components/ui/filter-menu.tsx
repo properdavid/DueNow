@@ -47,7 +47,7 @@ export function FilterMenu({
   return (
     <details
       ref={ref}
-      className="relative"
+      className="lg:relative"
       onToggle={(event) => {
         if (event.currentTarget.open) onOpen?.();
       }}
@@ -55,12 +55,15 @@ export function FilterMenu({
       <summary
         className={cn(
           "list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-          active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground",
+          "border-primary bg-card text-primary",
+          active ? "bg-accent text-accent-foreground" : null,
         )}
       >
         {label}
       </summary>
-      <div className={cn("absolute z-40 mt-1 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg", panelClassName)}>
+      {/* Below the breakpoint the panel spans its positioned ancestor rather than
+          its own chip, so a chip wrapped to the right of a row cannot overflow. */}
+      <div className={cn("absolute inset-x-0 z-40 mt-1 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg lg:inset-x-auto lg:left-0", panelClassName)}>
         {children}
       </div>
     </details>

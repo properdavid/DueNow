@@ -49,7 +49,7 @@ function UpdateBanner({ onDismiss, onSwitch }: { onDismiss: () => void; onSwitch
       <Button type="button" onClick={onSwitch}>
         Update
       </Button>
-      <Button type="button" variant="outline" onClick={onDismiss}>
+      <Button type="button" variant="neutral" onClick={onDismiss}>
         Not now
       </Button>
     </section>

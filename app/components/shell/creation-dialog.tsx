@@ -136,7 +136,7 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
                   <Button
                     key={candidateType}
                     type="button"
-                    variant="outline"
+                    variant="neutral"
                     className={type === candidateType ? "border-ring bg-accent text-accent-foreground" : undefined}
                     onClick={() => onTypeChange(candidateType)}
                     aria-pressed={type === candidateType}
@@ -220,8 +220,8 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
             {createError ? <p className="text-xs text-destructive">{controlErrorMessage(createError)}</p> : null}
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={isSubmitting || (!isTopic && selectedParent === null)}>
+              <Button type="button" variant="discard" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="submit" variant="write" disabled={isSubmitting || (!isTopic && selectedParent === null)}>
                 {isSubmitting ? "Creating" : "Create"}
               </Button>
             </DialogFooter>
@@ -237,16 +237,17 @@ export function CreationDialogTrigger({ compact = false }: { compact?: boolean }
   return compact ? (
     <Button
       aria-label="New Work Item"
-      className="fixed right-4 z-50 rounded-full lg:hidden"
+      className="fixed right-4 z-50 size-14 rounded-full lg:hidden [&_svg]:size-6"
       size="icon"
       style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
       type="button"
+      variant="write"
       onClick={() => openCreationDialog()}
     >
       <Plus aria-hidden="true" />
     </Button>
   ) : (
-    <Button className="mb-4 w-full" type="button" onClick={() => openCreationDialog()}>
+    <Button className="mb-4 w-full" type="button" variant="write" onClick={() => openCreationDialog()}>
       <Plus aria-hidden="true" />
       New Work Item
     </Button>
