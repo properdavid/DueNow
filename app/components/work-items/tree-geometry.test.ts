@@ -72,7 +72,7 @@ describe("the column's range", () => {
 
 describe("the indent", () => {
   test("spends fourteen pixels a rung over the root row's own padding", () => {
-    expect([0, 1, 2, 3].map(treeRowIndentPx)).toEqual([16, 30, 44, 58]);
+    expect([0, 1, 2, 3].map(treeRowIndentPx)).toEqual([4, 18, 32, 46]);
   });
 
   test("holds at the deepest rung for anything below it", () => {

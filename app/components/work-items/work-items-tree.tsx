@@ -9,7 +9,7 @@ import { Button } from "~/components/ui/button";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
 import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
 import { ReparentDialog } from "~/components/work-items/reparent-dialog";
-import { DUE_DATE_SLOT_PX, treeRowIndentPx } from "~/components/work-items/tree-geometry";
+import { DUE_DATE_SLOT_PX, TREE_ROW_META_INDENT_PX, treeRowIndentPx } from "~/components/work-items/tree-geometry";
 import { formatDueDate } from "~/lib/dates";
 import type { WorkItemsTreeReadModel, WorkItemsTreeRow } from "~/domain/work-items/work-items.server";
 import { expandableRowIds, isTerminalStatus, rootIsAllSettled, rootRows, terminalParentIdsInPath, workItemsTreeLines } from "~/domain/work-items/tree-view";
@@ -116,7 +116,7 @@ export function WorkItemsTree({ loaderData }: { loaderData: ItemsLoaderData }) {
 
 function SettledRevealLine({ parentId, level, count, reveal }: { parentId: number | null; level: number; count: number; reveal: (parentId: number | null) => void }) {
   return (
-    <div className="flex items-center gap-2 py-2 pr-4 text-xs text-muted-foreground" style={{ paddingLeft: treeRowIndentPx(level) }}>
+    <div className="flex items-center gap-2 py-2 pr-1 text-xs text-muted-foreground" style={{ paddingLeft: treeRowIndentPx(level) }}>
       <span>{count} settled —</span>
       <Button variant="ghost" size="sm" type="button" onClick={() => reveal(parentId)}>
         show
@@ -154,7 +154,7 @@ function TreeRow({
   const terminal = isTerminalStatus(row.status);
   return (
     <div
-      className={`group flex flex-col gap-1 py-3 pr-4 ${isSelected ? "bg-accent text-accent-foreground" : ""} ${terminal ? "text-muted-foreground line-through" : ""}`}
+      className={`group flex flex-col gap-1 py-2 pr-1 ${isSelected ? "bg-accent text-accent-foreground" : ""} ${terminal ? "text-muted-foreground line-through" : ""}`}
       style={{ paddingLeft: treeRowIndentPx(level) }}
     >
       <div className="flex items-center gap-2">
@@ -170,7 +170,7 @@ function TreeRow({
             {isExpanded ? <ChevronDown aria-hidden="true" /> : <ChevronRight aria-hidden="true" />}
           </Button>
         ) : (
-          <span className="size-6" />
+          <span className="size-9" />
         )}
         <TypeMark type={row.type} />
         <Button asChild className="min-w-0 flex-1 justify-start truncate px-0 text-sm font-medium" variant="ghost">
@@ -180,7 +180,7 @@ function TreeRow({
         {/* The due date leads the group so a dateless row spends its reserved
             slot next to the Summary's own slack rather than as a hole at the
             row's right edge. */}
-        <div className="hidden items-center gap-3 @min-[525px]:flex">
+        <div className="hidden items-center gap-3 @min-[501px]:flex">
           <span className="flex justify-end" style={{ width: DUE_DATE_SLOT_PX }}>
             {row.dueDate ? <DueDate dueDate={row.dueDate} /> : null}
           </span>
@@ -189,7 +189,7 @@ function TreeRow({
         </div>
         <RowMenu row={row} returnTo={returnTo} />
       </div>
-      <div className="ml-16 flex flex-wrap items-center gap-2 text-xs text-muted-foreground @min-[525px]:hidden">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground @min-[501px]:hidden" style={{ marginLeft: TREE_ROW_META_INDENT_PX }}>
         <StatusMark status={row.status} />
         {row.assignee ? <Avatar assignee={row.assignee} currentUserId={currentUserId} withName /> : <Avatar assignee={null} currentUserId={currentUserId} />}
         {row.dueDate ? <DueDate dueDate={row.dueDate} /> : null}
@@ -243,7 +243,7 @@ function RowMenu({ row, returnTo }: { row: WorkItemsTreeRow; returnTo: string })
         open={reparentOpen}
         onOpenChange={setReparentOpen}
       />
-      {error ? <p className="ml-16 mt-1 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
+      {error ? <p className="mt-1 text-xs text-destructive" style={{ marginLeft: TREE_ROW_META_INDENT_PX }}>{controlErrorMessage(error)}</p> : null}
     </>
   );
 }

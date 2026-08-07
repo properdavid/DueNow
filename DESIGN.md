@@ -376,6 +376,7 @@ Tailwind directly. Instead, follow density conventions:
 | Card internal padding       | `p-6`                           |
 | Page content region padding | `p-6`                           |
 | Page header region padding  | `p-4` with a `border-b` divider |
+| Dense list row padding      | `py-2`, with the horizontal insets owned by the tree geometry module rather than chosen at the call site |
 
 Arbitrary `gap-[Npx]` / `p-[Npx]` values are banned; use the scale.
 

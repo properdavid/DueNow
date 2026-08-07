@@ -30,7 +30,7 @@ The consequence is that the guarantee holds by construction. There is no column 
 
 ## The derived geometry
 
-The row's fixed cost is measured from the rendered row, not estimated: chevron button 36, type mark 16, status mark 16, avatar 28, row menu 36, three metadata gaps and four row gaps at 8 and 12, the row's own `pr-4`, the tree card's hairline, the indent, and the page wrapper.
+The row's fixed cost is measured from the rendered row, not estimated: chevron button 36, type mark 16, status mark 16, avatar 28, row menu 36, three metadata gaps and four row gaps at 8 and 12, the row's own horizontal inset, the tree card's hairline, the indent, and the page wrapper.
 
 Three of those inputs were wrong and are corrected here rather than worked around:
 
