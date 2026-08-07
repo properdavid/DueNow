@@ -57,7 +57,6 @@ export function WorkItemsTree({ loaderData }: { loaderData: ItemsLoaderData }) {
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-xl font-semibold">Work Items</h1>
-          <p className="mt-1 text-xs text-muted-foreground">The full Type Ladder for the household.</p>
         </div>
         {hasAnyWorkItems ? (
           <div className="flex gap-2">
