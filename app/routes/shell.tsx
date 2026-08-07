@@ -34,9 +34,14 @@ export const destinations = [
 ];
 
 export default function Shell({ loaderData }: Route.ComponentProps) {
-  const isFullLayout = useMatches().some((match) => {
+  const matches = useMatches();
+  const isFullLayout = matches.some((match) => {
     const handle = match.handle as { layout?: string } | undefined;
     return handle?.layout === "full";
+  });
+  const suppressesFab = matches.some((match) => {
+    const handle = match.handle as { fab?: string } | undefined;
+    return handle?.fab === "none";
   });
 
   return (
@@ -68,7 +73,7 @@ export default function Shell({ loaderData }: Route.ComponentProps) {
         >
           <Outlet />
         </div>
-        <CreationDialogTrigger compact />
+        {suppressesFab ? null : <CreationDialogTrigger compact />}
         <nav
           className="fixed inset-x-4 z-50 mx-auto flex max-w-md justify-around rounded-full border border-border bg-card p-1 text-card-foreground lg:hidden"
           style={{ bottom: "calc(1rem + env(safe-area-inset-bottom))" }}
