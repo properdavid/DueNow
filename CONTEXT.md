@@ -243,7 +243,7 @@ _Avoid_: age, delay, days overdue, slippage
 ### The Search tab
 
 **Filter Bar**:
-The fixed set of controls that narrows the Search tab — keyword, type, status, assignee, parent, due date, and labels. Values chosen within one control widen the result; every control narrows it against the others. There is no nesting and no OR across controls.
+The fixed set of controls that narrows the Search tab — keyword, type, status, assignee, parent, due date, and labels. One bar at every width, wrapping rather than hiding below the breakpoint, and a value chosen takes effect at once: there is no draft and nothing to apply. Values chosen within one control widen the result; every control narrows it against the others. There is no nesting and no OR across controls.
 _Avoid_: query builder, advanced search, facets, criteria
 
 **Keyword**:
@@ -263,7 +263,7 @@ The Search tab's rendering of its results — one row per work item, seven colum
 _Avoid_: grid, list view, data table, issue navigator
 
 **Sort Order**:
-The single column the Results Table is ordered by, plus its direction. Every column can carry it; Status orders down the Type Ladder's statuses rather than alphabetically, and Unassigned, undated and top-level rows sort last in both directions.
+The single column the Results Table is ordered by, plus its direction. Chosen from the column headers in Split Layout and from the Result Count line in Compact Layout, where there are no headers to click. Every column can carry it; Status orders down the Type Ladder's statuses rather than alphabetically, and Unassigned, undated and top-level rows sort last in both directions.
 _Avoid_: ordering, ranking, sequence
 
 ### Settings

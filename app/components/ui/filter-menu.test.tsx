@@ -49,8 +49,10 @@ describe("dismissing a Filter Bar menu", () => {
     expect(source).toContain('removeEventListener("keydown"');
   });
 
-  test("is the only way the Search tab builds a filter menu", () => {
+  test("is the only way the Search tab builds a filter menu, at every width", () => {
     expect(routeSource).not.toContain("<details");
     expect(routeSource).toContain("<FilterMenu");
+    // ADR-0033: one bar, so no compact sheet and nothing to apply.
+    expect(routeSource).not.toContain("<Dialog");
   });
 });

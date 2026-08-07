@@ -479,6 +479,10 @@ primary-action style. Faking one with a raw colour utility is banned.
 | `ghost`       | Lowest emphasis, toolbar and inline actions                           |
 | `destructive` | Destructive action (backed by `destructive`)                          |
 
+**The two reds differ.** A solid `destructive` fill with white text deletes
+data; a `destructive` border and `destructive` text on a `card` fill clears
+transient selections -- filter criteria, a sort -- and destroys nothing.
+
 Sizes use `min-h`, never a fixed `h`, so a button grows with its content rather
 than clipping it: `default` is `min-h-9 px-4 py-2`, `sm` is `min-h-8 px-3`, `lg`
 is `min-h-10 px-8`, `icon` is square. **`ghost` carries
