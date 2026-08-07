@@ -178,9 +178,11 @@ export function CreationDialogProvider({ members, labels, children }: CreationDi
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <label className="grid gap-2 text-xs font-medium">
+              <label className="grid min-w-0 gap-2 text-xs font-medium">
                 Due Date
-                <Input name="dueDate" type="date" />
+                {/* iOS Safari sizes date inputs from their intrinsic content, which
+                    overflows the grid column unless the track is allowed to shrink. */}
+                <Input className="min-w-0 appearance-none" name="dueDate" type="date" />
               </label>
               <label className="grid gap-2 text-xs font-medium">
                 Status
