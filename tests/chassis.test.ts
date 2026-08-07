@@ -29,3 +29,9 @@ describe("the ~ alias", () => {
     expect(read("vitest.config.ts")).toContain('"~": new URL("./app", import.meta.url).pathname');
   });
 });
+
+describe("the PWA dev server", () => {
+  it("enables devOptions so the manifest and worker are served instead of 404ing through React Router", () => {
+    expect(readFileSync(join(repoRoot, "vite.config.ts"), "utf8")).toMatch(/devOptions:\s*\{\s*enabled:\s*true/);
+  });
+});

@@ -4,6 +4,7 @@ node_modules/
 # Build output
 build/
 .react-router/
+dev-dist/
 
 # Environment
 .env

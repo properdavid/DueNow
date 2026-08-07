@@ -20,6 +20,11 @@ export default defineConfig({
       injectRegister: null,
       registerType: "prompt",
       manifest: duenowManifest,
+      // Without this the dev server never serves /manifest.webmanifest or /dev-sw.js,
+      // and React Router's catch-all answers them with "No route matches URL".
+      devOptions: {
+        enabled: true,
+      },
       workbox: {
         globPatterns: ["**/*.{js,css,woff2,png,svg}"],
         additionalManifestEntries: [{ url: "/offline.html", revision: appVersion }],
