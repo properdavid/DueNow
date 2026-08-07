@@ -46,11 +46,10 @@ export function SettingsPage({ loaderData, shellData }: { loaderData: Route.Comp
     <main className="min-h-screen bg-background p-6 pb-28 text-foreground lg:pb-6">
       <header>
         <h1 className="text-xl font-semibold">Settings</h1>
-        <p className="mt-1 text-xs text-muted-foreground">Personal choices and shared household controls.</p>
       </header>
 
       <div className="mt-6 space-y-6">
-        <Section title="You" description="Theme follows your user record. Sign out is here because the shell has no title bar.">
+        <Section title="User" description="">
           <ThemeForm theme={shellData.user.theme} />
           <div className="border-t border-border pt-4">
             <Form action="/auth/logout" method="post">
@@ -61,7 +60,7 @@ export function SettingsPage({ loaderData, shellData }: { loaderData: Route.Comp
           </div>
         </Section>
 
-        <Section title="Household" description="Shared facts for the one household served by this DueNow instance.">
+        <Section title="Household" description="">
           <MembersList members={shellData.members} currentUserId={shellData.user.id} />
           <TimezoneForm timezone={shellData.householdTimezone.timezone} timezones={timezones} />
           <LabelManagement labels={labels} />
@@ -104,9 +103,6 @@ function ThemeForm({ theme }: { theme: "system" | "light" | "dark" }) {
           {fetcher.state === "idle" ? "Save" : "Saving"}
         </Button>
       </div>
-      <p id="theme-help" className="text-xs text-muted-foreground">
-        System uses your device preference without JavaScript.
-      </p>
       {fetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
     </fetcher.Form>
   );
@@ -154,9 +150,6 @@ function TimezoneForm({ timezone, timezones }: { timezone: string; timezones: st
           {fetcher.state === "idle" ? "Save" : "Saving"}
         </Button>
       </div>
-      <p id="timezone-help" className="text-xs text-muted-foreground">
-        Today and Due tab groups are computed in this timezone for both members.
-      </p>
       {fetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(fetcher.data.error.message)}</p> : null}
     </fetcher.Form>
   );
@@ -170,7 +163,7 @@ function LabelManagement({ labels }: { labels: SettingsLabel[] }) {
         <h3 id="labels-heading" className="text-base font-medium">
           Labels
         </h3>
-        <p className="mt-1 text-xs text-muted-foreground">Create, rename and delete the household Label vocabulary.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Create, rename and delete the household Labels.</p>
       </div>
       <createFetcher.Form action="/api/labels/create" method="post" className="flex max-w-xl items-end gap-2">
         <div className="flex-1 space-y-2">
@@ -219,7 +212,7 @@ function LabelRow({ label }: { label: SettingsLabel }) {
         <p className="text-xs text-muted-foreground">
           {label.usageCount} {workItemWord}
         </p>
-        <p className="text-xs text-destructive">Deleting detaches this Label everywhere.</p>
+        <p className="text-xs text-destructive">Deleting removes this Label everywhere.</p>
         {renameFetcher.data?.ok === false ? <p className="text-xs text-destructive">{controlErrorMessage(renameFetcher.data.error.message)}</p> : null}
       </div>
       <deleteFetcher.Form action={`/api/labels/${label.id}/delete`} method="post">

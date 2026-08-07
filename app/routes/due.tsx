@@ -62,7 +62,6 @@ export default function Due({ loaderData }: Route.ComponentProps) {
         <header className="space-y-4">
           <div>
             <h1 className="text-xl font-semibold">Due</h1>
-            <p className="mt-1 text-xs text-muted-foreground">What is approaching in the next 30 days.</p>
           </div>
           <FilterSentence scope={scope} setScope={setScope} />
         </header>

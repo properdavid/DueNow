@@ -69,7 +69,6 @@ export default function Search({ loaderData }: Route.ComponentProps) {
         <header className="space-y-4">
           <div>
             <h1 className="text-xl font-semibold">Search</h1>
-            <p className="mt-1 text-xs text-muted-foreground">A read-only register over every Work Item.</p>
           </div>
           <KeywordBox params={params} />
           <div className="hidden lg:block">
