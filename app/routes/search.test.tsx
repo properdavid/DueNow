@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { createRoutesStub } from "react-router";
 
 import { createRouteTestHarness } from "~/test/route-harness";
+import { dueLabels } from "./search-params";
 import * as searchRoute from "./search";
 
 describe("Search route seam", () => {
@@ -83,6 +84,40 @@ describe("Search tab rendering seam", () => {
     expect(firstRun).toContain("Create your first work item and it will appear here.");
     expect(missedKeyword).toContain("No matching work items");
     expect(missedKeyword).toContain("Change the Filter Bar or try a different Keyword.");
+  });
+});
+
+describe("Due Date filter seam", () => {
+  test.each([
+    ["any", false, false],
+    ["overdue", false, false],
+    ["none", false, false],
+    ["before", true, false],
+    ["after", true, false],
+    ["between", true, true],
+  ])("the compact %s mode reveals only the date inputs the shared rule allows", (due, expectedFrom, expectedTo) => {
+    const markup = renderToStaticMarkup(<searchRoute.CompactDue params={new URLSearchParams(`due=${due}`)} />);
+
+    expect(markup.includes('name="from"')).toBe(expectedFrom);
+    expect(markup.includes('name="to"')).toBe(expectedTo);
+  });
+
+  test.each([
+    ["any", false, false],
+    ["overdue", false, false],
+    ["none", false, false],
+    ["before", true, false],
+    ["after", true, false],
+    ["between", true, true],
+  ])("the wide %s mode reveals the same date inputs as the compact surface", (due, expectedFrom, expectedTo) => {
+    const markup = renderSearch(
+      { rows: [], resultCount: 0, limit: 200, user: { id: 1, email: "dana@example.com", name: "Dana", theme: "system" }, selectedParents: [] },
+      `/search?due=${due}`,
+    );
+    const label = dueLabels[due as keyof typeof dueLabels];
+
+    expect(markup.includes(`aria-label="${label} from"`)).toBe(expectedFrom);
+    expect(markup.includes(`aria-label="${label} to"`)).toBe(expectedTo);
   });
 });
 

@@ -4,6 +4,31 @@ import type { SearchDirection, SearchDueFilter, SearchSort, SearchWorkItemsInput
 const searchSorts = ["id", "type", "summary", "parent", "assignee", "status", "due", "updated"] as const satisfies readonly SearchSort[];
 const searchDirections = ["asc", "desc"] as const satisfies readonly SearchDirection[];
 
+/** The date fields each Due Date mode collects — the single source both the wide and compact filters render from. */
+const dueModeDateFields = {
+  any: [],
+  overdue: [],
+  before: ["from"],
+  after: ["from"],
+  between: ["from", "to"],
+  none: [],
+} as const;
+
+export type DueMode = keyof typeof dueModeDateFields;
+export type DueDateField = "from" | "to";
+
+export const dueModes = Object.keys(dueModeDateFields) as DueMode[];
+
+export const dueLabels = { any: "Any", overdue: "Overdue", before: "Before", after: "After", between: "Between", none: "No due date" } as const satisfies Record<DueMode, string>;
+
+export function dueDateFields(mode: DueMode): readonly DueDateField[] {
+  return dueModeDateFields[mode];
+}
+
+export function dueModeFromValue(value: string | null): DueMode {
+  return value && value in dueModeDateFields ? (value as DueMode) : "any";
+}
+
 export function searchWorkItemsInputFromUrl(url: URL): SearchWorkItemsInput {
   return {
     keyword: url.searchParams.get("q") ?? url.searchParams.get("keyword") ?? undefined,

@@ -17,7 +17,7 @@ import type { DatabaseClient } from "~/db/client";
 import { formatDueDate } from "~/lib/dates";
 import { searchWorkItems, type ParentCandidate, type SearchDirection, type SearchSort, type SearchWorkItemRow } from "~/domain/work-items/work-items.server";
 import type { WorkItemStatus, WorkItemType } from "~/db/schema";
-import { searchWorkItemsInputFromUrl } from "./search-params";
+import { dueDateFields, dueLabels, dueModeFromValue, dueModes, type DueMode, searchWorkItemsInputFromUrl } from "./search-params";
 
 export const handle = { layout: "full" };
 
@@ -54,7 +54,6 @@ const tableSorts = ["id", "summary", "parent", "assignee", "status", "due", "upd
 
 const typeLabels = { topic: "Topic", project: "Project", task: "Task", subtask: "Subtask" } as const satisfies Record<WorkItemType, string>;
 const statusLabels = { open: "Open", in_progress: "In Progress", completed: "Completed", closed: "Closed" } as const satisfies Record<WorkItemStatus, string>;
-const dueLabels = { any: "Any", overdue: "Overdue", before: "Before", after: "After", between: "Between", none: "No due date" } as const;
 
 export default function Search({ loaderData }: Route.ComponentProps) {
   const hasSelection = useMatches().some((match) => match.id === "search-item");
@@ -221,21 +220,21 @@ function DueFilter({ params }: { params: URLSearchParams }) {
         Due Date: {dueSummary(params)}
       </summary>
       <div className="absolute z-40 mt-1 min-w-72 space-y-2 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
-        {(["any", "overdue", "none"] as const).map((mode) => (
+        {dueModes.filter((mode) => dueDateFields(mode).length === 0).map((mode) => (
           <Link key={mode} className="block rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, mode === "any" ? { due: [], from: [], to: [] } : { due: [mode], from: [], to: [] })}>
             {dueLabels[mode]}
           </Link>
         ))}
-        <DueDateChoice params={params} mode="before" navigate={navigate} />
-        <DueDateChoice params={params} mode="after" navigate={navigate} />
-        <DueDateChoice params={params} mode="between" navigate={navigate} />
+        {dueModes.filter((mode) => dueDateFields(mode).length > 0).map((mode) => (
+          <DueDateChoice key={mode} params={params} mode={mode} navigate={navigate} />
+        ))}
       </div>
     </details>
   );
 }
 
-function DueDateChoice({ params, mode, navigate }: { params: URLSearchParams; mode: "before" | "after" | "between"; navigate: ReturnType<typeof useNavigate> }) {
-  const selected = (params.get("due") ?? "any") === mode;
+function DueDateChoice({ params, mode, navigate }: { params: URLSearchParams; mode: DueMode; navigate: ReturnType<typeof useNavigate> }) {
+  const selected = dueModeFromValue(params.get("due")) === mode;
   if (!selected) {
     return (
       <Link className="block rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { due: [mode], from: [], to: [] })}>
@@ -243,14 +242,18 @@ function DueDateChoice({ params, mode, navigate }: { params: URLSearchParams; mo
       </Link>
     );
   }
-  const setDate = (name: "from" | "to", value: string) => {
-    navigate(searchHref(params, { due: [mode], [name]: value ? [value] : [] }));
-  };
   return (
     <div className="space-y-2 rounded-md border border-border p-2">
       <p className="text-xs font-medium">{dueLabels[mode]}</p>
-      <Input aria-label={`${dueLabels[mode]} from`} type="date" defaultValue={params.get("from") ?? ""} onChange={(event) => setDate("from", event.currentTarget.value)} />
-      {mode === "between" ? <Input aria-label="Between to" type="date" defaultValue={params.get("to") ?? ""} onChange={(event) => setDate("to", event.currentTarget.value)} /> : null}
+      {dueDateFields(mode).map((field) => (
+        <Input
+          key={field}
+          aria-label={`${dueLabels[mode]} ${field}`}
+          type="date"
+          defaultValue={params.get(field) ?? ""}
+          onChange={(event) => navigate(searchHref(params, { due: [mode], [field]: event.currentTarget.value ? [event.currentTarget.value] : [] }))}
+        />
+      ))}
     </div>
   );
 }
@@ -368,15 +371,17 @@ function useParentCandidateFetchers(query: string) {
   };
 }
 
-function CompactDue({ params }: { params: URLSearchParams }) {
+export function CompactDue({ params }: { params: URLSearchParams }) {
+  const [mode, setMode] = useState(dueModeFromValue(params.get("due")));
   return (
     <Fieldset>
       <FieldsetLegend>Due Date</FieldsetLegend>
-      <Select name="due" defaultValue={params.get("due") ?? "any"}>
-        {Object.entries(dueLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+      <Select name="due" value={mode} onChange={(event) => setMode(dueModeFromValue(event.currentTarget.value))}>
+        {dueModes.map((value) => <option key={value} value={value}>{dueLabels[value]}</option>)}
       </Select>
-      <Input type="date" name="from" aria-label="Due Date from" defaultValue={params.get("from") ?? ""} />
-      <Input type="date" name="to" aria-label="Due Date to" defaultValue={params.get("to") ?? ""} />
+      {dueDateFields(mode).map((field) => (
+        <Input key={field} type="date" name={field} aria-label={`Due Date ${field}`} defaultValue={params.get(field) ?? ""} />
+      ))}
     </Fieldset>
   );
 }
@@ -503,10 +508,10 @@ function activeFilterCount(params: URLSearchParams) {
 }
 
 function dueSummary(params: URLSearchParams) {
-  const due = (params.get("due") ?? "any") as keyof typeof dueLabels;
+  const due = dueModeFromValue(params.get("due"));
   if (due === "before" || due === "after") return `${dueLabels[due]} ${formatDate(params.get("from"))}`;
   if (due === "between") return `Between ${formatDate(params.get("from"))} and ${formatDate(params.get("to"))}`;
-  return dueLabels[due] ?? "Any";
+  return dueLabels[due];
 }
 
 function formatDate(date: string | null) {
