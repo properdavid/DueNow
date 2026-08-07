@@ -9,6 +9,7 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Fieldset, FieldsetLegend } from "~/components/ui/fieldset";
+import { FilterMenu } from "~/components/ui/filter-menu";
 import { Input } from "~/components/ui/input";
 import { Select } from "~/components/ui/select";
 import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
@@ -144,25 +145,24 @@ function MultiFilter({ label, param, options, params }: { label: string; param: 
   const selected = selectedValues(params, param);
   const active = selected.length > 0;
   return (
-    <details className="relative">
-      <summary className={`list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
-        {label}: {active ? selected.map((value) => options.find((option) => option.value === value)?.label ?? value).join(", ") : "Any"}
-      </summary>
-      <div className="absolute z-40 mt-1 min-w-56 space-y-1 rounded-lg border border-border bg-popover p-1 text-popover-foreground shadow-lg">
-        <Link className="block rounded-md px-3 py-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: [] })}>
-          Any
-        </Link>
-        {options.map((option) => {
-          const values = toggleValue(selected, option.value);
-          return (
-            <Link key={option.value} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: values })}>
-              <span className="inline-block size-4 rounded-sm border border-border bg-card text-center text-[10px] font-bold uppercase tracking-wide">{selected.includes(option.value) ? "✓" : ""}</span>
-              {option.label}
-            </Link>
-          );
-        })}
-      </div>
-    </details>
+    <FilterMenu
+      active={active}
+      panelClassName="min-w-56 space-y-1 p-1"
+      label={<>{label}: {active ? selected.map((value) => options.find((option) => option.value === value)?.label ?? value).join(", ") : "Any"}</>}
+    >
+      <Link className="block rounded-md px-3 py-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: [] })}>
+        Any
+      </Link>
+      {options.map((option) => {
+        const values = toggleValue(selected, option.value);
+        return (
+          <Link key={option.value} className="flex items-center gap-2 rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { [param]: values })}>
+            <span className="inline-block size-4 rounded-sm border border-border bg-card text-center text-[10px] font-bold uppercase tracking-wide">{selected.includes(option.value) ? "✓" : ""}</span>
+            {option.label}
+          </Link>
+        );
+      })}
+    </FilterMenu>
   );
 }
 
@@ -175,38 +175,34 @@ function ParentFilter({ selectedParents, params }: { selectedParents: SelectedPa
   const filteredCandidates = candidates.filter((candidate) => candidate.summary.toLowerCase().includes(parentQuery.trim().toLowerCase()));
   const active = selectedParents.length > 0;
   return (
-    <details className="relative" onToggle={(event) => {
-      if (event.currentTarget.open) {
-        parentFetchers.load();
-      }
-    }}>
-      <summary className={`list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
-        Parent: {active ? selectedParents.map((parent) => parent.summary).join(", ") : "Any"}
-      </summary>
-      <div className="absolute z-40 mt-1 w-80 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
-        <Link className="mb-2 block rounded-md px-3 py-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: [] })}>
-          Any Parent
-        </Link>
-        {active ? (
-          <div className="mb-2 flex flex-wrap gap-1">
-            {selectedParents.map((parent) => (
-              <Link key={parent.id} className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: selectedParentIds.filter((id) => id !== String(parent.id)) })}>
-                {parent.summary} ×
-              </Link>
-            ))}
-          </div>
-        ) : null}
-        <ParentPicker
-          candidates={filteredCandidates}
-          loading={parentFetchers.loading}
-          parentQuery={parentQuery}
-          prefilledParentSummary={selectedParents[0]?.summary ?? null}
-          selectedParentId={selectedParents[0]?.id ?? null}
-          setParentQuery={setParentQuery}
-          setSelectedParentId={(id) => navigate(searchHref(params, { parent: toggleValue(selectedParentIds, String(id)) }))}
-        />
-      </div>
-    </details>
+    <FilterMenu
+      active={active}
+      panelClassName="w-80 p-3"
+      onOpen={parentFetchers.load}
+      label={<>Parent: {active ? selectedParents.map((parent) => parent.summary).join(", ") : "Any"}</>}
+    >
+      <Link className="mb-2 block rounded-md px-3 py-2 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: [] })}>
+        Any Parent
+      </Link>
+      {active ? (
+        <div className="mb-2 flex flex-wrap gap-1">
+          {selectedParents.map((parent) => (
+            <Link key={parent.id} className="rounded-full border border-border bg-muted px-2 py-0.5 text-xs text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, { parent: selectedParentIds.filter((id) => id !== String(parent.id)) })}>
+              {parent.summary} ×
+            </Link>
+          ))}
+        </div>
+      ) : null}
+      <ParentPicker
+        candidates={filteredCandidates}
+        loading={parentFetchers.loading}
+        parentQuery={parentQuery}
+        prefilledParentSummary={selectedParents[0]?.summary ?? null}
+        selectedParentId={selectedParents[0]?.id ?? null}
+        setParentQuery={setParentQuery}
+        setSelectedParentId={(id) => navigate(searchHref(params, { parent: toggleValue(selectedParentIds, String(id)) }))}
+      />
+    </FilterMenu>
   );
 }
 
@@ -215,21 +211,16 @@ function DueFilter({ params }: { params: URLSearchParams }) {
   const due = params.get("due") ?? "any";
   const active = due !== "any";
   return (
-    <details className="relative">
-      <summary className={`list-none rounded-md border px-3 py-2 text-xs font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${active ? "border-primary bg-accent text-accent-foreground" : "border-input bg-card text-foreground"}`}>
-        Due Date: {dueSummary(params)}
-      </summary>
-      <div className="absolute z-40 mt-1 min-w-72 space-y-2 rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-lg">
-        {dueModes.filter((mode) => dueDateFields(mode).length === 0).map((mode) => (
-          <Link key={mode} className="block rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, mode === "any" ? { due: [], from: [], to: [] } : { due: [mode], from: [], to: [] })}>
-            {dueLabels[mode]}
-          </Link>
-        ))}
-        {dueModes.filter((mode) => dueDateFields(mode).length > 0).map((mode) => (
-          <DueDateChoice key={mode} params={params} mode={mode} navigate={navigate} />
-        ))}
-      </div>
-    </details>
+    <FilterMenu active={active} panelClassName="min-w-72 space-y-2 p-3" label={<>Due Date: {dueSummary(params)}</>}>
+      {dueModes.filter((mode) => dueDateFields(mode).length === 0).map((mode) => (
+        <Link key={mode} className="block rounded-md px-3 py-2 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring" to={searchHref(params, mode === "any" ? { due: [], from: [], to: [] } : { due: [mode], from: [], to: [] })}>
+          {dueLabels[mode]}
+        </Link>
+      ))}
+      {dueModes.filter((mode) => dueDateFields(mode).length > 0).map((mode) => (
+        <DueDateChoice key={mode} params={params} mode={mode} navigate={navigate} />
+      ))}
+    </FilterMenu>
   );
 }
 
