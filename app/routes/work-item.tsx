@@ -9,10 +9,11 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Textarea } from "~/components/ui/textarea";
-import { Avatar, StatusMark } from "~/components/ui/work-item-marks";
-import { ReparentDialog } from "~/components/work-items/reparent-dialog";
-import type { WorkItemCommentReadModel, WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
+import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
+import { ParentPicker } from "~/components/work-items/parent-picker";
+import type { ParentCandidate, WorkItemCommentReadModel, WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
 import type { WorkItemStatus, WorkItemType } from "~/db/schema";
 import { controlErrorMessage } from "~/pwa/unreachable";
@@ -51,7 +52,6 @@ export function WorkItemDocument({
   members: WorkItemsTreeMember[];
 }) {
   const location = useLocation();
-  const [reparentOpen, setReparentOpen] = useState(false);
   const backLink = location.pathname.startsWith("/search/")
     ? { href: `/search${location.search}`, label: "← Back to results" }
     : location.pathname.startsWith("/due/")
@@ -72,30 +72,18 @@ export function WorkItemDocument({
           </Link>
         ) : null}
         <nav className="text-xs text-muted-foreground" aria-label="Breadcrumb">
-          {detail.breadcrumb.map((crumb, index) => (
-            <span key={`${crumb.id}-${index}`}>
-              {index > 0 ? " › " : null}
-              {index === detail.breadcrumb.length - 1 ? crumb.label : <Link to={`/items/${crumb.id}`}>{crumb.label}</Link>}
-            </span>
-          ))}
+          {detail.breadcrumb.length > 0
+            ? detail.breadcrumb.map((crumb, index) => (
+                <span key={crumb.id}>
+                  {index > 0 ? " › " : null}
+                  <Link to={`/items/${crumb.id}`}>{crumb.summary}</Link>
+                </span>
+              ))
+            : typeLabel(detail.item.type)}
         </nav>
-        {detail.item.parentId !== null ? (
-          <div>
-            <Button size="sm" type="button" variant="open" onClick={() => setReparentOpen(true)}>
-              Reparent…
-            </Button>
-            <ReparentDialog
-              currentParentId={detail.item.parentId}
-              itemId={detail.item.id}
-              itemSummary={detail.item.summary}
-              itemType={detail.item.type}
-              open={reparentOpen}
-              onOpenChange={setReparentOpen}
-            />
-          </div>
-        ) : null}
-        <SummaryEditor id={detail.item.id} summary={detail.item.summary} />
+        <SummaryEditor id={detail.item.id} summary={detail.item.summary} type={detail.item.type} />
         <div className="flex flex-wrap gap-2" aria-label="Property Chips">
+          <ParentChip id={detail.item.id} parent={detail.parent} type={detail.item.type} />
           <StatusChip
             id={detail.item.id}
             reopenNotice={detail.reopenNotice}
@@ -252,14 +240,35 @@ function CommentRow({ comment, currentUserId }: { comment: WorkItemCommentReadMo
 
 function CommentComposer({ workItemId }: { workItemId: number }) {
   const fetcher = useFetcher<ActionResult>();
+  const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const error = fetcher.data?.ok === false ? fetcher.data.error.message : null;
+
+  function discard() {
+    setValue("");
+    setOpen(false);
+  }
+
+  // A Draft belongs to the work item it was opened on and never travels.
+  useEffect(() => {
+    setValue("");
+    setOpen(false);
+  }, [workItemId]);
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.ok) {
       setValue("");
+      setOpen(false);
     }
   }, [fetcher.state, fetcher.data]);
+
+  if (!open) {
+    return (
+      <Button type="button" variant="open" onClick={() => setOpen(true)}>
+        Add Comment
+      </Button>
+    );
+  }
 
   return (
     <fetcher.Form method="post" action={`/api/work-items/${workItemId}/add-comment`} className="space-y-2 rounded-lg border border-border bg-card p-4 text-card-foreground">
@@ -267,6 +276,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
         Add Comment
       </label>
       <Textarea
+        autoFocus
         id={`comment-body-${workItemId}`}
         name="body"
         rows={4}
@@ -275,7 +285,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
-            setValue("");
+            discard();
           }
         }}
       />
@@ -283,7 +293,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
         <Button aria-label="Save Comment" disabled={fetcher.state !== "idle"} size="sm" type="submit" variant="write">
           <Check aria-hidden="true" />
         </Button>
-        <Button aria-label="Discard Comment" size="sm" type="button" variant="discard" onClick={() => setValue("")}>
+        <Button aria-label="Discard Comment" size="sm" type="button" variant="discard" onClick={discard}>
           <X aria-hidden="true" />
         </Button>
       </div>
@@ -478,7 +488,7 @@ function ChecklistNotice({
   );
 }
 
-function SummaryEditor({ id, summary }: { id: number; summary: string }) {
+function SummaryEditor({ id, summary, type }: { id: number; summary: string; type: WorkItemType }) {
   return (
     <TextEditor
       action={`/api/work-items/${id}/update-summary`}
@@ -488,7 +498,10 @@ function SummaryEditor({ id, summary }: { id: number; summary: string }) {
       multilineEnter={false}
       renderValue={(startEditing) => (
         <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
-          <h1 className="text-xl font-semibold">{summary}</h1>
+          <span className="flex items-center gap-2">
+            <TypeMark type={type} />
+            <h1 className="text-xl font-semibold">{summary}</h1>
+          </span>
         </Button>
       )}
       required
@@ -500,18 +513,22 @@ function SummaryEditor({ id, summary }: { id: number; summary: string }) {
 
 function DescriptionEditor({ id, description }: { id: number; description: string }) {
   return (
-    <TextEditor
-      action={`/api/work-items/${id}/update-description`}
-      fieldName="description"
-      initialValue={description}
-      label="Description"
-      multilineEnter
-      renderValue={(startEditing) => (
-        <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
-          {description.trim().length > 0 ? <p className="whitespace-pre-wrap text-sm">{description}</p> : <p className="text-xs text-muted-foreground">Add a Description</p>}
-        </Button>
-      )}
-    />
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">Description</h2>
+      <TextEditor
+        action={`/api/work-items/${id}/update-description`}
+        fieldName="description"
+        initialValue={description}
+        label="Description"
+        multilineEnter
+        renderValue={(startEditing) => (
+          <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
+            {description.trim().length > 0 ? <p className="whitespace-pre-wrap text-sm">{description}</p> : <p className="text-xs text-muted-foreground">Add a Description</p>}
+          </Button>
+        )}
+        showLabel={false}
+      />
+    </section>
   );
 }
 
@@ -524,6 +541,7 @@ function TextEditor({
   multilineEnter,
   renderValue,
   required = false,
+  showLabel = true,
   textareaClassName,
 }: {
   action: string;
@@ -534,6 +552,7 @@ function TextEditor({
   multilineEnter: boolean;
   renderValue: (startEditing: () => void) => React.ReactNode;
   required?: boolean;
+  showLabel?: boolean;
   textareaClassName?: string;
 }) {
   const fetcher = useFetcher<ActionResult>();
@@ -559,7 +578,7 @@ function TextEditor({
 
   return (
     <section className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      {showLabel ? <p className="text-xs font-medium text-muted-foreground">{label}</p> : null}
       <fetcher.Form ref={formRef} method="post" action={action} className="space-y-2">
         <Textarea
           aria-label={label}
@@ -603,6 +622,101 @@ function TextEditor({
         {error ? <p className="text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
       </fetcher.Form>
     </section>
+  );
+}
+
+type ParentPickerData =
+  | { ok: true; type: WorkItemType; query: string; candidates: ParentCandidate[] }
+  | { ok: false; candidates: []; error: { field?: string; message: string } };
+
+function ParentChip({
+  id,
+  parent,
+  type,
+}: {
+  id: number;
+  parent: { id: number; summary: string; type: WorkItemType } | null;
+  type: WorkItemType;
+}) {
+  const parentFetcher = useFetcher<ParentPickerData>();
+  const reparentFetcher = useFetcher<ActionResult>();
+  const [open, setOpen] = useState(false);
+  const [parentQuery, setParentQuery] = useState("");
+  const [pendingParentId, setPendingParentId] = useState<number | null>(null);
+  const parentData = parentFetcher.data;
+  const parentDataIsFresh = parentData?.ok === true && parentData.type === type && parentData.query === parentQuery;
+  const candidates = parentDataIsFresh ? parentData.candidates : [];
+  const pendingParent = candidates.find((candidate) => candidate.id === pendingParentId) ?? null;
+  const error = reparentFetcher.data?.ok === false ? reparentFetcher.data.error.message : null;
+
+  useEffect(() => {
+    if (!open || type === "topic") {
+      return;
+    }
+    parentFetcher.load(`/api/parents?type=${type}&q=${encodeURIComponent(parentQuery)}&excludeParentId=${parent?.id ?? ""}`);
+  }, [open, parent?.id, parentQuery, type]);
+
+  useEffect(() => {
+    if (open) {
+      setParentQuery("");
+      setPendingParentId(null);
+    }
+  }, [open]);
+
+  if (type === "topic" || parent === null) {
+    return null;
+  }
+
+  const reparent = (parentId: number) => {
+    reparentFetcher.submit({ parentId: String(parentId) }, { method: "post", action: `/api/work-items/${id}/reparent` });
+    setOpen(false);
+  };
+
+  /* A candidate with terminal ancestors pauses on its Reopen Notice; every other choice commits on selection, as the other chips do. */
+  const chooseParent = (parentId: number) => {
+    const candidate = candidates.find((entry) => entry.id === parentId);
+    if (candidate && candidate.terminalAncestors.length > 0) {
+      setPendingParentId(parentId);
+      return;
+    }
+    reparent(parentId);
+  };
+
+  return (
+    <div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button className="max-w-full rounded-full" size="sm" type="button" variant="open">
+            <span>Parent:</span>
+            <TypeMark type={parent.type} />
+            <span className="inline-block max-w-40 truncate align-bottom">{parent.summary}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 space-y-2 p-2">
+          <ParentPicker
+            candidates={candidates}
+            loading={parentFetcher.state !== "idle" || !parentDataIsFresh}
+            parentQuery={parentQuery}
+            prefilledParentSummary={null}
+            selectedParentId={pendingParentId}
+            setParentQuery={setParentQuery}
+            setSelectedParentId={chooseParent}
+          />
+          {pendingParent ? (
+            <div className="space-y-2 rounded-lg border border-status-in-progress/40 bg-status-in-progress-subtle p-3 text-xs text-foreground">
+              <p className="font-medium">Reopen Notice</p>
+              <p className="text-muted-foreground">
+                Reparenting here will move {formatSummaryList(pendingParent.terminalAncestors.map((ancestor) => ancestor.summary))} to In Progress.
+              </p>
+              <Button size="sm" type="button" variant="write" onClick={() => reparent(pendingParent.id)}>
+                Reopen and reparent
+              </Button>
+            </div>
+          ) : null}
+        </PopoverContent>
+      </Popover>
+      {error ? <p className="mt-1 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
+    </div>
   );
 }
 
@@ -749,7 +863,7 @@ function AssigneeChip({
       <Menu>
         <MenuTrigger asChild>
           <Button className="rounded-full" size="sm" type="button" variant="open">
-            <Avatar assignee={assignee} currentUserId={currentUserId} withName />
+            <Avatar assignee={assignee} currentUserId={currentUserId} size="sm" withName />
           </Button>
         </MenuTrigger>
         <MenuContent align="start">

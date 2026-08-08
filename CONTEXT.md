@@ -49,8 +49,8 @@ The work items above an item on its path to its Topic, and everything beneath it
 _Avoid_: parents (plural), children (when meaning more than one rung), lineage
 
 **Reparent**:
-Moving a work item under a different parent of the same type it already sits under — a Task moves to another Project. The work item carries its subtree with it, and no type changes.
-_Avoid_: move, re-assign, transfer — except the Work Items tree row menu label **Move…**, where the affordance names the action in the tightest possible row-menu language.
+Moving a work item under a different parent of the same type it already sits under — a Task moves to another Project. The work item carries its subtree with it, and no type changes. It is reached from the Detail View's Parent Chip, which names the parent rather than the act, so the word itself appears on no screen — except the Work Items tree row menu label **Move…**, where the affordance names the action in the tightest possible row-menu language.
+_Avoid_: move, re-assign, transfer
 
 **Promotion** / **Demotion**:
 Changing a work item's type, shifting it and its whole subtree one rung up or down the ladder — a Task that turns out to be a Project. Not in v1; the term is reserved so that retyping, when it arrives, is not confused with Reparent.
@@ -203,11 +203,11 @@ A control that is the value *and* the control: it names what it currently holds,
 _Avoid_: pill, tag, badge, toggle
 
 **Set**:
-A Chip that names a value rather than `Any`, `Unassigned` or `No Due Date`. A Set chip carries a tint to say so, but the name it carries already says it — the tint never carries the meaning alone.
+A Chip that names a value rather than `Any`, `Unassigned` or `No Due Date`. A Set chip carries a tint to say so, but the name it carries already says it — the tint never carries the meaning alone. A Chip with no unset state to contrast against is neither Set nor unset and never tinted, because a tint that never varies says nothing.
 _Avoid_: active, applied, selected, on
 
 **Property Chip**:
-One of the four Chips under the Summary — Status, Assignee, Due Date, Labels. The choice commits at once, with no edit mode and no Save.
+One of the five Chips under the Summary — Parent, Status, Assignee, Due Date, Labels. The choice commits at once, with no edit mode and no Save. Parent leads, and is the one Chip that names a position on the Type Ladder rather than a Core Field; a Topic, which can have no parent, shows no Parent Chip at all.
 _Avoid_: field, property panel, pill, tag
 
 **Settle Confirmation**:
@@ -217,6 +217,14 @@ _Avoid_: confirm dialog, warning, are-you-sure, undo prompt
 **Children Checklist**:
 The children of a work item as they appear on its Detail View — Status Mark, Summary, Due Date, Assignee per row, ending in the settled reveal and an inline add. Its Status Mark is a toggle that settles a child to Completed and un-settles one to Open; no other status is reachable from it.
 _Avoid_: subtask list, child list, checkbox list, todo list
+
+**Comment Composer**:
+The closed affordance at the foot of a Detail View's Comments that opens into a box for writing one. It starts closed and returns to closed — a Detail View at rest offers to take a Comment rather than standing ready to receive one.
+_Avoid_: comment box, comment form, reply box, add comment
+
+**Draft**:
+Text a household member has typed and not yet stored. Every long-form field is written through one — Summary, Description, and a Comment — and every Draft ends the same way: Saved, or Discarded and gone. A Draft belongs to the work item it was opened on and never travels; leaving takes it with nothing. Chips have no Draft, which is why they have no Save.
+_Avoid_: unsaved changes, edit mode, pending edit, dirty state
 
 ### The Due tab
 

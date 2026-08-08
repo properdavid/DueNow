@@ -82,7 +82,6 @@ export function ReparentDialog({
         </DialogHeader>
         <reparentFetcher.Form method="post" action={`/api/work-items/${itemId}/reparent`} className="grid gap-4" onSubmit={() => setSubmitted(true)}>
           <input type="hidden" name="parentId" value={selectedParentId ?? ""} />
-          <input type="hidden" name="confirmed" value={reopenNotice.length > 0 ? "true" : "false"} />
           <ParentPicker
             candidates={candidates}
             loading={parentFetcher.state !== "idle" || !parentDataIsFresh}
