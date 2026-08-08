@@ -841,7 +841,7 @@ function AssigneeChip({
       <Menu>
         <MenuTrigger asChild>
           <Button className="rounded-full" size="sm" type="button" variant="open">
-            <Avatar assignee={assignee} currentUserId={currentUserId} withName />
+            <Avatar assignee={assignee} currentUserId={currentUserId} size="sm" withName />
           </Button>
         </MenuTrigger>
         <MenuContent align="start">

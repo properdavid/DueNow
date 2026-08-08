@@ -28,15 +28,26 @@ export function StatusMark({ status }: { status: WorkItemStatus }) {
   return <span aria-label="Closed Status Mark" className="inline-block size-4 rounded-full bg-status-closed" />;
 }
 
-export function Avatar({ assignee, currentUserId, withName = false }: { assignee: { id: number; name: string; email: string } | null; currentUserId: number; withName?: boolean }) {
+export function Avatar({
+  assignee,
+  currentUserId,
+  size = "default",
+  withName = false,
+}: {
+  assignee: { id: number; name: string; email: string } | null;
+  currentUserId: number;
+  size?: "default" | "sm";
+  withName?: boolean;
+}) {
+  const disc = size === "sm" ? "size-5" : "size-7";
   if (!assignee) {
-    return <span aria-label="Unassigned" className="inline-flex size-7 items-center justify-center rounded-full border border-dashed border-muted-foreground" />;
+    return <span aria-label="Unassigned" className={`inline-flex ${disc} items-center justify-center rounded-full border border-dashed border-muted-foreground`} />;
   }
   const initial = (assignee.name.trim()[0] ?? assignee.email.trim()[0] ?? "?").toUpperCase();
   const mine = assignee.id === currentUserId;
   return (
     <span className="inline-flex items-center gap-1">
-      <span className={`inline-flex size-7 items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-wide ${mine ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary"}`}>
+      <span className={`inline-flex ${disc} items-center justify-center rounded-full text-[10px] font-bold uppercase tracking-wide ${mine ? "bg-primary text-primary-foreground" : "bg-primary-soft text-primary"}`}>
         {initial}
       </span>
       {withName ? <span>{assignee.name}</span> : null}
