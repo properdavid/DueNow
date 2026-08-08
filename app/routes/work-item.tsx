@@ -491,18 +491,22 @@ function SummaryEditor({ id, summary, type }: { id: number; summary: string; typ
 
 function DescriptionEditor({ id, description }: { id: number; description: string }) {
   return (
-    <TextEditor
-      action={`/api/work-items/${id}/update-description`}
-      fieldName="description"
-      initialValue={description}
-      label="Description"
-      multilineEnter
-      renderValue={(startEditing) => (
-        <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
-          {description.trim().length > 0 ? <p className="whitespace-pre-wrap text-sm">{description}</p> : <p className="text-xs text-muted-foreground">Add a Description</p>}
-        </Button>
-      )}
-    />
+    <section className="space-y-3">
+      <h2 className="text-lg font-semibold">Description</h2>
+      <TextEditor
+        action={`/api/work-items/${id}/update-description`}
+        fieldName="description"
+        initialValue={description}
+        label="Description"
+        multilineEnter
+        renderValue={(startEditing) => (
+          <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
+            {description.trim().length > 0 ? <p className="whitespace-pre-wrap text-sm">{description}</p> : <p className="text-xs text-muted-foreground">Add a Description</p>}
+          </Button>
+        )}
+        showLabel={false}
+      />
+    </section>
   );
 }
 
@@ -515,6 +519,7 @@ function TextEditor({
   multilineEnter,
   renderValue,
   required = false,
+  showLabel = true,
   textareaClassName,
 }: {
   action: string;
@@ -525,6 +530,7 @@ function TextEditor({
   multilineEnter: boolean;
   renderValue: (startEditing: () => void) => React.ReactNode;
   required?: boolean;
+  showLabel?: boolean;
   textareaClassName?: string;
 }) {
   const fetcher = useFetcher<ActionResult>();
@@ -550,7 +556,7 @@ function TextEditor({
 
   return (
     <section className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      {showLabel ? <p className="text-xs font-medium text-muted-foreground">{label}</p> : null}
       <fetcher.Form ref={formRef} method="post" action={action} className="space-y-2">
         <Textarea
           aria-label={label}
