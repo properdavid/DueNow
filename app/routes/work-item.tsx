@@ -81,7 +81,7 @@ export function WorkItemDocument({
               ))
             : typeLabel(detail.item.type)}
         </nav>
-        <SummaryEditor id={detail.item.id} summary={detail.item.summary} />
+        <SummaryEditor id={detail.item.id} summary={detail.item.summary} type={detail.item.type} />
         <div className="flex flex-wrap gap-2" aria-label="Property Chips">
           <ParentChip id={detail.item.id} parent={detail.parent} type={detail.item.type} />
           <StatusChip
@@ -466,7 +466,7 @@ function ChecklistNotice({
   );
 }
 
-function SummaryEditor({ id, summary }: { id: number; summary: string }) {
+function SummaryEditor({ id, summary, type }: { id: number; summary: string; type: WorkItemType }) {
   return (
     <TextEditor
       action={`/api/work-items/${id}/update-summary`}
@@ -476,7 +476,10 @@ function SummaryEditor({ id, summary }: { id: number; summary: string }) {
       multilineEnter={false}
       renderValue={(startEditing) => (
         <Button className="rounded-md" size="inline" type="button" variant="inline" onClick={startEditing}>
-          <h1 className="text-xl font-semibold">{summary}</h1>
+          <span className="flex items-center gap-2">
+            <TypeMark type={type} />
+            <h1 className="text-xl font-semibold">{summary}</h1>
+          </span>
         </Button>
       )}
       required
