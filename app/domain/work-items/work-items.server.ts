@@ -103,7 +103,8 @@ export interface SearchWorkItemsReadModel {
 
 export interface WorkItemDetailReadModel {
   item: WorkItemsTreeRow;
-  breadcrumb: { id: number; label: string; type: WorkItemType }[];
+  breadcrumb: { id: number; summary: string; type: WorkItemType }[];
+  parent: { id: number; summary: string; type: WorkItemType } | null;
   children: WorkItemDetailChild[];
   comments: WorkItemCommentReadModel[];
   labels: { id: number; name: string }[];
@@ -259,10 +260,12 @@ export function loadWorkItemDetail(database: DatabaseClient, id: number): WorkIt
     )
     .all(id) as { id: number; name: string }[];
   const selectedComments = loadCommentsForWorkItem(database, id);
+  const ancestors = ancestorsForWorkItem(rows, id).map(({ id, summary, type }) => ({ id, summary, type }));
 
   return {
     item,
-    breadcrumb: [...ancestorsForWorkItem(rows, id).map(({ id, summary: label, type }) => ({ id, label, type })), { id: item.id, label: typeLabel(item.type), type: item.type }],
+    breadcrumb: ancestors,
+    parent: ancestors.at(-1) ?? null,
     children: rows
       .filter((row) => row.parentId === id)
       .map((child) => ({
@@ -361,7 +364,6 @@ export function reparentWorkItem(
   database: DatabaseClient,
   id: number,
   newParentId: number,
-  confirmed: boolean,
   actorId: number,
   now = Date.now(),
 ): ReparentWorkItemResult {
@@ -387,9 +389,6 @@ export function reparentWorkItem(
       plan = planReparent(rows, id, newParentId);
     } catch {
       return { ok: false as const, error: { field: "parentId", message: "Choose a valid Parent." } };
-    }
-    if (plan.reopenStatusChanges.length > 0 && !confirmed) {
-      return { ok: false as const, error: { field: "confirmed", message: "Confirm the Reopen Notice first." } };
     }
 
     database.sqlite
@@ -794,10 +793,6 @@ function loadTreeRows(database: DatabaseClient): TreeWorkItem[] {
     .from(workItems)
     .orderBy(workItems.id)
     .all();
-}
-
-function typeLabel(type: WorkItemType) {
-  return { topic: "Topic", project: "Project", task: "Task", subtask: "Subtask" }[type];
 }
 
 function toDueRadarCard(rows: WorkItemsTreeRow[], row: WorkItemsTreeRow, today: string): DueRadarCard {

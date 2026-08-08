@@ -9,10 +9,11 @@ import { Badge } from "~/components/ui/badge";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Menu, MenuContent, MenuItem, MenuTrigger } from "~/components/ui/menu";
+import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { Textarea } from "~/components/ui/textarea";
-import { Avatar, StatusMark } from "~/components/ui/work-item-marks";
-import { ReparentDialog } from "~/components/work-items/reparent-dialog";
-import type { WorkItemCommentReadModel, WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
+import { Avatar, StatusMark, TypeMark } from "~/components/ui/work-item-marks";
+import { ParentPicker } from "~/components/work-items/parent-picker";
+import type { ParentCandidate, WorkItemCommentReadModel, WorkItemDetailChild, WorkItemDetailReadModel, WorkItemsTreeMember } from "~/domain/work-items/work-items.server";
 import { loadWorkItemDetail } from "~/domain/work-items/work-items.server";
 import type { WorkItemStatus, WorkItemType } from "~/db/schema";
 import { controlErrorMessage } from "~/pwa/unreachable";
@@ -51,7 +52,6 @@ export function WorkItemDocument({
   members: WorkItemsTreeMember[];
 }) {
   const location = useLocation();
-  const [reparentOpen, setReparentOpen] = useState(false);
   const backLink = location.pathname.startsWith("/search/")
     ? { href: `/search${location.search}`, label: "← Back to results" }
     : location.pathname.startsWith("/due/")
@@ -72,30 +72,18 @@ export function WorkItemDocument({
           </Link>
         ) : null}
         <nav className="text-xs text-muted-foreground" aria-label="Breadcrumb">
-          {detail.breadcrumb.map((crumb, index) => (
-            <span key={`${crumb.id}-${index}`}>
-              {index > 0 ? " › " : null}
-              {index === detail.breadcrumb.length - 1 ? crumb.label : <Link to={`/items/${crumb.id}`}>{crumb.label}</Link>}
-            </span>
-          ))}
+          {detail.breadcrumb.length > 0
+            ? detail.breadcrumb.map((crumb, index) => (
+                <span key={crumb.id}>
+                  {index > 0 ? " › " : null}
+                  <Link to={`/items/${crumb.id}`}>{crumb.summary}</Link>
+                </span>
+              ))
+            : typeLabel(detail.item.type)}
         </nav>
-        {detail.item.parentId !== null ? (
-          <div>
-            <Button size="sm" type="button" variant="open" onClick={() => setReparentOpen(true)}>
-              Reparent…
-            </Button>
-            <ReparentDialog
-              currentParentId={detail.item.parentId}
-              itemId={detail.item.id}
-              itemSummary={detail.item.summary}
-              itemType={detail.item.type}
-              open={reparentOpen}
-              onOpenChange={setReparentOpen}
-            />
-          </div>
-        ) : null}
         <SummaryEditor id={detail.item.id} summary={detail.item.summary} />
         <div className="flex flex-wrap gap-2" aria-label="Property Chips">
+          <ParentChip id={detail.item.id} parent={detail.parent} type={detail.item.type} />
           <StatusChip
             id={detail.item.id}
             reopenNotice={detail.reopenNotice}
@@ -603,6 +591,101 @@ function TextEditor({
         {error ? <p className="text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
       </fetcher.Form>
     </section>
+  );
+}
+
+type ParentPickerData =
+  | { ok: true; type: WorkItemType; query: string; candidates: ParentCandidate[] }
+  | { ok: false; candidates: []; error: { field?: string; message: string } };
+
+function ParentChip({
+  id,
+  parent,
+  type,
+}: {
+  id: number;
+  parent: { id: number; summary: string; type: WorkItemType } | null;
+  type: WorkItemType;
+}) {
+  const parentFetcher = useFetcher<ParentPickerData>();
+  const reparentFetcher = useFetcher<ActionResult>();
+  const [open, setOpen] = useState(false);
+  const [parentQuery, setParentQuery] = useState("");
+  const [pendingParentId, setPendingParentId] = useState<number | null>(null);
+  const parentData = parentFetcher.data;
+  const parentDataIsFresh = parentData?.ok === true && parentData.type === type && parentData.query === parentQuery;
+  const candidates = parentDataIsFresh ? parentData.candidates : [];
+  const pendingParent = candidates.find((candidate) => candidate.id === pendingParentId) ?? null;
+  const error = reparentFetcher.data?.ok === false ? reparentFetcher.data.error.message : null;
+
+  useEffect(() => {
+    if (!open || type === "topic") {
+      return;
+    }
+    parentFetcher.load(`/api/parents?type=${type}&q=${encodeURIComponent(parentQuery)}&excludeParentId=${parent?.id ?? ""}`);
+  }, [open, parent?.id, parentQuery, type]);
+
+  useEffect(() => {
+    if (open) {
+      setParentQuery("");
+      setPendingParentId(null);
+    }
+  }, [open]);
+
+  if (type === "topic" || parent === null) {
+    return null;
+  }
+
+  const reparent = (parentId: number) => {
+    reparentFetcher.submit({ parentId: String(parentId) }, { method: "post", action: `/api/work-items/${id}/reparent` });
+    setOpen(false);
+  };
+
+  /* A candidate with terminal ancestors pauses on its Reopen Notice; every other choice commits on selection, as the other chips do. */
+  const chooseParent = (parentId: number) => {
+    const candidate = candidates.find((entry) => entry.id === parentId);
+    if (candidate && candidate.terminalAncestors.length > 0) {
+      setPendingParentId(parentId);
+      return;
+    }
+    reparent(parentId);
+  };
+
+  return (
+    <div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button className="max-w-full rounded-full" size="sm" type="button" variant="open">
+            <span>Parent:</span>
+            <TypeMark type={parent.type} />
+            <span className="inline-block max-w-40 truncate align-bottom">{parent.summary}</span>
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-80 space-y-2 p-2">
+          <ParentPicker
+            candidates={candidates}
+            loading={parentFetcher.state !== "idle" || !parentDataIsFresh}
+            parentQuery={parentQuery}
+            prefilledParentSummary={null}
+            selectedParentId={pendingParentId}
+            setParentQuery={setParentQuery}
+            setSelectedParentId={chooseParent}
+          />
+          {pendingParent ? (
+            <div className="space-y-2 rounded-lg border border-status-in-progress/40 bg-status-in-progress-subtle p-3 text-xs text-foreground">
+              <p className="font-medium">Reopen Notice</p>
+              <p className="text-muted-foreground">
+                Reparenting here will move {formatSummaryList(pendingParent.terminalAncestors.map((ancestor) => ancestor.summary))} to In Progress.
+              </p>
+              <Button size="sm" type="button" variant="write" onClick={() => reparent(pendingParent.id)}>
+                Reopen and reparent
+              </Button>
+            </div>
+          ) : null}
+        </PopoverContent>
+      </Popover>
+      {error ? <p className="mt-1 text-xs text-destructive">{controlErrorMessage(error)}</p> : null}
+    </div>
   );
 }
 

@@ -17,7 +17,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     return { ok: false as const, error: { field: "parentId", message: "Choose a valid Parent." } };
   }
 
-  return runFieldUpdate(() => reparentWorkItem(getDatabase(context), id, parentId, formData.get("confirmed") === "true", user.id));
+  return runFieldUpdate(() => reparentWorkItem(getDatabase(context), id, parentId, user.id));
 }
 
 function positiveInteger(value: FormDataEntryValue | null) {

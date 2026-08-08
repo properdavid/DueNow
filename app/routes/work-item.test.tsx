@@ -44,10 +44,10 @@ describe("Work Item detail route seam", () => {
       const detail = loadWorkItemDetail(harness.database, 3);
 
       expect(detail.breadcrumb).toEqual([
-        { id: 1, label: "House", type: "topic" },
-        { id: 2, label: "Kitchen", type: "project" },
-        { id: 3, label: "Task", type: "task" },
+        { id: 1, summary: "House", type: "topic" },
+        { id: 2, summary: "Kitchen", type: "project" },
       ]);
+      expect(detail.parent).toEqual({ id: 2, summary: "Kitchen", type: "project" });
       expect(detail.item.summary).toBe("Paint cabinets");
       expect(detail.item.description).toBe("Use primer\nTwo coats");
       expect(detail.startCascadeAncestors.map((ancestor) => ancestor.summary)).toEqual(["Kitchen", "House"]);
@@ -422,7 +422,8 @@ describe("Work Item detail route seam", () => {
 describe("Work Item detail rendering seam", () => {
   test("renders document order with chips and plain Description text for every type", () => {
     const detail = {
-      breadcrumb: [{ id: 1, label: "Topic", type: "topic" as const }],
+      breadcrumb: [],
+      parent: null,
       item: {
         id: 1,
         type: "topic" as const,
@@ -459,19 +460,20 @@ describe("Work Item detail rendering seam", () => {
 
     const markup = renderToStaticMarkup(<Stub initialEntries={["/items/1"]} />);
 
-    expect(markup.indexOf("Topic › Topic")).toBeLessThan(markup.indexOf("Topic</h1>"));
+    expect(markup.indexOf('aria-label="Breadcrumb"')).toBeLessThan(markup.indexOf("Topic</h1>"));
     expect(markup.indexOf("Topic</h1>")).toBeLessThan(markup.indexOf("Status: Open"));
     expect(markup.indexOf("Labels")).toBeLessThan(markup.indexOf("Use **plain** text"));
     expect(markup).not.toContain("<strong>");
     expect(markup).toContain("Unassigned");
     expect(markup).toContain("No Due Date");
-    expect(markup).not.toContain("Reparent…");
+    expect(markup).not.toContain("Parent:");
   });
 
   test("renders the Children Checklist with a settled reveal and omits it for Subtasks", () => {
     const members = [{ id: 1, email: "dana@example.com", name: "Dana" }];
     const projectDetail = {
-      breadcrumb: [{ id: 1, label: "House", type: "topic" as const }, { id: 2, label: "Project", type: "project" as const }],
+      breadcrumb: [{ id: 1, summary: "House", type: "topic" as const }],
+      parent: { id: 1, summary: "House", type: "topic" as const },
       item: {
         id: 2,
         type: "project" as const,
@@ -537,7 +539,8 @@ describe("Work Item detail rendering seam", () => {
     expect(markup).toContain("1 settled");
     expect(markup).not.toContain("Choose colour");
     expect(markup).toContain("Add Task");
-    expect(markup).toContain("Reparent…");
+    expect(markup).toContain("Parent:");
+    expect(markup).toContain("House");
 
     const subtaskDetail = { ...projectDetail, item: { ...projectDetail.item, id: 5, type: "subtask" as const }, children: [] };
     const SubtaskStub = createRoutesStub([
@@ -561,7 +564,8 @@ describe("Work Item detail rendering seam", () => {
       { id: 2, email: "lee@example.com", name: "Lee" },
     ];
     const detail = {
-      breadcrumb: [{ id: 1, label: "Topic", type: "topic" as const }],
+      breadcrumb: [],
+      parent: null,
       item: {
         id: 1,
         type: "topic" as const,

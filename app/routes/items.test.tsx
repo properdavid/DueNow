@@ -181,7 +181,7 @@ describe("Work Items tree route seam", () => {
       insert.run(5, "subtask", 4, "task", "Buy primer", "open", 1, 1, user.id, user.id);
 
       const data = await reparentRoute.action({
-        request: harness.request("/api/work-items/4/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "3", confirmed: "false" } }),
+        request: harness.request("/api/work-items/4/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "3" } }),
         params: { id: "4" },
         context: { database: harness.database, env: harness.env },
       } as unknown as Parameters<typeof reparentRoute.action>[0]);
@@ -199,7 +199,7 @@ describe("Work Items tree route seam", () => {
     }
   });
 
-  test("reparenting under a terminal parent waits for the Reopen Notice", async () => {
+  test("reparenting under a terminal parent reopens it without a separate confirmation", async () => {
     const harness = createRouteTestHarness({ env: { DUENOW_ALLOWED_EMAILS: "dana@example.com" } });
 
     try {
@@ -213,11 +213,11 @@ describe("Work Items tree route seam", () => {
       insert.run(3, "project", 2, "topic", "San Diego", "open", 1, 1, user.id, user.id);
 
       const blocked = await reparentRoute.action({
-        request: harness.request("/api/work-items/3/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "1", confirmed: "false" } }),
+        request: harness.request("/api/work-items/3/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "0" } }),
         params: { id: "3" },
         context: { database: harness.database, env: harness.env },
       } as unknown as Parameters<typeof reparentRoute.action>[0]);
-      expect(blocked).toEqual({ ok: false, error: { field: "confirmed", message: "Confirm the Reopen Notice first." } });
+      expect(blocked).toEqual({ ok: false, error: { field: "parentId", message: "Choose a valid Parent." } });
       expect(harness.database.sqlite.prepare("SELECT id, parentId, status, updatedAt FROM work_items ORDER BY id").all()).toEqual([
         { id: 1, parentId: null, status: "completed", updatedAt: 1 },
         { id: 2, parentId: null, status: "open", updatedAt: 1 },
@@ -225,7 +225,7 @@ describe("Work Items tree route seam", () => {
       ]);
 
       const confirmed = await reparentRoute.action({
-        request: harness.request("/api/work-items/3/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "1", confirmed: "true" } }),
+        request: harness.request("/api/work-items/3/reparent", { method: "POST", headers: { Cookie: cookie }, formData: { parentId: "1" } }),
         params: { id: "3" },
         context: { database: harness.database, env: harness.env },
       } as unknown as Parameters<typeof reparentRoute.action>[0]);

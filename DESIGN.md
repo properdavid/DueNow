@@ -534,6 +534,10 @@ scope. All three are `open` -- they name a value and tapping one opens a picker
 one is not. Activeness never rests on colour alone: a chip reading `Any` is off
 and one naming a value is on, whether or not the tint is perceived.
 
+The Detail View's **Parent** chip is the exception, and never tinted: it always
+names a parent (a Topic shows no Parent chip at all), so it has no unset state
+to contrast against and a permanent tint would spend the accent on nothing.
+
 ### Input and Textarea
 [input.tsx](app/components/ui/input.tsx) /
 [textarea.tsx](app/components/ui/textarea.tsx). A `card` fill inside an `input`
@@ -571,6 +575,17 @@ that are **deliberately different jobs, not two skins**:
 
 Labels and statuses are distinguished by **treatment, not hue**: a Label carries
 no colour at all (ADR-0018), so a chip can never be mistaken for a status.
+
+### Popover
+
+[app/components/ui/popover.tsx](app/components/ui/popover.tsx), over Radix
+Popover, wearing the same surface as a menu: `popover` fill, hairline border,
+`rounded-lg`, `shadow-lg`, `sideOffset={4}`, portalled.
+
+**A chip whose picker is a list of choices uses the Menu; one that holds a text
+field uses this.** A Radix menu runs typeahead on every character key inside its
+content, so a filter input in a menu fights the menu for the keystrokes. The
+Parent chip's picker is the case that needs it.
 
 ### Dialog
 

@@ -1,12 +1,16 @@
 # The work item detail view is one editable document
 
-The detail view is a single scrolling document, not a form and not a record with a property panel. Top to bottom: a breadcrumb of ancestors and the item's type, the Summary as a heading, a wrapping strip of **property chips**, the Description as prose, the children, and the comments last. It is **one view for all four types** — a Topic gets the same layout, the same chips and the same comment section as a Subtask, and differs only in what its fields happen to hold and in what its child rung is called. This is ADR-0006 held to in the UI: withholding a chip from a Topic because a Topic rarely has a due date would be the first step toward per-type fields.
+The detail view is a single scrolling document, not a form and not a record with a property panel. Top to bottom: a breadcrumb of ancestors, the Summary as a heading, a wrapping strip of **property chips**, the Description as prose, the children, and the comments last. The breadcrumb follows the rule ADR-0020 set for Due Cards — it is the lineage, and where the lineage is empty it says the item's type instead — so a Topic reads `Topic` and everything else ends at its parent rather than at a rung name. It is **one view for all four types** — a Topic gets the same layout, the same chips and the same comment section as a Subtask, and differs only in what its fields happen to hold and in what its child rung is called. This is ADR-0006 held to in the UI: withholding a chip from a Topic because a Topic rarely has a due date would be the first step toward per-type fields.
 
 Two alternatives were built and lost. A **Record** — labelled fields in their own rail, a right-hand column on desktop and a sheet on a phone, with nothing committing until Save, and the body split into Description / children / Comments tabs — is the safest of the three and the only one where a phone never scrolls past three surfaces to reach the third. It lost because the tabs hide the two things you most often want side by side: what the item says and what is left underneath it. A **Workbench** — a full-width Start/Complete bar directly under the summary, children as the body, fields demoted to a disclosure, and comments as a chat thread with a pinned composer — is the fastest view to act in and the best-feeling on a phone, but it optimises for a household that mostly acknowledges work rather than describes it, and it buries the fields that ADR-0006 insists every item carries.
 
 ## Editing
 
-**A field's value is its control.** Status, Assignee, Due date and Labels are chips; tapping one opens a small popover and the choice commits immediately. There is no edit mode, no Save button, and no dirty state to reason about.
+**A field's value is its control.** Parent, Status, Assignee, Due date and Labels are chips; tapping one opens a small popover and the choice commits immediately. There is no edit mode, no Save button, and no dirty state to reason about.
+
+**Parent is a chip, and leads the strip.** Reparenting was a bare `Reparent…` button sitting between the breadcrumb and the Summary — the only mutable thing on the view that was not a chip, in a slot the document order does not have. As a chip it names the parent instead of the act, which also fixes the older complaint that the view never said what the parent *was* without reading the breadcrumb as lineage. Choosing a parent commits on selection like every other chip; the one pause is a candidate with terminal ancestors, where the Reopen Notice appears with a single action, exactly as the Settle Confirmation does under the Status chip.
+
+Parent is the only chip that names a position on the Type Ladder rather than a Core Field (ADR-0006), and the only one that can be absent: **a Topic shows no Parent chip**. That is the same divergence a Subtask's missing children section is, at the other end of the ladder — the two rungs where the ladder stops, and nothing to do with what a field usually holds. The prohibition above stands: a chip may be withheld only where the structure makes it impossible, never because a type rarely uses it.
 
 **Free text is the exception, and commits explicitly.** Summary, Description and Comments each turn into a text area with a small ✓ and ✕ beneath it. The check commits, the cross discards, and **blur commits nothing** — a half-written sentence must never be able to save itself because a tap landed elsewhere. Escape discards from any of the three; Enter confirms a Summary (Shift+Enter for a newline) but not a Description or a Comment, both of which need Enter for their own newlines.
 
@@ -16,7 +20,7 @@ The distinction is composition, not risk: a picker offers a closed set and one t
 
 Children are a checklist in the document, not a panel: status mark, summary, due date, assignee. The status mark is a toggle — it completes and un-completes that child directly. Each group ends in the same per-parent "*n* settled — show" reveal the tree uses (ADR-0018) and an inline "Add <child rung>", which opens the creation dialog with type and parent pre-filled.
 
-A Subtask has no children and shows no children section at all — the one place the four types genuinely diverge, and only because the ladder ends.
+A Subtask has no children and shows no children section at all — one of the two places the four types genuinely diverge, and only because the ladder ends. The other is the Topic's missing Parent chip, above.
 
 ## Comments
 
@@ -31,6 +35,8 @@ Those controls are **always visible rather than revealed on hover**, because hal
 A modal listing the same items was rejected as heavier than the act; **acting first and offering Undo was rejected outright**. A cascade is a fan-out over work the person cannot currently see, and an Undo that has to be noticed and reached within a few seconds is not consent — it is a race. This is the same reasoning that kept Complete and Close out of the tree in ADR-0018 and out of Search in ADR-0012, and it is why the detail view is where settling happens: it is the one surface that can name the items it is about to change.
 
 The Start Cascade needs no confirmation and gets none, but the status popover names it: when the item is Open and has Open ancestors, a line reads which ancestors starting it will also start. Starting is additive and reversible, so it is announced rather than gated.
+
+**The Reopen Notice informs and does not gate**, wherever it appears — the Parent chip, the tree's `Move…` dialog and the creation dialog all name the ancestors a terminal parent will reopen, and none of them demands a separate confirmation first. The reparent route once refused a move until a `confirmed` flag came back; that was a second gate on top of the ordinary submit, and it contradicted the notice's own definition. Reparenting under a terminal parent now reopens it and says so beforehand.
 
 ## Consequences
 
