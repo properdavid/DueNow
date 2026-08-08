@@ -660,6 +660,11 @@ metadata literals in lockstep with `app.css`.
   overlays.
 - **Don't** turn a typography role into a component or an `@utility` alias. The
   recipe is what you type.
+- **Don't** leave a form permanently armed. A surface that appends to a list ends
+  in an `open` button that opens a Draft; the Save and Discard pair appears only
+  once there is something to save or discard. Editing an existing value in place
+  is exempt -- its placeholder stands in the value's own slot, and is not an
+  append.
 - **Do** treat the absent families (chart ramp, computed borders, serif /
   signature / mono, `--label-1..8`) as decisions. Adding one back is an ADR, not
   a commit.

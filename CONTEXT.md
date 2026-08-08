@@ -218,6 +218,14 @@ _Avoid_: confirm dialog, warning, are-you-sure, undo prompt
 The children of a work item as they appear on its Detail View — Status Mark, Summary, Due Date, Assignee per row, ending in the settled reveal and an inline add. Its Status Mark is a toggle that settles a child to Completed and un-settles one to Open; no other status is reachable from it.
 _Avoid_: subtask list, child list, checkbox list, todo list
 
+**Comment Composer**:
+The closed affordance at the foot of a Detail View's Comments that opens into a box for writing one. It starts closed and returns to closed — a Detail View at rest offers to take a Comment rather than standing ready to receive one.
+_Avoid_: comment box, comment form, reply box, add comment
+
+**Draft**:
+Text a household member has typed and not yet stored. Every long-form field is written through one — Summary, Description, and a Comment — and every Draft ends the same way: Saved, or Discarded and gone. A Draft belongs to the work item it was opened on and never travels; leaving takes it with nothing. Chips have no Draft, which is why they have no Save.
+_Avoid_: unsaved changes, edit mode, pending edit, dirty state
+
 ### The Due tab
 
 **Overdue**:

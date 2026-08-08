@@ -240,14 +240,35 @@ function CommentRow({ comment, currentUserId }: { comment: WorkItemCommentReadMo
 
 function CommentComposer({ workItemId }: { workItemId: number }) {
   const fetcher = useFetcher<ActionResult>();
+  const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
   const error = fetcher.data?.ok === false ? fetcher.data.error.message : null;
+
+  function discard() {
+    setValue("");
+    setOpen(false);
+  }
+
+  // A Draft belongs to the work item it was opened on and never travels.
+  useEffect(() => {
+    setValue("");
+    setOpen(false);
+  }, [workItemId]);
 
   useEffect(() => {
     if (fetcher.state === "idle" && fetcher.data?.ok) {
       setValue("");
+      setOpen(false);
     }
   }, [fetcher.state, fetcher.data]);
+
+  if (!open) {
+    return (
+      <Button type="button" variant="open" onClick={() => setOpen(true)}>
+        Add Comment
+      </Button>
+    );
+  }
 
   return (
     <fetcher.Form method="post" action={`/api/work-items/${workItemId}/add-comment`} className="space-y-2 rounded-lg border border-border bg-card p-4 text-card-foreground">
@@ -255,6 +276,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
         Add Comment
       </label>
       <Textarea
+        autoFocus
         id={`comment-body-${workItemId}`}
         name="body"
         rows={4}
@@ -263,7 +285,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
         onKeyDown={(event) => {
           if (event.key === "Escape") {
             event.preventDefault();
-            setValue("");
+            discard();
           }
         }}
       />
@@ -271,7 +293,7 @@ function CommentComposer({ workItemId }: { workItemId: number }) {
         <Button aria-label="Save Comment" disabled={fetcher.state !== "idle"} size="sm" type="submit" variant="write">
           <Check aria-hidden="true" />
         </Button>
-        <Button aria-label="Discard Comment" size="sm" type="button" variant="discard" onClick={() => setValue("")}>
+        <Button aria-label="Discard Comment" size="sm" type="button" variant="discard" onClick={discard}>
           <X aria-hidden="true" />
         </Button>
       </div>
